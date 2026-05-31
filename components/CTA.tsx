@@ -13,7 +13,7 @@ export function CTA({
 }: CTAProps) {
   return (
     <section className="section-dark-solid border-t border-white/10">
-      <div className="mx-auto max-w-[1400px] px-6 py-24 lg:px-10 lg:py-28">
+      <div className="mx-auto max-w-[1400px] px-6 py-16 sm:py-20 lg:px-10 lg:py-28">
         <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr] lg:items-end lg:gap-20">
           <h2 className="headline-sm max-w-[18ch] text-white">{title}</h2>
           <div>

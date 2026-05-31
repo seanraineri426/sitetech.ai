@@ -36,7 +36,7 @@ const pricingNotes = [
 export function Pricing() {
   return (
     <section id="pricing" className="section-light">
-      <div className="mx-auto max-w-[1400px] px-6 py-20 lg:px-10 lg:py-24">
+      <div className="mx-auto max-w-[1400px] px-6 py-16 lg:px-10 lg:py-24">
         <div className="grid gap-px bg-gray-200 lg:grid-cols-2 lg:grid-rows-[auto_auto_auto_auto]">
           {phases.map((item) => (
             <div

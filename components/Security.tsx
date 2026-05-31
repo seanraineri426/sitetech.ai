@@ -40,7 +40,7 @@ const commitments = [
 export function Security() {
   return (
     <section id="security" className="section-dark-solid border-t border-white/10">
-      <div className="mx-auto max-w-[1400px] px-6 py-24 lg:px-10 lg:py-32">
+      <div className="mx-auto max-w-[1400px] px-6 py-16 sm:py-20 lg:px-10 lg:py-32">
         <div className="grid gap-16 lg:grid-cols-[1fr_1.4fr] lg:gap-24">
           <div className="lg:sticky lg:top-32 lg:self-start">
             <p className="section-label mb-6">Security</p>

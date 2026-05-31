@@ -106,7 +106,7 @@ export default async function InsightPage({
       />
 
       <article className="section-light">
-        <div className="mx-auto max-w-[720px] px-6 pt-36 pb-20 lg:pt-44 lg:pb-28">
+        <div className="mx-auto max-w-[720px] px-6 pt-28 pb-16 sm:pt-32 lg:pt-44 lg:pb-28">
           <a
             href="/insights"
             className="font-mono text-[11px] uppercase tracking-[0.2em] text-gray-500 transition-colors hover:text-black"

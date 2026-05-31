@@ -1,7 +1,7 @@
 export function CompoundingTeaser() {
   return (
     <section className="section-light">
-      <div className="mx-auto max-w-[1400px] px-6 py-24 lg:px-10 lg:py-28">
+      <div className="mx-auto max-w-[1400px] px-6 py-16 sm:py-20 lg:px-10 lg:py-28">
         <div className="grid gap-12 lg:grid-cols-[1.2fr_1fr] lg:items-end lg:gap-20">
           <div>
             <p className="section-label mb-6">Model progression</p>

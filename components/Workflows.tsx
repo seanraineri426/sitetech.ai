@@ -231,7 +231,7 @@ const workflowGroups = [
 export function Workflows() {
   return (
     <section id="workflows" className="section-light">
-      <div className="mx-auto max-w-[1400px] px-6 py-24 lg:px-10 lg:py-32">
+      <div className="mx-auto max-w-[1400px] px-6 py-16 sm:py-20 lg:px-10 lg:py-32">
         <div className="max-w-2xl">
           <p className="section-label mb-6">Use cases</p>
           <h2 className="headline-sm">

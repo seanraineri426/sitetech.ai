@@ -28,7 +28,7 @@ const drivers = [
 export function FinancialCase() {
   return (
     <section className="section-light">
-      <div className="mx-auto max-w-[1400px] px-6 py-24 lg:px-10 lg:py-32">
+      <div className="mx-auto max-w-[1400px] px-6 py-16 sm:py-20 lg:px-10 lg:py-32">
         <div className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:gap-20">
           <div>
             <p className="section-label mb-6">The financial case</p>

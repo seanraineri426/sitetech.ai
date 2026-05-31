@@ -40,7 +40,7 @@ const benefits = [
 export function RealWorld() {
   return (
     <section className="section-light">
-      <div className="mx-auto max-w-[1400px] px-6 py-24 lg:px-10 lg:py-32">
+      <div className="mx-auto max-w-[1400px] px-6 py-16 sm:py-20 lg:px-10 lg:py-32">
         <div className="max-w-3xl">
           <p className="section-label mb-6">Why SiteTech</p>
           <h2 className="headline-sm">
