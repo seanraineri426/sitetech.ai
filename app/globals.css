@@ -1,0 +1,180 @@
+@import "tailwindcss";
+
+@theme {
+  --color-black: #000000;
+  --color-white: #ffffff;
+  --color-gray-50: #fafafa;
+  --color-gray-100: #f5f5f5;
+  --color-gray-200: #e5e5e5;
+  --color-gray-300: #d4d4d4;
+  --color-gray-400: #a3a3a3;
+  --color-gray-500: #737373;
+  --color-gray-600: #525252;
+  --color-gray-700: #404040;
+  --color-gray-800: #262626;
+  --color-gray-900: #171717;
+  --color-gray-950: #0a0a0a;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+html {
+  scroll-behavior: auto;
+}
+
+body {
+  background-color: var(--color-black);
+  color: var(--color-white);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background-color: var(--color-white);
+  color: var(--color-black);
+}
+
+.section-dark {
+  background-color: transparent;
+  color: var(--color-white);
+}
+
+.section-dark-solid {
+  background-color: var(--color-black);
+  color: var(--color-white);
+}
+
+.section-light {
+  background-color: var(--color-white);
+  color: var(--color-black);
+}
+
+.section-label {
+  @apply font-mono text-[11px] uppercase tracking-[0.25em] text-gray-500;
+}
+
+.section-light .section-label {
+  @apply text-gray-500;
+}
+
+.headline {
+  @apply text-[clamp(2.25rem,5vw,4.5rem)] font-medium leading-[1.05] tracking-[-0.03em];
+}
+
+.headline-sm {
+  @apply text-[clamp(1.75rem,3.5vw,3rem)] font-medium leading-[1.1] tracking-[-0.025em];
+}
+
+.body-lg {
+  @apply text-lg leading-relaxed text-gray-400;
+}
+
+.section-light .body-lg {
+  @apply text-gray-600;
+}
+
+.link-arrow {
+  @apply inline-flex items-center gap-3 text-sm font-medium tracking-wide transition-opacity hover:opacity-60;
+}
+
+.btn-primary {
+  @apply inline-flex items-center justify-center border border-white bg-white px-8 py-3.5 text-sm font-medium tracking-wide text-black transition-colors hover:bg-transparent hover:text-white;
+}
+
+.section-light .btn-primary {
+  @apply border-black bg-black text-white hover:bg-transparent hover:text-black;
+}
+
+.btn-ghost {
+  @apply inline-flex items-center justify-center border border-gray-700 px-8 py-3.5 text-sm font-medium tracking-wide text-white transition-colors hover:border-white;
+}
+
+.section-light .btn-ghost {
+  @apply border-gray-300 text-black hover:border-black;
+}
+
+.divide-grid {
+  @apply border border-gray-800;
+}
+
+.section-light .divide-grid {
+  @apply border-gray-200;
+}
+
+@keyframes pulse-node {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes scan {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+.animate-pulse-node {
+  animation: pulse-node 4s ease-in-out infinite;
+}
+
+.animate-scan {
+  animation: scan 8s linear infinite;
+}
+
+@keyframes flow-down {
+  0% { transform: translateY(-6px); opacity: 0; }
+  25% { opacity: 1; }
+  75% { opacity: 1; }
+  100% { transform: translateY(22px); opacity: 0; }
+}
+
+.animate-flow-down {
+  animation: flow-down 1.8s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-130%); }
+  100% { transform: translateX(130%); }
+}
+
+.animate-shimmer {
+  animation: shimmer 3.2s ease-in-out infinite;
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes panel-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+  50% { box-shadow: 0 0 40px 0 rgba(255, 255, 255, 0.05); }
+}
+
+.animate-panel-glow {
+  animation: panel-glow 6s ease-in-out infinite;
+}
+
+@keyframes topo-breathe {
+  0%, 100% { transform: scale(1) translateY(0); }
+  50% { transform: scale(1.022) translateY(-2px); }
+}
+
+.animate-topo-breathe {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: topo-breathe 16s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-flow-down,
+  .animate-shimmer,
+  .animate-fade-up,
+  .animate-panel-glow,
+  .animate-pulse-node,
+  .animate-topo-breathe {
+    animation: none;
+  }
+}
