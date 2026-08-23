@@ -5,9 +5,10 @@ import { BOOKING_URL, BOOKING_ENABLED, CONTACT_ACCESS_KEY, CONTACT_ENDPOINT } fr
 
 const segments = [
   "Real Estate Development",
-  "General Construction",
-  "Real Estate Brokerage",
-  "Private Equity (Real Estate)",
+  "Real Estate Investment / Private Equity",
+  "Property Ownership / Operations",
+  "Property Management",
+  "Affordable Housing",
   "Other",
 ];
 
@@ -44,13 +45,14 @@ export function Contact() {
       <div className="mx-auto max-w-[1400px] px-6 py-16 sm:py-20 lg:px-10 lg:py-32">
         <div className="grid gap-20 lg:grid-cols-2 lg:gap-24">
           <div>
-            <p className="section-label mb-6">Contact</p>
+            <p className="section-label mb-6">AI Workflow Assessment</p>
             <h2 className="headline-sm">
-              Tell us how you work.
+              Show us how your team works today.
             </h2>
             <p className="body-lg mt-6">
-              No pitch deck. A conversation about your workflows, your data
-              requirements, and where embedded AI would save your team time.
+              We&apos;ll identify where AI agents can eliminate repetitive work,
+              connect disconnected systems, and improve visibility across your
+              organization — and tell you honestly where they can&apos;t.
             </p>
 
             {BOOKING_ENABLED && (
@@ -134,7 +136,7 @@ export function Contact() {
                     name="message"
                     rows={4}
                     className={`${inputClass} resize-none`}
-                    placeholder="RFI follow-up, LP reporting, bid leveling..."
+                    placeholder="Lease-up documentation, RFI follow-up, investor reporting..."
                   />
                 </div>
 

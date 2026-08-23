@@ -59,26 +59,26 @@ export default function OpengraphImage() {
           <div
             style={{
               color: "#ffffff",
-              fontSize: "76px",
+              fontSize: "64px",
               fontWeight: 600,
-              lineHeight: 1.05,
+              lineHeight: 1.08,
               letterSpacing: "-0.02em",
-              maxWidth: "900px",
+              maxWidth: "980px",
             }}
           >
-            AI for the real world of real estate.
+            Turn your real estate technology stack into an AI operating system.
           </div>
           <div
             style={{
               marginTop: "32px",
               color: "#a3a3a3",
-              fontSize: "30px",
+              fontSize: "28px",
               lineHeight: 1.3,
               maxWidth: "880px",
             }}
           >
-            Custom, governed AI workflows built and maintained by forward-deployed AI
-            engineers.
+            AI agents designed, deployed, and managed for real estate developers,
+            owners, operators, and property managers.
           </div>
         </div>
       </div>

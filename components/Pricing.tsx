@@ -1,35 +1,45 @@
 const phases = [
   {
     phase: "01",
-    title: "Implementation setup",
+    title: "Workflow Assessment",
     description:
-      "A one-time engagement to map your workflows, stand up your private data environment and system-of-record ledger, and deliver your first production AI workflows.",
+      "A fixed-scope engagement to map how work moves through your organization and identify where AI agents pay for themselves.",
     includes: [
-      "Workflow discovery with your team",
-      "Private infrastructure & ledger setup",
-      "Initial custom AI workflows shipped",
-      "Integration with your existing tools",
-      "Team onboarding & documentation",
+      "Employee interviews & workflow mapping",
+      "Systems and data inventory",
+      "Prioritized automation roadmap",
+      "Fixed-scope implementation proposal",
     ],
   },
   {
     phase: "02",
-    title: "Ongoing maintenance",
+    title: "Implementation",
     description:
-      "Our forward-deployed AI engineers remain at your service, building new workflows day by day, maintaining what ships, and responding when your process changes.",
+      "Your first production AI workflows — integrations, agents, and automations — built into your environment.",
     includes: [
-      "24/7 AI engineer availability",
-      "Continuous workflow iteration",
-      "New automations as needs emerge",
-      "Performance monitoring & optimization",
-      "Security updates & compliance support",
+      "Integrations with your existing systems",
+      "Specialized AI agents deployed",
+      "Workflow automations & routines",
+      "Team onboarding & documentation",
+    ],
+  },
+  {
+    phase: "03",
+    title: "Managed AI Infrastructure",
+    description:
+      "SiteTech operates and expands your AI layer as an ongoing service, as your operation evolves.",
+    includes: [
+      "Workflow monitoring & troubleshooting",
+      "Continuous improvement & new use cases",
+      "Employee training",
+      "Integration updates & value measurement",
     ],
   },
 ];
 
 const pricingNotes = [
-  { title: "Per seat", detail: "Aligned to the people who use the system" },
-  { title: "Per usage", detail: "You pay for what runs" },
+  { title: "Fixed-scope assessment", detail: "Know the cost before anything is built" },
+  { title: "Per seat & per usage", detail: "Aligned to the people and volume that use it" },
   { title: "No platform tax", detail: "Built for you, not thousands of other firms" },
 ];
 
@@ -37,21 +47,18 @@ export function Pricing() {
   return (
     <section id="pricing" className="section-light">
       <div className="mx-auto max-w-[1400px] px-6 py-16 lg:px-10 lg:py-24">
-        <div className="grid gap-px bg-gray-200 lg:grid-cols-2 lg:grid-rows-[auto_auto_auto_auto]">
+        <div className="grid gap-px bg-gray-200 lg:grid-cols-3">
           {phases.map((item) => (
-            <div
-              key={item.phase}
-              className="bg-white p-10 lg:row-span-4 lg:grid lg:grid-rows-subgrid lg:gap-y-0 lg:p-12"
-            >
-              <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-gray-400">
+            <div key={item.phase} className="flex flex-col bg-white p-10 lg:p-12">
+              <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-gray-500">
                 Phase {item.phase}
               </p>
               <h3 className="mt-4 text-2xl font-medium tracking-tight">{item.title}</h3>
               <p className="mt-4 text-sm leading-relaxed text-gray-600">{item.description}</p>
-              <ul className="mt-8 space-y-3 border-t border-gray-200 pt-8">
+              <ul className="mt-8 flex-1 space-y-3 border-t border-gray-200 pt-8">
                 {item.includes.map((line, i) => (
                   <li key={line} className="flex gap-4 text-sm text-gray-700">
-                    <span className="font-mono text-gray-400">{String(i + 1).padStart(2, "0")}</span>
+                    <span className="font-mono text-gray-500">{String(i + 1).padStart(2, "0")}</span>
                     {line}
                   </li>
                 ))}
@@ -74,7 +81,7 @@ export function Pricing() {
 
         <div className="mt-16 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-8">
           <a href="#contact" className="btn-primary">
-            Request a proposal
+            Book an AI Workflow Assessment
           </a>
           <p className="text-sm text-gray-500">
             Every engagement is scoped to your operation.

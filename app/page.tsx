@@ -1,11 +1,9 @@
 import { Hero } from "@/components/Hero";
-import { RealWorld } from "@/components/home/RealWorld";
-import { IndustriesTeaser } from "@/components/home/IndustriesTeaser";
-import { PlatformStack } from "@/components/home/PlatformStack";
-import { DeploymentModel } from "@/components/home/DeploymentModel";
-import { CompoundingTeaser } from "@/components/home/CompoundingTeaser";
-import { InsightsTeaser } from "@/components/home/InsightsTeaser";
-import { FinancialCase } from "@/components/home/FinancialCase";
+import { Problem } from "@/components/Problem";
+import { LayerStack } from "@/components/LayerStack";
+import { FlowShowcase } from "@/components/home/FlowShowcase";
+import { AffordableSpotlight } from "@/components/home/AffordableSpotlight";
+import { HowItWorksStrip } from "@/components/home/HowItWorksStrip";
 import { CTA } from "@/components/CTA";
 import { Reveal } from "@/components/Reveal";
 
@@ -14,25 +12,19 @@ export default function Home() {
     <main className="relative">
       <Hero />
       <Reveal>
-        <RealWorld />
+        <Problem />
       </Reveal>
       <Reveal>
-        <PlatformStack />
+        <LayerStack />
       </Reveal>
       <Reveal>
-        <IndustriesTeaser />
+        <FlowShowcase />
       </Reveal>
       <Reveal>
-        <DeploymentModel />
+        <AffordableSpotlight />
       </Reveal>
       <Reveal>
-        <CompoundingTeaser />
-      </Reveal>
-      <Reveal>
-        <InsightsTeaser />
-      </Reveal>
-      <Reveal>
-        <FinancialCase />
+        <HowItWorksStrip />
       </Reveal>
       <Reveal>
         <CTA />

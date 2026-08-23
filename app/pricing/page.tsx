@@ -5,14 +5,14 @@ import { Contact } from "@/components/Contact";
 import { Reveal } from "@/components/Reveal";
 
 export const metadata: Metadata = {
-  title: "Pricing",
+  title: "Engagement",
   description:
-    "Priced per seat and per usage, with a setup fee to get you live and ongoing maintenance from forward-deployed AI engineers.",
+    "Start with a fixed-scope AI workflow assessment, move to implementation, and continue with managed AI infrastructure — operated and expanded by SiteTech AI engineers.",
   alternates: { canonical: "/pricing" },
   openGraph: {
-    title: "Pricing | SiteTech AI",
+    title: "Engagement | SiteTech AI",
     description:
-      "Priced per seat and per usage, with a setup fee to get you live and ongoing maintenance from forward-deployed AI engineers.",
+      "Assessment, implementation, and managed AI infrastructure for real estate companies.",
     url: "https://sitetech.ai/pricing",
     type: "website",
   },
@@ -23,8 +23,8 @@ export default function PricingPage() {
     <main className="relative">
       <PageHeader
         label="Engagement"
-        title="Priced for your team. Your usage. Your workflow."
-        description="A setup fee to get you live, then an ongoing maintenance fee so our forward-deployed AI engineers never leave your side."
+        title="Assessment first. Then implementation. Then we stay."
+        description="SiteTech sells outcomes, not licenses: a fixed-scope workflow assessment, a defined implementation, and ongoing managed AI infrastructure."
       />
       <Reveal>
         <Pricing />

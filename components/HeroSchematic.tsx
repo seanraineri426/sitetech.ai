@@ -99,9 +99,9 @@ const spots = [
 const bm = { x: 150, y: 168, w: 34, h: 24 };
 
 const ledger = [
-  { id: "SITE-04", action: "grade analysis", result: "balanced" },
-  { id: "PAD", action: "buildable", result: "2.1 ac" },
-  { id: "DRAINAGE", action: "review", result: "2 flags" },
+  { id: "OAC-12", action: "actions extracted", result: "9 assigned" },
+  { id: "RFI-118", action: "aging 6 days", result: "escalated" },
+  { id: "RECERT", action: "17 due", result: "60 days" },
 ];
 
 export function HeroSchematic() {
@@ -208,10 +208,10 @@ export function HeroSchematic() {
       <div className="mt-2 flex items-center justify-between border-t border-white/10 pt-4">
         <span className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-gray-500">
           <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse-node" />
-          Site analysis
+          Operating layer
         </span>
-        <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-gray-600">
-          surveyed
+        <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-gray-500">
+          live
         </span>
       </div>
 
@@ -230,8 +230,8 @@ export function HeroSchematic() {
         ))}
       </div>
 
-      <p className="mt-4 font-mono text-[10px] leading-relaxed tracking-wide text-gray-600">
-        Topography · Grade · Buildable area · Setbacks · Ledger
+      <p className="mt-4 font-mono text-[10px] leading-relaxed tracking-wide text-gray-500">
+        Meetings · RFIs · Approvals · Recertifications · Ledger
       </p>
     </div>
   );

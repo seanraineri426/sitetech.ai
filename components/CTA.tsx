@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 type CTAProps = {
   title?: string;
   body?: string;
@@ -6,10 +8,10 @@ type CTAProps = {
 };
 
 export function CTA({
-  title = "Tell us how you work. We'll build the AI around it.",
-  body = "No pitch deck. A conversation about your workflows, your data, and where embedded AI would save your team real time.",
+  title = "Show us how your team works today.",
+  body = "We'll map where AI agents can eliminate repetitive work, connect your systems, and improve visibility — and tell you honestly where they can't.",
   href = "/pricing#contact",
-  label = "Start a conversation",
+  label = "Book an AI Workflow Assessment",
 }: CTAProps) {
   return (
     <section className="section-dark-solid border-t border-white/10">
@@ -18,9 +20,9 @@ export function CTA({
           <h2 className="headline-sm max-w-[18ch] text-white">{title}</h2>
           <div>
             <p className="text-base leading-relaxed text-gray-400">{body}</p>
-            <a href={href} className="btn-primary mt-8">
+            <Link href={href} className="btn-primary mt-8">
               {label}
-            </a>
+            </Link>
           </div>
         </div>
       </div>

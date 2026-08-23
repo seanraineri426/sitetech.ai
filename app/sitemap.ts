@@ -3,40 +3,19 @@ import { insights } from "@/lib/insights";
 
 const siteUrl = "https://sitetech.ai";
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const lastModified = new Date();
+// Update when page content materially changes.
+const LAST_UPDATED = "2026-08-22";
 
+export default function sitemap(): MetadataRoute.Sitemap {
   const staticRoutes: MetadataRoute.Sitemap = [
-    {
-      url: siteUrl,
-      lastModified,
-      changeFrequency: "weekly",
-      priority: 1,
-    },
-    {
-      url: `${siteUrl}/platform`,
-      lastModified,
-      changeFrequency: "monthly",
-      priority: 0.9,
-    },
-    {
-      url: `${siteUrl}/workflows`,
-      lastModified,
-      changeFrequency: "monthly",
-      priority: 0.9,
-    },
-    {
-      url: `${siteUrl}/insights`,
-      lastModified,
-      changeFrequency: "weekly",
-      priority: 0.8,
-    },
-    {
-      url: `${siteUrl}/pricing`,
-      lastModified,
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
+    { url: siteUrl, lastModified: LAST_UPDATED, changeFrequency: "weekly", priority: 1 },
+    { url: `${siteUrl}/solutions`, lastModified: LAST_UPDATED, changeFrequency: "monthly", priority: 0.9 },
+    { url: `${siteUrl}/solutions/affordable-housing`, lastModified: LAST_UPDATED, changeFrequency: "monthly", priority: 0.9 },
+    { url: `${siteUrl}/solutions/property-management`, lastModified: LAST_UPDATED, changeFrequency: "monthly", priority: 0.9 },
+    { url: `${siteUrl}/integrations`, lastModified: LAST_UPDATED, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${siteUrl}/how-it-works`, lastModified: LAST_UPDATED, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${siteUrl}/pricing`, lastModified: LAST_UPDATED, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${siteUrl}/insights`, lastModified: LAST_UPDATED, changeFrequency: "weekly", priority: 0.7 },
   ];
 
   const insightRoutes: MetadataRoute.Sitemap = insights.map((post) => ({
