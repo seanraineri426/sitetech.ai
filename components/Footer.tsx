@@ -13,7 +13,7 @@ const solutionLinks = [
 const companyLinks = [
   { href: "/integrations", label: "Integrations" },
   { href: "/how-it-works", label: "How It Works" },
-  { href: "/insights", label: "Insights" },
+  { href: "/blog", label: "Blog" },
   { href: "/pricing", label: "Engagement" },
   { href: "/pricing#contact", label: "Book an Assessment" },
 ];

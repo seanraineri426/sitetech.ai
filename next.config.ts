@@ -12,6 +12,8 @@ const nextConfig: NextConfig = {
     return [
       { source: "/platform", destination: "/how-it-works", permanent: true },
       { source: "/workflows", destination: "/solutions", permanent: true },
+      { source: "/insights", destination: "/blog", permanent: true },
+      { source: "/insights/:slug", destination: "/blog/:slug", permanent: true },
     ];
   },
   async headers() {

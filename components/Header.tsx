@@ -9,7 +9,7 @@ const navLinks = [
   { href: "/solutions/affordable-housing", label: "Affordable Housing" },
   { href: "/integrations", label: "Integrations" },
   { href: "/how-it-works", label: "How It Works" },
-  { href: "/insights", label: "Insights" },
+  { href: "/blog", label: "Blog" },
 ];
 
 export function Header() {
