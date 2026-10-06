@@ -205,13 +205,13 @@ begin
       end if;
     end if;
     
-    -- Count remaining owners
+    -- Count remaining owners (excluding the one being removed/demoted)
     select count(*)
     into owner_count
     from public.org_memberships
     where org_id = old.org_id
       and role = 'owner'
-      and (TG_OP = 'DELETE' or user_id != old.user_id);
+      and user_id != old.user_id;
     
     if owner_count = 0 then
       raise exception 'Cannot remove the last owner from an organization';

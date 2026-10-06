@@ -2,7 +2,7 @@
 -- Run as authenticator user (not superuser) to properly test RLS
 
 begin;
-select plan(29);
+select plan(35);
 
 -- Setup test data (need elevated privileges briefly)
 set role postgres;
@@ -192,19 +192,84 @@ select lives_ok($$select public.create_org('Test Org', 'test-org-pgtap')$$, 'cre
 select is((select role from public.org_memberships om join public.orgs o on om.org_id = o.id where o.slug = 'test-org-pgtap' and om.user_id = '22222222-2222-2222-2222-222222222222'), 'owner'::text, 'Caller is owner of created org');
 reset role;
 
--- Test 21-22: Last owner removal is refused by trigger
-set role postgres;
-select is((select count(*)::int from public.org_memberships where org_id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb' and role = 'owner'), 1, 'Org B has exactly 1 owner');
+-- ============================================================================
+-- LAST OWNER PROTECTION TESTS
+-- ============================================================================
+
+-- Test 21: Verify sole owner row is visible to RLS
+set role authenticated;
+set local "request.jwt.claim.sub" = '22222222-2222-2222-2222-222222222222';
+select is(
+  (select count(*)::int from public.org_memberships where org_id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb' and user_id = '22222222-2222-2222-2222-222222222222'),
+  1,
+  'Sole owner row is visible through RLS before delete attempt'
+);
 reset role;
 
--- The trigger should prevent this delete
+-- Test 22: Sole owner cannot leave (DELETE own membership)
 set role authenticated;
 set local "request.jwt.claim.sub" = '22222222-2222-2222-2222-222222222222';
 select throws_ok(
   $$delete from public.org_memberships where org_id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb' and user_id = '22222222-2222-2222-2222-222222222222'$$,
   'P0001',
   'Cannot remove the last owner from an organization',
-  'Trigger prevents last owner removal'
+  'Sole owner cannot delete own membership (trigger blocks)'
+);
+reset role;
+
+-- Test 23: Add second owner, original owner leaves, verify sole owner protection
+-- First add a second owner
+set role postgres;
+insert into public.org_memberships (org_id, user_id, role) values
+  ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '33333333-3333-3333-3333-333333333333', 'owner');
+reset role;
+
+-- Original owner (user2) leaves
+set role authenticated;
+set local "request.jwt.claim.sub" = '22222222-2222-2222-2222-222222222222';
+delete from public.org_memberships where org_id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb' and user_id = '22222222-2222-2222-2222-222222222222';
+reset role;
+
+-- Verify user3 is now the sole owner
+set role postgres;
+select is(
+  (select count(*)::int from public.org_memberships where org_id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'),
+  1,
+  'Org B has exactly 1 membership after user2 left'
+);
+select is(
+  (select count(*)::int from public.org_memberships where org_id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb' and user_id = '33333333-3333-3333-3333-333333333333' and role = 'owner'),
+  1,
+  'User3 is the sole owner of Org B'
+);
+reset role;
+
+-- Test 24-26: Sole owner self-demotion is prevented by RLS policy (user_id != auth.uid())
+set role authenticated;
+set local "request.jwt.claim.sub" = '33333333-3333-3333-3333-333333333333';
+
+-- Verify we can see the owner row
+select is(
+  (select count(*)::int from public.org_memberships where org_id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb' and role = 'owner'),
+  1,
+  'Verify exactly 1 owner remains'
+);
+
+select is(
+  (select count(*)::int from public.org_memberships where org_id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb' and user_id = '33333333-3333-3333-3333-333333333333'),
+  1,
+  'User3 can see their own membership row through RLS'
+);
+
+-- Try to demote self - RLS policy blocks this (no one can change their own role)
+prepare test_self_demotion as update public.org_memberships set role = 'admin' where org_id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb' and user_id = '33333333-3333-3333-3333-333333333333';
+select lives_ok('execute test_self_demotion', 'Self-demotion UPDATE executes without exception');
+
+-- Verify role unchanged (RLS policy prevented the update)
+select is(
+  (select role::text from public.org_memberships where org_id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb' and user_id = '33333333-3333-3333-3333-333333333333'),
+  'owner',
+  'Role unchanged - RLS policy blocks self-demotion'
 );
 reset role;
 
