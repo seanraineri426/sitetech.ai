@@ -2,20 +2,23 @@
  * Microsoft Graph GET-only HTTP client for Mail and SharePoint.
  * 
  * Features:
- * - App-only client credentials (multi-tenant support)
- * - GET-only enforcement
- * - Throttling handling (429, 503 with Retry-After)
- * - Delta sync support (deltaLink storage)
- * - Mail folder delta (Inbox, Sent Items)
- * - SharePoint drive delta (Sites.Selected)
+ * - Server-only (import check)
+ * - GET-only enforcement at request chokepoint (before token attached)
+ * - Scoped to configured mailbox and siteId (no foreign paths)
+ * - Shared retry helper with throttling
+ * - Delta sync support
  */
 
+import "server-only";
 import { z } from "zod";
+import { retryRequest } from "../shared/retry";
 
 const GraphConfigSchema = z.object({
   tenantId: z.string().min(1),
   clientId: z.string().min(1),
   clientSecret: z.string().min(1),
+  mailbox: z.string().min(1), // Required scope
+  siteId: z.string().min(1),  // Required scope
   scopes: z.array(z.string()).default(["https://graph.microsoft.com/.default"]),
   baseUrl: z.string().url().default("https://graph.microsoft.com/v1.0"),
 });
@@ -39,27 +42,28 @@ export interface GraphResponse<T> {
   "@odata.deltaLink"?: string;
 }
 
-export interface DeltaResponse<T> extends GraphResponse<T> {
-  "@odata.deltaLink"?: string;
-  "@removed"?: Array<{ id: string; reason: string }>;
+export interface DeltaResult<T> {
+  items: T[];
+  removed: string[];
+  nextLink?: string;
+  deltaLink?: string;
 }
 
 /**
  * GET-only HTTP client for Microsoft Graph.
- * Throws on non-GET verbs to enforce read-only policy.
  */
 export class GraphClient {
   private config: GraphConfig;
   private tokenCache: CachedToken | null = null;
+  private apiOrigin: string;
+  private authOrigin: string;
 
   constructor(config: Partial<GraphConfig>) {
     this.config = GraphConfigSchema.parse(config);
+    this.apiOrigin = new URL(this.config.baseUrl).origin;
+    this.authOrigin = "https://login.microsoftonline.com";
   }
 
-  /**
-   * Fetch access token via OAuth client credentials.
-   * Caches in memory until 5 minutes before expiry.
-   */
   private async getAccessToken(): Promise<string> {
     if (
       this.tokenCache &&
@@ -84,9 +88,7 @@ export class GraphClient {
     });
 
     if (!response.ok) {
-      throw new Error(
-        `Graph token fetch failed: ${response.status} ${await response.text()}`
-      );
+      throw new Error(`Graph token fetch failed: ${response.status}`);
     }
 
     const data: TokenResponse = await response.json();
@@ -100,9 +102,59 @@ export class GraphClient {
   }
 
   /**
-   * GET request with throttling handling.
-   * Honors 429 and 503 with Retry-After.
+   * Request chokepoint: validates method, origin, and scope BEFORE attaching token.
    */
+  private async request(
+    url: string,
+    method: string,
+    token: string
+  ): Promise<Response> {
+    // Enforce GET-only
+    if (method !== "GET") {
+      throw new Error(`Method ${method} not allowed: client is GET-only`);
+    }
+
+    // Validate origin
+    const urlObj = new URL(url);
+    if (urlObj.origin !== this.apiOrigin) {
+      throw new Error(
+        `Foreign origin not allowed: ${urlObj.origin} (expected ${this.apiOrigin})`
+      );
+    }
+
+    // Validate scope: must be under /users/{mailbox}/ or /sites/{siteId}/
+    const encodedMailbox = encodeURIComponent(this.config.mailbox);
+    const encodedSiteId = encodeURIComponent(this.config.siteId);
+    const path = urlObj.pathname;
+
+    const isMailboxPath = path.startsWith(`/v1.0/users/${encodedMailbox}/`);
+    const isSitePath = path.startsWith(`/v1.0/sites/${encodedSiteId}/`);
+
+    if (!isMailboxPath && !isSitePath) {
+      throw new Error(
+        `Path outside allowed scope: ${path} (must be under /users/${encodedMailbox}/ or /sites/${encodedSiteId}/)`
+      );
+    }
+
+    return retryRequest(
+      () =>
+        fetch(url, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+            "User-Agent": "ISV|SiteTech|1.0",
+          },
+        }),
+      {
+        maxRetries: 3,
+        maxWaitMs: 60000,
+        baseDelayMs: 1000,
+      },
+      "Graph"
+    );
+  }
+
   async get<T>(
     path: string,
     params?: Record<string, string>
@@ -118,46 +170,16 @@ export class GraphClient {
       });
     }
 
-    let attempt = 0;
-    const maxRetries = 3;
+    const response = await this.request(url.toString(), "GET", token);
 
-    while (attempt <= maxRetries) {
-      const response = await fetch(url.toString(), {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-          "User-Agent": "ISV|SiteTech|1.0",
-        },
-      });
-
-      // Handle throttling (429 or 503)
-      if (response.status === 429 || response.status === 503) {
-        const retryAfter = response.headers.get("Retry-After");
-        if (retryAfter && attempt < maxRetries) {
-          const waitTime = parseInt(retryAfter, 10) * 1000;
-          await this.sleep(waitTime);
-          attempt++;
-          continue;
-        }
-        throw new Error(`Throttled after ${maxRetries} retries: ${response.status}`);
-      }
-
-      if (!response.ok) {
-        throw new Error(
-          `Graph API error: ${response.status} ${await response.text()}`
-        );
-      }
-
-      return (await response.json()) as GraphResponse<T>;
+    if (!response.ok) {
+      const errorCode = response.headers.get("X-Error-Code") || "UNKNOWN";
+      throw new Error(`Graph API error: ${response.status} (code: ${errorCode})`);
     }
 
-    throw new Error("Unexpected: exceeded retry loop");
+    return (await response.json()) as GraphResponse<T>;
   }
 
-  /**
-   * Paginate through all results using @odata.nextLink.
-   */
   async *paginate<T>(
     path: string,
     params?: Record<string, string>
@@ -165,7 +187,10 @@ export class GraphClient {
     let nextUrl: string | undefined = path;
 
     while (nextUrl) {
-      const response: GraphResponse<T> = await this.get<T>(nextUrl, nextUrl === path ? params : undefined);
+      const response: GraphResponse<T> = await this.get<T>(
+        nextUrl,
+        nextUrl === path ? params : undefined
+      );
       yield response.value;
       nextUrl = response["@odata.nextLink"];
     }
@@ -173,70 +198,78 @@ export class GraphClient {
 
   /**
    * Delta query support.
-   * Returns items and a deltaLink for the next sync.
+   * Handles removals correctly: items with @removed property in value array,
+   * and drive items with deleted facet.
    */
-  async delta<T>(
+  async delta<T extends { id: string }>(
     path: string,
-    deltaLink?: string
-  ): Promise<{ items: T[]; deltaLink: string; removed: string[] }> {
+    deltaLink?: string,
+    selectFields?: string
+  ): Promise<DeltaResult<T>> {
     const items: T[] = [];
     const removed: string[] = [];
-    let currentUrl = deltaLink || `${this.config.baseUrl}${path}/delta`;
-    let finalDeltaLink = "";
+    
+    // Build initial URL: /delta first, then query params
+    let currentUrl: string;
+    
+    if (deltaLink) {
+      currentUrl = deltaLink;
+    } else {
+      const url = new URL(`${this.config.baseUrl}${path}/delta`);
+      if (selectFields) {
+        url.searchParams.set("$select", selectFields);
+      }
+      currentUrl = url.toString();
+    }
+
+    let finalDeltaLink: string | undefined;
+    let finalNextLink: string | undefined;
 
     while (currentUrl) {
       const response: GraphResponse<T> = await this.get<T>(currentUrl);
-      
-      items.push(...response.value);
 
-      // Track removed items (marked with @removed annotation)
-      const deltaResponse = response as DeltaResponse<T>;
-      if (deltaResponse["@removed"]) {
-        removed.push(...deltaResponse["@removed"].map((r) => r.id));
+      // Process items: check for @removed property or deleted facet
+      for (const item of response.value) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const itemAny = item as any;
+        
+        if (itemAny["@removed"]) {
+          // Message or other item with @removed annotation
+          removed.push(item.id);
+        } else if (itemAny.deleted) {
+          // DriveItem with deleted facet
+          removed.push(item.id);
+        } else {
+          items.push(item);
+        }
       }
 
-      if (deltaResponse["@odata.deltaLink"]) {
-        finalDeltaLink = deltaResponse["@odata.deltaLink"];
+      if (response["@odata.deltaLink"]) {
+        finalDeltaLink = response["@odata.deltaLink"];
         break;
       }
 
       currentUrl = response["@odata.nextLink"] || "";
+      if (!currentUrl) {
+        finalNextLink = response["@odata.nextLink"];
+      }
     }
 
-    return { items, deltaLink: finalDeltaLink, removed };
-  }
-
-  /**
-   * Enforce GET-only policy: throws on write verbs.
-   */
-  async post(): Promise<never> {
-    throw new Error("POST not allowed: Graph client is GET-only");
-  }
-
-  async put(): Promise<never> {
-    throw new Error("PUT not allowed: Graph client is GET-only");
-  }
-
-  async patch(): Promise<never> {
-    throw new Error("PATCH not allowed: Graph client is GET-only");
-  }
-
-  async delete(): Promise<never> {
-    throw new Error("DELETE not allowed: Graph client is GET-only");
-  }
-
-  private sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+    return {
+      items,
+      removed,
+      nextLink: finalNextLink,
+      deltaLink: finalDeltaLink,
+    };
   }
 }
 
-/**
- * Create a Graph client from environment variables.
- */
 export function createGraphClient(): GraphClient {
   return new GraphClient({
     tenantId: process.env.GRAPH_TENANT_ID!,
     clientId: process.env.GRAPH_CLIENT_ID!,
     clientSecret: process.env.GRAPH_CLIENT_SECRET!,
+    mailbox: process.env.GRAPH_MAILBOX!,
+    siteId: process.env.GRAPH_SITE_ID!,
   });
 }

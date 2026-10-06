@@ -3,53 +3,41 @@
  * These will be reconciled with the actual DB tables once the shared schema lands.
  * 
  * All dates are ISO-8601 strings. Money values are numbers (no currency in this layer).
- * Source IDs are preserved as strings.
+ * External IDs are preserved as strings.
  */
 
 export interface NormalizedRFI {
-  // Stable SiteTech fingerprint (hash of allowlisted fields)
+  // Entity identification
+  entity_type: "rfi";
+  external_id: string;
   fingerprint: string;
   
-  // Core identifiers
-  source_id: string;
-  number: string;
-  project_id: string;
-  company_id?: string;
+  // Source identifiers
+  source_project_id: string;
+  source_company_id?: string;
   
-  // Content
+  // Core fields
+  number: string;
   subject: string;
   question: string | null;
   official_response: string | null;
   
-  // Status and classification
+  // Status
+  status: string;
   source_status: string;
+  
+  // Classification
   location: string | null;
   cost_code: string | null;
-  specification_section: {
-    number: string | null;
-    description: string | null;
-  } | null;
-  drawing_number: string | null;
   
-  // People and responsibility
-  ball_in_court: string | null;
+  // People (IDs and names only, no emails)
   assignees: Array<{
     id: string | null;
     name: string | null;
-    email: string | null;
-    company: string | null;
   }>;
-  responsible_contractor: string | null;
-  rfi_manager: {
+  responsible_contractor: {
     id: string | null;
     name: string | null;
-    email: string | null;
-  } | null;
-  received_from: {
-    id: string | null;
-    name: string | null;
-    email: string | null;
-    company: string | null;
   } | null;
   
   // Dates (ISO-8601 strings)
@@ -58,55 +46,49 @@ export interface NormalizedRFI {
   created_at: string | null;
   updated_at: string | null;
   
-  // Impact tracking (preserve raw structure, don't collapse)
+  // Impact tracking (preserve raw structure)
   cost_impact: {
-    status: string; // "yes_unknown", "yes_known", "no_impact", "tbd", etc.
+    status: string;
     value: number | null;
   } | null;
   schedule_impact: {
     status: string;
-    value: number | null; // days
+    value: number | null;
   } | null;
-  
-  // Source metadata
-  source_system: "procore";
-  source_endpoint: string;
-  synced_at: string;
 }
 
 export interface NormalizedSubmittal {
-  // Stable SiteTech fingerprint
+  // Entity identification
+  entity_type: "submittal";
+  external_id: string;
   fingerprint: string;
   
-  // Core identifiers
-  source_id: string;
-  number: string;
-  project_id: string;
-  company_id?: string;
+  // Source identifiers
+  source_project_id: string;
+  source_company_id?: string;
   
-  // Content (description explicitly excluded per CTO)
+  // Core fields
+  number: string;
   title: string;
   specification_section: string | null;
-  location: string | null;
-  cost_code: string | null;
   
-  // Status and workflow
+  // Status
+  status: string;
   source_status: string;
   current_revision: string | null;
   
-  // Approvers with revision history
+  // Classification
+  location: string | null;
+  cost_code: string | null;
+  
+  // Approvers with revision history (IDs and names only, no emails)
   approvers: Array<{
     id: string | null;
     name: string | null;
-    email: string | null;
     revision: string | null;
-    response: string; // Can include "revise_resubmit"
+    response: string;
     responded_at: string | null;
   }>;
-  
-  // People
-  responsible_contractor: string | null;
-  ball_in_court: string | null;
   
   // Dates (ISO-8601 strings)
   created_at: string | null;
@@ -116,10 +98,10 @@ export interface NormalizedSubmittal {
   required_on_site_date: string | null;
   
   // Timing fields
-  lead_time: number | null; // days
-  design_team_review_time: number | null; // days
-  internal_review_time: number | null; // days
-  buffer_time: number | null; // days
+  lead_time: number | null;
+  design_team_review_time: number | null;
+  internal_review_time: number | null;
+  buffer_time: number | null;
   
   // Schedule linkage
   scheduled_task: {
@@ -127,23 +109,21 @@ export interface NormalizedSubmittal {
     code: string | null;
     name: string | null;
   } | null;
-  
-  // Source metadata
-  source_system: "procore";
-  source_endpoint: string;
-  synced_at: string;
 }
 
 export interface NormalizedScheduleActivity {
-  // Stable fingerprint
+  // Entity identification
+  entity_type: "schedule_activity";
+  external_id: string;
   fingerprint: string;
   
-  // Core identifiers
-  source_id: string;
+  // Source identifiers
+  source_project_id: string;
+  
+  // Core fields
   activity_code: string | null;
   name: string;
   wbs: string | null;
-  project_id: string;
   
   // Dates (ISO-8601 date strings, not date-time)
   planned_start: string | null;
@@ -157,33 +137,24 @@ export interface NormalizedScheduleActivity {
   
   // Status
   percent_complete: number | null;
-  total_float: number | null; // days
+  total_float: number | null;
   is_critical: boolean;
   
   // Relationships
   predecessors: Array<{
     activity_id: string;
-    type: string; // FS, SS, FF, SF
-    lag: number | null; // days
+    type: string;
+    lag: number | null;
   }>;
-  
-  // Source metadata
-  source_system: "p6_xer";
-  source_file: string;
-  parsed_at: string;
 }
 
 /**
- * Connector interface contract (provisional).
- * Each connector implements these methods for integration with the sync engine.
+ * Raw record shape for storage layer.
+ * Contains allowlisted payload and fingerprint.
  */
-export interface ConnectorContract<T> {
-  authorize(config: unknown): Promise<{ authorized: boolean; error?: string }>;
-  backfill(config: unknown, since?: string): AsyncIterable<T>;
-  incrementalSync(config: unknown, cursor: string): Promise<{
-    records: T[];
-    nextCursor: string;
-  }>;
-  listAllIds(config: unknown): Promise<string[]>;
-  mapToNormalized(raw: unknown): T;
+export interface RawRecord {
+  entityType: string;
+  externalId: string;
+  allowlistedPayload: Record<string, unknown>;
+  fingerprint: string;
 }

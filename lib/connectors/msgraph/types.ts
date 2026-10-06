@@ -1,20 +1,12 @@
 /**
- * Microsoft Graph API response types.
- * Based on Graph REST API v1.0 documentation.
+ * Microsoft Graph API response types (allowlist-aligned).
  */
 
-/**
- * Graph Message (email)
- */
 export interface GraphMessage {
   id: string;
   conversationId: string;
   subject: string;
   bodyPreview: string;
-  body: {
-    contentType: "text" | "html";
-    content: string;
-  };
   from: {
     emailAddress: {
       name: string;
@@ -41,9 +33,6 @@ export interface GraphMessage {
   categories: string[];
 }
 
-/**
- * Graph Message field allowlist (no attachment content).
- */
 export const MESSAGE_ALLOWLIST = [
   "id",
   "conversationId",
@@ -60,9 +49,6 @@ export const MESSAGE_ALLOWLIST = [
   "categories",
 ] as const;
 
-/**
- * Graph DriveItem (file/folder)
- */
 export interface GraphDriveItem {
   id: string;
   name: string;
@@ -96,11 +82,11 @@ export interface GraphDriveItem {
     id: string;
     path: string;
   };
+  deleted?: {
+    state: string;
+  };
 }
 
-/**
- * DriveItem field allowlist (no file content).
- */
 export const DRIVEITEM_ALLOWLIST = [
   "id",
   "name",
@@ -113,11 +99,9 @@ export const DRIVEITEM_ALLOWLIST = [
   "file",
   "folder",
   "parentReference",
+  "deleted",
 ] as const;
 
-/**
- * Graph Site
- */
 export interface GraphSite {
   id: string;
   displayName: string;
@@ -125,9 +109,6 @@ export interface GraphSite {
   createdDateTime: string;
 }
 
-/**
- * Graph MailFolder
- */
 export interface GraphMailFolder {
   id: string;
   displayName: string;

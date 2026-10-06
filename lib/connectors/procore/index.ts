@@ -9,6 +9,8 @@ export {
   mapProcoreRFIToNormalized,
   mapProcoreSubmittalToNormalized,
   generateFingerprint,
+  rfiToRawRecord,
+  submittalToRawRecord,
   RFI_ALLOWLIST,
   SUBMITTAL_ALLOWLIST,
 } from "./mappers";

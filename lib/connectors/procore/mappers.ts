@@ -1,27 +1,32 @@
 /**
  * Procore field allowlists and mapping functions.
  * 
- * Field allowlists approved by CTO (2026-10-06):
- * - RFI: number, subject, question, official_response, status, location, cost_code,
- *   initiated_at, due_date, assignees, responsible_contractor, specification_section,
- *   drawing_number, ball_in_court, rfi_manager, received_from, cost_impact (raw),
- *   schedule_impact (raw), dates, IDs
- * - Submittal: number, title, revision, spec_section, status, location, cost_code,
- *   required_on_site_date, lead_time, design_team_review_time, internal_review_time,
- *   buffer_time, received_date, approvers (with revision history), responsible_contractor,
- *   ball_in_court, scheduled_task, dates, IDs
+ * Final CTO-approved allowlists (2026-10-06 review):
+ * 
+ * RFI: number, subject, question, official_response, status/source_status,
+ *      raw cost_impact and schedule_impact {status, value}, dates (initiated_at,
+ *      due, created, updated), location, cost_code, assignees (IDs and names only),
+ *      responsible_contractor (ID and name)
+ * 
+ * Submittal: number, title, spec section, status, dates, required_on_site_date,
+ *            lead_time, design_team/internal review and buffer times, received_date,
+ *            current_revision, approvers per revision with response and responded_at
+ *            (IDs and names only), location, cost_code, scheduled_task
+ * 
+ * DROPPED (pending CTO approval): drawing_number, rfi_manager, received_from,
+ *          ball_in_court, RFI spec section, submittal responsible_contractor and
+ *          ball_in_court, ALL email addresses (PII)
  * 
  * Attachments and file data NEVER kept.
- * Description field explicitly excluded from submittals.
  */
 
 import { createHash } from "crypto";
-import type { NormalizedRFI, NormalizedSubmittal } from "../types";
+import { canonicalStringify } from "../shared/canonical-stringify";
+import type { NormalizedRFI, NormalizedSubmittal, RawRecord } from "../types";
 import type { ProcoreRFI, ProcoreSubmittal } from "./types";
 
 /**
- * RFI field allowlist as specified by CTO.
- * Used for fingerprinting and to document what we store.
+ * RFI field allowlist (final CTO-approved).
  */
 export const RFI_ALLOWLIST = [
   "id",
@@ -32,26 +37,20 @@ export const RFI_ALLOWLIST = [
   "status",
   "location",
   "cost_code",
-  "specification_section",
-  "drawing_number",
-  "ball_in_court",
-  "assignees",
-  "responsible_contractor",
-  "rfi_manager",
-  "received_from",
+  "assignees", // IDs and names only
+  "responsible_contractor", // ID and name only
   "initiated_at",
   "due_date",
   "created_at",
   "updated_at",
-  "cost_impact",
-  "schedule_impact",
+  "cost_impact", // raw {status, value}
+  "schedule_impact", // raw {status, value}
   "project.id",
   "company.id",
 ] as const;
 
 /**
- * Submittal field allowlist as specified by CTO.
- * Description field is explicitly excluded.
+ * Submittal field allowlist (final CTO-approved).
  */
 export const SUBMITTAL_ALLOWLIST = [
   "id",
@@ -62,8 +61,6 @@ export const SUBMITTAL_ALLOWLIST = [
   "specification_section",
   "location",
   "cost_code",
-  "responsible_contractor",
-  "ball_in_court",
   "created_at",
   "updated_at",
   "received_date",
@@ -73,7 +70,7 @@ export const SUBMITTAL_ALLOWLIST = [
   "design_team_review_time",
   "internal_review_time",
   "buffer_time",
-  "approvers",
+  "approvers", // IDs and names only, no emails
   "scheduled_task",
   "project.id",
   "company.id",
@@ -81,7 +78,6 @@ export const SUBMITTAL_ALLOWLIST = [
 
 /**
  * Extract allowlisted fields from raw Procore RFI.
- * Used for fingerprint generation.
  */
 function extractAllowlistedRFIFields(rfi: ProcoreRFI): Record<string, unknown> {
   return {
@@ -93,18 +89,12 @@ function extractAllowlistedRFIFields(rfi: ProcoreRFI): Record<string, unknown> {
     status: rfi.status,
     location: rfi.location,
     cost_code: rfi.cost_code,
-    specification_section: rfi.specification_section,
-    drawing_number: rfi.drawing_number,
-    ball_in_court: rfi.ball_in_court,
     assignees: rfi.assignees.map((a) => ({
       id: a.id,
       name: a.name,
-      email_address: a.email_address,
-      company: a.company,
+      // NO emails
     })),
     responsible_contractor: rfi.responsible_contractor,
-    rfi_manager: rfi.rfi_manager,
-    received_from: rfi.received_from,
     initiated_at: rfi.initiated_at,
     due_date: rfi.due_date,
     created_at: rfi.created_at,
@@ -131,8 +121,6 @@ function extractAllowlistedSubmittalFields(
     specification_section: submittal.specification_section,
     location: submittal.location,
     cost_code: submittal.cost_code,
-    responsible_contractor: submittal.responsible_contractor,
-    ball_in_court: submittal.ball_in_court,
     created_at: submittal.created_at,
     updated_at: submittal.updated_at,
     received_date: submittal.received_date,
@@ -145,7 +133,7 @@ function extractAllowlistedSubmittalFields(
     approvers: submittal.approvers.map((a) => ({
       id: a.id,
       name: a.name,
-      email_address: a.email_address,
+      // NO emails
       revision: a.revision,
       response: a.response,
       responded_at: a.responded_at,
@@ -158,67 +146,48 @@ function extractAllowlistedSubmittalFields(
 
 /**
  * Generate stable fingerprint (SHA-256 hash) of allowlisted fields.
- * Used for change detection.
+ * Uses recursive canonical stringify with sorted keys at every depth.
  */
 export function generateFingerprint(allowlistedFields: Record<string, unknown>): string {
-  const canonical = JSON.stringify(allowlistedFields, Object.keys(allowlistedFields).sort());
+  const canonical = canonicalStringify(allowlistedFields);
   return createHash("sha256").update(canonical).digest("hex");
 }
 
 /**
  * Map raw Procore RFI to normalized SiteTech RFI.
- * 
- * Rules per CTO:
- * - Keep raw cost_impact and schedule_impact structure (don't collapse to boolean)
- * - Keep raw source_status as-is
- * - Don't compute is_overdue or days_overdue (rules layer owns these)
- * - Only map "answered" from real Procore status, not from presence of answer
  */
-export function mapProcoreRFIToNormalized(
-  rfi: ProcoreRFI,
-  endpoint: string
-): NormalizedRFI {
+export function mapProcoreRFIToNormalized(rfi: ProcoreRFI): NormalizedRFI {
   const allowlistedFields = extractAllowlistedRFIFields(rfi);
   const fingerprint = generateFingerprint(allowlistedFields);
 
   return {
+    entity_type: "rfi",
+    external_id: String(rfi.id),
     fingerprint,
-    source_id: String(rfi.id),
-    number: rfi.number,
-    project_id: String(rfi.project.id),
-    company_id: String(rfi.company.id),
     
+    source_project_id: String(rfi.project.id),
+    source_company_id: String(rfi.company.id),
+    
+    number: rfi.number,
     subject: rfi.subject,
     question: rfi.question,
     official_response: rfi.official_response,
     
+    status: rfi.status,
     source_status: rfi.status,
+    
     location: rfi.location,
     cost_code: rfi.cost_code?.name ?? null,
-    specification_section: rfi.specification_section,
-    drawing_number: rfi.drawing_number,
     
-    ball_in_court: rfi.ball_in_court,
     assignees: rfi.assignees.map((a) => ({
       id: String(a.id),
       name: a.name,
-      email: a.email_address,
-      company: a.company?.name ?? null,
+      // NO emails per CTO trim
     })),
-    responsible_contractor: rfi.responsible_contractor?.name ?? null,
-    rfi_manager: rfi.rfi_manager
+    responsible_contractor: rfi.responsible_contractor
       ? {
-          id: String(rfi.rfi_manager.id),
-          name: rfi.rfi_manager.name,
-          email: rfi.rfi_manager.email_address,
-        }
-      : null,
-    received_from: rfi.received_from
-      ? {
-          id: String(rfi.received_from.id),
-          name: rfi.received_from.name,
-          email: rfi.received_from.email_address,
-          company: rfi.received_from.company?.name ?? null,
+          id: String(rfi.responsible_contractor.id),
+          name: rfi.responsible_contractor.name,
         }
       : null,
     
@@ -227,58 +196,47 @@ export function mapProcoreRFIToNormalized(
     created_at: rfi.created_at,
     updated_at: rfi.updated_at,
     
-    // Preserve raw impact structure per CTO instructions
     cost_impact: rfi.cost_impact,
     schedule_impact: rfi.schedule_impact,
-    
-    source_system: "procore",
-    source_endpoint: endpoint,
-    synced_at: new Date().toISOString(),
   };
 }
 
 /**
  * Map raw Procore Submittal to normalized SiteTech Submittal.
- * 
- * Rules per CTO:
- * - Keep approvers array with full revision history
- * - Keep revise_resubmit as an approver response (don't collapse)
- * - Don't store description field
  */
 export function mapProcoreSubmittalToNormalized(
-  submittal: ProcoreSubmittal,
-  endpoint: string
+  submittal: ProcoreSubmittal
 ): NormalizedSubmittal {
   const allowlistedFields = extractAllowlistedSubmittalFields(submittal);
   const fingerprint = generateFingerprint(allowlistedFields);
 
   return {
+    entity_type: "submittal",
+    external_id: String(submittal.id),
     fingerprint,
-    source_id: String(submittal.id),
-    number: submittal.number,
-    project_id: String(submittal.project.id),
-    company_id: String(submittal.company.id),
     
+    source_project_id: String(submittal.project.id),
+    source_company_id: String(submittal.company.id),
+    
+    number: submittal.number,
     title: submittal.title,
     specification_section: submittal.specification_section,
-    location: submittal.location,
-    cost_code: submittal.cost_code?.name ?? null,
     
+    status: submittal.status,
     source_status: submittal.status,
     current_revision: submittal.revision,
     
-    // Keep full approver revision history per CTO
+    location: submittal.location,
+    cost_code: submittal.cost_code?.name ?? null,
+    
     approvers: submittal.approvers.map((a) => ({
       id: String(a.id),
       name: a.name,
-      email: a.email_address,
+      // NO emails per CTO trim
       revision: a.revision,
-      response: a.response, // Can include "revise_resubmit"
+      response: a.response,
       responded_at: a.responded_at,
     })),
-    
-    responsible_contractor: submittal.responsible_contractor?.name ?? null,
-    ball_in_court: submittal.ball_in_court,
     
     created_at: submittal.created_at,
     updated_at: submittal.updated_at,
@@ -298,9 +256,64 @@ export function mapProcoreSubmittalToNormalized(
           name: submittal.scheduled_task.name,
         }
       : null,
-    
-    source_system: "procore",
-    source_endpoint: endpoint,
-    synced_at: new Date().toISOString(),
+  };
+}
+
+/**
+ * Convert normalized RFI to raw record shape for storage layer.
+ */
+export function rfiToRawRecord(rfi: NormalizedRFI): RawRecord {
+  return {
+    entityType: "rfi",
+    externalId: rfi.external_id,
+    allowlistedPayload: {
+      number: rfi.number,
+      subject: rfi.subject,
+      question: rfi.question,
+      official_response: rfi.official_response,
+      status: rfi.status,
+      location: rfi.location,
+      cost_code: rfi.cost_code,
+      assignees: rfi.assignees,
+      responsible_contractor: rfi.responsible_contractor,
+      initiated_at: rfi.initiated_at,
+      due_date: rfi.due_date,
+      created_at: rfi.created_at,
+      updated_at: rfi.updated_at,
+      cost_impact: rfi.cost_impact,
+      schedule_impact: rfi.schedule_impact,
+    },
+    fingerprint: rfi.fingerprint,
+  };
+}
+
+/**
+ * Convert normalized Submittal to raw record shape for storage layer.
+ */
+export function submittalToRawRecord(submittal: NormalizedSubmittal): RawRecord {
+  return {
+    entityType: "submittal",
+    externalId: submittal.external_id,
+    allowlistedPayload: {
+      number: submittal.number,
+      title: submittal.title,
+      specification_section: submittal.specification_section,
+      status: submittal.status,
+      current_revision: submittal.current_revision,
+      location: submittal.location,
+      cost_code: submittal.cost_code,
+      approvers: submittal.approvers,
+      created_at: submittal.created_at,
+      updated_at: submittal.updated_at,
+      received_date: submittal.received_date,
+      due_date: submittal.due_date,
+      required_on_site_date: submittal.required_on_site_date,
+      lead_time: submittal.lead_time,
+      design_team_review_time: submittal.design_team_review_time,
+      internal_review_time: submittal.internal_review_time,
+      buffer_time: submittal.buffer_time,
+      scheduled_task: submittal.scheduled_task,
+    },
+    fingerprint: submittal.fingerprint,
   };
 }

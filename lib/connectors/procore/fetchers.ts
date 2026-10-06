@@ -1,6 +1,5 @@
 /**
  * Typed Procore API fetchers for RFIs and Submittals.
- * Handles pagination, filtering, and ID-only listings for deletion detection.
  */
 
 import type { ProcoreClient } from "./client";
@@ -9,34 +8,18 @@ import { mapProcoreRFIToNormalized, mapProcoreSubmittalToNormalized } from "./ma
 import type { NormalizedRFI, NormalizedSubmittal } from "../types";
 
 export interface FetchOptions {
-  /**
-   * ISO-8601 timestamp for incremental sync.
-   * Uses Procore's filters[updated_at] parameter.
-   */
   updatedSince?: string;
-  
-  /**
-   * Include only deleted records (for deletion detection).
-   */
   deletedOnly?: boolean;
-  
-  /**
-   * Maximum results per page (default 100).
-   */
   perPage?: number;
 }
 
-/**
- * Fetch all projects for the configured company.
- */
 export async function fetchProjects(
   client: ProcoreClient
 ): Promise<ProcoreProject[]> {
   const projects: ProcoreProject[] = [];
   
   for await (const page of client.paginate<ProcoreProject>(
-    "/rest/v1.1/projects",
-    { company_id: client["config"].companyId }
+    "/rest/v1.1/projects"
   )) {
     projects.push(...page);
   }
@@ -44,10 +27,6 @@ export async function fetchProjects(
   return projects;
 }
 
-/**
- * Fetch RFIs for a project with optional filtering.
- * Returns normalized SiteTech RFIs.
- */
 export async function* fetchRFIs(
   client: ProcoreClient,
   projectId: string,
@@ -56,7 +35,6 @@ export async function* fetchRFIs(
   const params: Record<string, string | number> = {};
   
   if (options.updatedSince) {
-    // Add 15-minute overlap for safety as per evaluation doc
     const since = new Date(
       new Date(options.updatedSince).getTime() - 15 * 60 * 1000
     ).toISOString();
@@ -67,24 +45,16 @@ export async function* fetchRFIs(
     params["filters[include_deleted]"] = "only";
   }
   
-  const endpoint = `/rest/v1.0/projects/${projectId}/rfis`;
-  
   for await (const page of client.paginate<ProcoreRFI>(
-    endpoint,
+    `/rest/v1.0/projects/${projectId}/rfis`,
     params,
     options.perPage ?? 100
   )) {
-    const normalized = page.map((rfi) =>
-      mapProcoreRFIToNormalized(rfi, endpoint)
-    );
+    const normalized = page.map(mapProcoreRFIToNormalized);
     yield normalized;
   }
 }
 
-/**
- * List all RFI IDs for a project (for deletion detection).
- * Returns only string IDs for efficient comparison.
- */
 export async function listRFIIds(
   client: ProcoreClient,
   projectId: string
@@ -94,7 +64,7 @@ export async function listRFIIds(
   for await (const page of client.paginate<ProcoreRFI>(
     `/rest/v1.0/projects/${projectId}/rfis`,
     {},
-    1000 // Higher page size for ID-only fetches
+    1000
   )) {
     ids.push(...page.map((rfi) => String(rfi.id)));
   }
@@ -102,10 +72,6 @@ export async function listRFIIds(
   return ids;
 }
 
-/**
- * Fetch Submittals for a project with optional filtering.
- * Returns normalized SiteTech Submittals.
- */
 export async function* fetchSubmittals(
   client: ProcoreClient,
   projectId: string,
@@ -124,23 +90,16 @@ export async function* fetchSubmittals(
     params["filters[include_deleted]"] = "only";
   }
   
-  const endpoint = `/rest/v1.1/projects/${projectId}/submittals`;
-  
   for await (const page of client.paginate<ProcoreSubmittal>(
-    endpoint,
+    `/rest/v1.1/projects/${projectId}/submittals`,
     params,
     options.perPage ?? 100
   )) {
-    const normalized = page.map((submittal) =>
-      mapProcoreSubmittalToNormalized(submittal, endpoint)
-    );
+    const normalized = page.map(mapProcoreSubmittalToNormalized);
     yield normalized;
   }
 }
 
-/**
- * List all Submittal IDs for a project (for deletion detection).
- */
 export async function listSubmittalIds(
   client: ProcoreClient,
   projectId: string
