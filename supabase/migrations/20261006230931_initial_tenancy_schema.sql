@@ -2,8 +2,7 @@
 -- Creates: orgs, profiles, org_memberships, projects, audit_log
 -- Includes: RLS helpers and policies for org-based tenancy
 
--- Enable UUID extension
-create extension if not exists "uuid-ossp";
+-- Note: gen_random_uuid() is built-in, no extension needed
 
 -- ============================================================================
 -- TABLES
@@ -80,7 +79,7 @@ returns boolean
 language sql
 stable
 security definer
-set search_path = public
+set search_path = ''
 as $$
   select exists (
     select 1
@@ -96,7 +95,7 @@ returns boolean
 language sql
 stable
 security definer
-set search_path = public
+set search_path = ''
 as $$
   select exists (
     select 1
@@ -107,13 +106,49 @@ as $$
   );
 $$;
 
--- Revoke public access to RLS helpers
-revoke execute on function public.is_org_member(uuid) from public;
-revoke execute on function public.has_org_role(uuid, text[]) from public;
+-- Create org with caller as owner (atomically)
+create or replace function public.create_org(p_name text, p_slug text)
+returns uuid
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_org_id uuid;
+  v_user_id uuid;
+begin
+  v_user_id := auth.uid();
+  
+  if v_user_id is null then
+    raise exception 'Not authenticated';
+  end if;
+  
+  -- Insert org
+  insert into public.orgs (name, slug)
+  values (p_name, p_slug)
+  returning id into v_org_id;
+  
+  -- Insert caller as owner
+  insert into public.org_memberships (org_id, user_id, role)
+  values (v_org_id, v_user_id, 'owner');
+  
+  -- Log the action
+  insert into public.audit_log (org_id, actor_type, actor_user_id, action, target_table, target_id)
+  values (v_org_id, 'user', v_user_id, 'create_org', 'orgs', v_org_id);
+  
+  return v_org_id;
+end;
+$$;
 
--- Grant access to authenticated users
+-- Revoke public and anon access to helper functions
+revoke execute on function public.is_org_member(uuid) from public, anon;
+revoke execute on function public.has_org_role(uuid, text[]) from public, anon;
+revoke execute on function public.create_org(text, text) from public, anon;
+
+-- Grant access to authenticated users only
 grant execute on function public.is_org_member(uuid) to authenticated;
 grant execute on function public.has_org_role(uuid, text[]) to authenticated;
+grant execute on function public.create_org(text, text) to authenticated;
 
 -- ============================================================================
 -- TRIGGERS
@@ -124,7 +159,7 @@ create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
 security definer
-set search_path = public
+set search_path = ''
 as $$
 begin
   insert into public.profiles (id, email, full_name)
@@ -137,22 +172,40 @@ begin
 end;
 $$;
 
+revoke execute on function public.handle_new_user() from public, anon;
+
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
--- Prevent removing the last owner from an org
+-- Prevent removing the last owner from an org (unless org is being deleted)
 create or replace function public.prevent_last_owner_removal()
 returns trigger
 language plpgsql
+security definer
+set search_path = ''
 as $$
 declare
   owner_count int;
+  org_exists boolean;
 begin
   -- Only check if we're deleting or changing role of an owner
   if (TG_OP = 'DELETE' and old.role = 'owner') or 
      (TG_OP = 'UPDATE' and old.role = 'owner' and new.role != 'owner') then
     
+    -- Check if org still exists (if not, this is part of cascade delete)
+    select exists(select 1 from public.orgs where id = old.org_id) into org_exists;
+    
+    -- If org doesn't exist, allow the operation (cascade delete)
+    if not org_exists then
+      if TG_OP = 'DELETE' then
+        return old;
+      else
+        return new;
+      end if;
+    end if;
+    
+    -- Count remaining owners
     select count(*)
     into owner_count
     from public.org_memberships
@@ -172,6 +225,8 @@ begin
   end if;
 end;
 $$;
+
+revoke execute on function public.prevent_last_owner_removal() from public, anon;
 
 create trigger prevent_last_owner_removal
   before update or delete on public.org_memberships
@@ -198,11 +253,7 @@ create policy "Members can view their orgs"
   to authenticated
   using (public.is_org_member(id));
 
--- Authenticated users can create orgs (app layer creates owner membership)
-create policy "Authenticated users can create orgs"
-  on public.orgs for insert
-  to authenticated
-  with check (true);
+-- No direct insert - use create_org() function instead
 
 -- Owners and admins can update their orgs
 create policy "Owners and admins can update orgs"
@@ -253,24 +304,43 @@ create policy "Members can view org memberships"
   to authenticated
   using (public.is_org_member(org_id));
 
--- Owners and admins can add members to their orgs
-create policy "Owners and admins can add members"
+-- Only owners can insert owner roles; admins can insert member/admin roles
+create policy "Owners can add owners; admins can add members/admins"
   on public.org_memberships for insert
   to authenticated
-  with check (public.has_org_role(org_id, array['owner', 'admin']));
+  with check (
+    (role = 'owner' and public.has_org_role(org_id, array['owner'])) or
+    (role in ('admin', 'member') and public.has_org_role(org_id, array['owner', 'admin']))
+  );
 
--- Owners and admins can update memberships in their orgs
-create policy "Owners and admins can update memberships"
+-- Only owners can modify owner roles; admins can modify member/admin roles
+-- Nobody can change their own role
+create policy "Owners can modify owners; admins can modify members/admins"
   on public.org_memberships for update
   to authenticated
-  using (public.has_org_role(org_id, array['owner', 'admin']))
-  with check (public.has_org_role(org_id, array['owner', 'admin']));
+  using (
+    user_id != auth.uid() and (
+      (old.role = 'owner' and public.has_org_role(org_id, array['owner'])) or
+      (old.role in ('admin', 'member') and public.has_org_role(org_id, array['owner', 'admin']))
+    )
+  )
+  with check (
+    user_id != auth.uid() and (
+      (role = 'owner' and public.has_org_role(org_id, array['owner'])) or
+      (role in ('admin', 'member') and public.has_org_role(org_id, array['owner', 'admin']))
+    )
+  );
 
--- Owners and admins can remove members from their orgs
-create policy "Owners and admins can remove members"
+-- Only owners can remove owners; admins can remove members/admins
+-- Members can leave (delete their own membership)
+create policy "Owners can remove owners; admins can remove members/admins; members can leave"
   on public.org_memberships for delete
   to authenticated
-  using (public.has_org_role(org_id, array['owner', 'admin']));
+  using (
+    user_id = auth.uid() or
+    (role = 'owner' and public.has_org_role(org_id, array['owner'])) or
+    (role in ('admin', 'member') and public.has_org_role(org_id, array['owner', 'admin']))
+  );
 
 -- ============================================================================
 -- RLS POLICIES: projects
@@ -305,17 +375,14 @@ create policy "Owners and admins can delete projects"
 -- RLS POLICIES: audit_log
 -- ============================================================================
 
--- Org members can view audit logs for their orgs
+-- Org members can view audit logs for their orgs only
 create policy "Org members can view audit logs"
   on public.audit_log for select
   to authenticated
-  using (
-    org_id is null or
-    public.is_org_member(org_id)
-  );
+  using (public.is_org_member(org_id));
 
 -- No direct insert/update/delete for authenticated users
--- Service role bypasses RLS for background jobs
+-- Service role bypasses RLS for background jobs and system actions
 
 -- ============================================================================
 -- COMMENTS
@@ -329,3 +396,6 @@ comment on table public.audit_log is 'Audit trail for org actions (service role 
 
 comment on function public.is_org_member(uuid) is 'RLS helper: check if current user is org member';
 comment on function public.has_org_role(uuid, text[]) is 'RLS helper: check if current user has specified role(s) in org';
+comment on function public.create_org(text, text) is 'Create org with caller as owner atomically';
+comment on function public.handle_new_user() is 'Trigger: auto-create profile on user signup';
+comment on function public.prevent_last_owner_removal() is 'Trigger: prevent removing last owner (unless org is being deleted)';

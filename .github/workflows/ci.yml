@@ -35,3 +35,49 @@ jobs:
 
       - name: Test
         run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+  rls-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start Supabase
+        run: pnpm supabase start
+
+      - name: Run pgTAP tests
+        run: pnpm supabase test db
+
+      - name: Export Supabase env vars
+        run: |
+          pnpm supabase status -o env > /tmp/supabase-env
+          cat /tmp/supabase-env >> $GITHUB_ENV
+
+      - name: Run RLS integration tests
+        run: pnpm test lib/supabase/__tests__/rls.test.ts
+
+      - name: Stop Supabase
+        if: always()
+        run: pnpm supabase stop --no-backup
