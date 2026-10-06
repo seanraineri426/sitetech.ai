@@ -2,7 +2,7 @@
 -- Run as authenticator user (not superuser) to properly test RLS
 
 begin;
-select plan(28);
+select plan(29);
 
 -- Setup test data (need elevated privileges briefly)
 set role postgres;
