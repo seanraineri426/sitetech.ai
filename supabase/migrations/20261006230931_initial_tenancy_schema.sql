@@ -320,8 +320,8 @@ create policy "Owners can modify owners; admins can modify members/admins"
   to authenticated
   using (
     user_id != auth.uid() and (
-      (old.role = 'owner' and public.has_org_role(org_id, array['owner'])) or
-      (old.role in ('admin', 'member') and public.has_org_role(org_id, array['owner', 'admin']))
+      (role = 'owner' and public.has_org_role(org_id, array['owner'])) or
+      (role in ('admin', 'member') and public.has_org_role(org_id, array['owner', 'admin']))
     )
   )
   with check (

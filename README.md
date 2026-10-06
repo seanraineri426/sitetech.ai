@@ -156,25 +156,52 @@ The application uses a multi-tenant architecture with organization-based isolati
 
 All tables use Row Level Security (RLS) to enforce tenant isolation. See `supabase/migrations/` for the complete schema.
 
-### Testing RLS Policies
+### Running the Security Tests
 
-Run the RLS integration tests:
+**Prerequisites:**
+- Docker installed and running
+- Local Supabase instance
+
+**Full test suite** (reset DB + pgTAP + RLS integration tests):
 
 ```bash
-# Make sure Supabase is running and configured
+# Start Supabase (if not already running)
 pnpm supabase start
-pnpm supabase db reset
 
-# Run tests (RLS tests are skipped if Supabase not configured)
+# Run complete security test suite
+pnpm test:db
+```
+
+This command:
+1. Resets the database and applies all migrations
+2. Runs pgTAP test suite (21 test cases)
+3. Runs Vitest RLS integration tests (19 test cases)
+
+**Individual test commands:**
+
+```bash
+# pgTAP tests only
+pnpm supabase test db
+
+# RLS integration tests only
+pnpm test lib/supabase/__tests__/rls.test.ts
+
+# Unit tests (RLS tests skipped without Supabase)
 pnpm test
 ```
+
+**Note**: This repository is hosted on Cursor Origin. GitHub Actions workflows are defined for future GitHub mirroring but do not run on Origin. Run security tests locally before pushing.
 
 ## CI
 
 GitHub Actions workflow runs on push and PR:
 - Type checking
-- Linting
-- Tests (Supabase RLS tests are skipped in CI unless configured)
+- Linting  
+- Unit tests (RLS tests skip without Supabase)
+- Build
+- RLS tests (separate job with local Supabase + pgTAP)
+
+**Note**: GitHub Actions do not run on Origin-hosted repositories. The workflow is present for future GitHub mirroring. Run `pnpm test:db` locally to verify security tests.
 
 ## What's Next
 
