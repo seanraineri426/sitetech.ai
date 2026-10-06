@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:db": "pnpm supabase db reset && pnpm supabase test db && pnpm test lib/supabase/__tests__/rls.test.ts"
+    "test:db": "pnpm supabase db reset && pnpm supabase test db && pnpm test lib/supabase/__tests__/rls.test.ts",
+    "test:db:nodocker": "bash scripts/test-db-nodocker.sh"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

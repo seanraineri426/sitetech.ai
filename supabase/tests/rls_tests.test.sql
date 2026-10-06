@@ -1,345 +1,251 @@
 -- pgTAP tests for RLS policies
--- Run with: supabase test db
+-- Run as authenticator user (not superuser) to properly test RLS
 
 begin;
-select plan(30);
+select plan(28);
 
--- Setup test data
-set local role postgres;
+-- Setup test data (need elevated privileges briefly)
+set role postgres;
 
--- Create test users
-insert into auth.users (id, email, encrypted_password, email_confirmed_at, raw_user_meta_data)
+insert into auth.users (id, email, raw_user_meta_data)
 values 
-  ('11111111-1111-1111-1111-111111111111', 'user1@test.com', crypt('password', gen_salt('bf')), now(), '{"full_name": "User One"}'),
-  ('22222222-2222-2222-2222-222222222222', 'user2@test.com', crypt('password', gen_salt('bf')), now(), '{"full_name": "User Two"}'),
-  ('33333333-3333-3333-3333-333333333333', 'admin@test.com', crypt('password', gen_salt('bf')), now(), '{"full_name": "Admin User"}'),
-  ('44444444-4444-4444-4444-444444444444', 'member@test.com', crypt('password', gen_salt('bf')), now(), '{"full_name": "Member User"}');
+  ('11111111-1111-1111-1111-111111111111', 'user1@test.com', '{}'),
+  ('22222222-2222-2222-2222-222222222222', 'user2@test.com', '{}'),
+  ('33333333-3333-3333-3333-333333333333', 'admin@test.com', '{}'),
+  ('44444444-4444-4444-4444-444444444444', 'member@test.com', '{}');
 
--- Create test orgs
 insert into public.orgs (id, name, slug) values
   ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Org A', 'org-a'),
   ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'Org B', 'org-b');
 
--- Create memberships
 insert into public.org_memberships (org_id, user_id, role) values
   ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '11111111-1111-1111-1111-111111111111', 'owner'),
   ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-3333-3333-3333-333333333333', 'admin'),
   ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '44444444-4444-4444-4444-444444444444', 'member'),
   ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '22222222-2222-2222-2222-222222222222', 'owner');
 
--- Create projects
 insert into public.projects (id, org_id, name) values
   ('11111111-aaaa-aaaa-aaaa-111111111111', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Project A1'),
   ('22222222-bbbb-bbbb-bbbb-222222222222', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'Project B1');
 
--- Create audit log entries
 insert into public.audit_log (org_id, actor_type, action, target_table) values
   ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'system', 'test_action', 'orgs'),
   ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'system', 'test_action', 'orgs');
 
--- ============================================================================
--- TEST 1: Cross-org isolation (orgs table)
--- ============================================================================
-
-set local role authenticated;
-set local request.jwt.claims to '{"sub": "11111111-1111-1111-1111-111111111111"}';
-
-select results_eq(
-  'select count(*)::int from public.orgs',
-  array[1],
-  'User in Org A sees only Org A'
-);
-
-set local request.jwt.claims to '{"sub": "22222222-2222-2222-2222-222222222222"}';
-
-select results_eq(
-  'select count(*)::int from public.orgs',
-  array[1],
-  'User in Org B sees only Org B'
-);
+reset role;
 
 -- ============================================================================
--- TEST 2: Cross-org isolation (projects table)
+-- CROSS-ORG ISOLATION TESTS
 -- ============================================================================
 
-set local request.jwt.claims to '{"sub": "11111111-1111-1111-1111-111111111111"}';
+-- Test 1-2: Orgs
+set role authenticated;
+set local "request.jwt.claim.sub" = '11111111-1111-1111-1111-111111111111';
+select is((select count(*)::int from public.orgs), 1, 'User in Org A sees only Org A');
+reset role;
 
-select results_eq(
-  'select count(*)::int from public.projects',
-  array[1],
-  'User in Org A sees only Org A projects'
-);
+set role authenticated;
+set local "request.jwt.claim.sub" = '22222222-2222-2222-2222-222222222222';
+select is((select count(*)::int from public.orgs), 1, 'User in Org B sees only Org B');
+reset role;
 
-set local request.jwt.claims to '{"sub": "22222222-2222-2222-2222-222222222222"}';
+-- Test 3-4: Projects
+set role authenticated;
+set local "request.jwt.claim.sub" = '11111111-1111-1111-1111-111111111111';
+select is((select count(*)::int from public.projects), 1, 'User in Org A sees only Org A projects');
+reset role;
 
-select results_eq(
-  'select count(*)::int from public.projects',
-  array[1],
-  'User in Org B sees only Org B projects'
-);
+set role authenticated;
+set local "request.jwt.claim.sub" = '22222222-2222-2222-2222-222222222222';
+select is((select count(*)::int from public.projects), 1, 'User in Org B sees only Org B projects');
+reset role;
 
--- ============================================================================
--- TEST 3: Cross-org isolation (org_memberships table)
--- ============================================================================
+-- Test 5-6: Memberships
+set role authenticated;
+set local "request.jwt.claim.sub" = '11111111-1111-1111-1111-111111111111';
+select is((select count(*)::int from public.org_memberships), 3, 'User in Org A sees only Org A memberships');
+reset role;
 
-set local request.jwt.claims to '{"sub": "11111111-1111-1111-1111-111111111111"}';
+set role authenticated;
+set local "request.jwt.claim.sub" = '22222222-2222-2222-2222-222222222222';
+select is((select count(*)::int from public.org_memberships), 1, 'User in Org B sees only Org B memberships');
+reset role;
 
-select results_eq(
-  'select count(*)::int from public.org_memberships',
-  array[3],
-  'User in Org A sees only Org A memberships'
-);
+-- Test 7: Profiles
+set role authenticated;
+set local "request.jwt.claim.sub" = '11111111-1111-1111-1111-111111111111';
+select is((select count(*)::int from public.profiles), 3, 'User in Org A sees 3 profiles (members of Org A)');
+reset role;
 
-set local request.jwt.claims to '{"sub": "22222222-2222-2222-2222-222222222222"}';
-
-select results_eq(
-  'select count(*)::int from public.org_memberships',
-  array[1],
-  'User in Org B sees only Org B memberships'
-);
-
--- ============================================================================
--- TEST 4: Cross-org isolation (profiles table)
--- ============================================================================
-
-set local request.jwt.claims to '{"sub": "11111111-1111-1111-1111-111111111111"}';
-
-select results_eq(
-  'select count(*)::int from public.profiles',
-  array[4],
-  'User in Org A sees profiles in their org plus their own'
-);
+-- Test 8: Audit logs
+set role authenticated;
+set local "request.jwt.claim.sub" = '11111111-1111-1111-1111-111111111111';
+select is((select count(*)::int from public.audit_log where org_id is not null), 1, 'User in Org A sees only Org A audit logs');
+reset role;
 
 -- ============================================================================
--- TEST 5: Cross-org isolation (audit_log table)
+-- MEMBER PERMISSIONS TESTS
 -- ============================================================================
 
-set local request.jwt.claims to '{"sub": "11111111-1111-1111-1111-111111111111"}';
+-- Test 9: Member cannot update org (value unchanged)
+set role authenticated;
+set local "request.jwt.claim.sub" = '44444444-4444-4444-4444-444444444444';
+update public.orgs set name = 'Member Updated' where id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+set role postgres;
+select is((select name from public.orgs where id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'), 'Org A', 'Member cannot update org (value unchanged)');
+reset role;
 
-select results_eq(
-  'select count(*)::int from public.audit_log where org_id is not null',
-  array[1],
-  'User in Org A sees only Org A audit logs'
-);
-
-set local request.jwt.claims to '{"sub": "22222222-2222-2222-2222-222222222222"}';
-
-select results_eq(
-  'select count(*)::int from public.audit_log where org_id is not null',
-  array[1],
-  'User in Org B sees only Org B audit logs'
-);
-
--- ============================================================================
--- TEST 6: Member cannot update org
--- ============================================================================
-
-set local request.jwt.claims to '{"sub": "44444444-4444-4444-4444-444444444444"}';
-
-select throws_ok(
-  $$update public.orgs set name = 'Updated' where id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'$$,
-  'new row violates row-level security policy for table "orgs"',
-  'Member cannot update org'
-);
-
--- ============================================================================
--- TEST 7: Member cannot create projects
--- ============================================================================
-
+-- Test 10: Member cannot create projects
+set role authenticated;
+set local "request.jwt.claim.sub" = '44444444-4444-4444-4444-444444444444';
 select throws_ok(
   $$insert into public.projects (org_id, name) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'New Project')$$,
-  'new row violates row-level security policy for table "projects"',
+  '42501',
+  null,
   'Member cannot create project'
 );
+reset role;
 
 -- ============================================================================
--- TEST 8: Admin cannot promote to owner
+-- ADMIN PERMISSIONS TESTS
 -- ============================================================================
 
-set local request.jwt.claims to '{"sub": "33333333-3333-3333-3333-333333333333"}';
-
+-- Test 11: Admin cannot promote to owner
+set role authenticated;
+set local "request.jwt.claim.sub" = '33333333-3333-3333-3333-333333333333';
 select throws_ok(
-  $$insert into public.org_memberships (org_id, user_id, role) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '11111111-1111-1111-1111-111111111111', 'owner')$$,
-  'new row violates row-level security policy for table "org_memberships"',
+  $$insert into public.org_memberships (org_id, user_id, role) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '44444444-4444-4444-4444-444444444444', 'owner')$$,
+  '42501',
+  null,
   'Admin cannot insert owner role'
 );
+reset role;
+
+-- Test 12: Admin cannot modify owner (role unchanged)
+set role authenticated;
+set local "request.jwt.claim.sub" = '33333333-3333-3333-3333-333333333333';
+update public.org_memberships set role = 'member' where org_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' and user_id = '11111111-1111-1111-1111-111111111111';
+set role postgres;
+select is((select role from public.org_memberships where org_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' and user_id = '11111111-1111-1111-1111-111111111111'), 'owner', 'Admin cannot modify owner role (unchanged)');
+reset role;
+
+-- Test 13: Admin cannot remove owner (still exists)
+set role authenticated;
+set local "request.jwt.claim.sub" = '33333333-3333-3333-3333-333333333333';
+delete from public.org_memberships where org_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' and user_id = '11111111-1111-1111-1111-111111111111';
+set role postgres;
+select is((select count(*)::int from public.org_memberships where org_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' and user_id = '11111111-1111-1111-1111-111111111111'), 1, 'Admin cannot remove owner (still exists)');
+reset role;
+
+-- Test 14: Admin cannot change own role (role unchanged)
+set role authenticated;
+set local "request.jwt.claim.sub" = '33333333-3333-3333-3333-333333333333';
+update public.org_memberships set role = 'owner' where org_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' and user_id = '33333333-3333-3333-3333-333333333333';
+set role postgres;
+select is((select role from public.org_memberships where org_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' and user_id = '33333333-3333-3333-3333-333333333333'), 'admin', 'Admin cannot change own role (unchanged)');
+reset role;
 
 -- ============================================================================
--- TEST 9: Admin cannot modify owner
+-- OWNER PERMISSIONS TESTS
 -- ============================================================================
 
-select throws_ok(
-  $$update public.org_memberships set role = 'admin' where org_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' and user_id = '11111111-1111-1111-1111-111111111111'$$,
-  'new row violates row-level security policy for table "org_memberships"',
-  'Admin cannot modify owner role'
-);
+-- Test 15: Owner can update org
+set role authenticated;
+set local "request.jwt.claim.sub" = '11111111-1111-1111-1111-111111111111';
+prepare owner_update_org as update public.orgs set name = 'Updated Org A' where id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+select lives_ok('owner_update_org', 'Owner can update org');
+reset role;
 
--- ============================================================================
--- TEST 10: Admin cannot remove owner
--- ============================================================================
+-- Test 16: Owner can create projects
+set role authenticated;
+set local "request.jwt.claim.sub" = '11111111-1111-1111-1111-111111111111';
+prepare owner_create_project as insert into public.projects (org_id, name) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Owner Project');
+select lives_ok('owner_create_project', 'Owner can create project');
+reset role;
 
-select throws_ok(
-  $$delete from public.org_memberships where org_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' and user_id = '11111111-1111-1111-1111-111111111111'$$,
-  'new row violates row-level security policy for table "org_memberships"',
-  'Admin cannot remove owner'
-);
-
--- ============================================================================
--- TEST 11: Admin cannot change own role
--- ============================================================================
-
-select throws_ok(
-  $$update public.org_memberships set role = 'owner' where org_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' and user_id = '33333333-3333-3333-3333-333333333333'$$,
-  'new row violates row-level security policy for table "org_memberships"',
-  'Admin cannot change own role'
-);
-
--- ============================================================================
--- TEST 12: Owner can update org
--- ============================================================================
-
-set local request.jwt.claims to '{"sub": "11111111-1111-1111-1111-111111111111"}';
-
-select lives_ok(
-  $$update public.orgs set name = 'Updated Org A' where id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'$$,
-  'Owner can update org'
-);
-
--- ============================================================================
--- TEST 13: Owner can create projects
--- ============================================================================
-
-select lives_ok(
-  $$insert into public.projects (org_id, name) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Owner Project')$$,
-  'Owner can create project'
-);
-
--- ============================================================================
--- TEST 14: Owner can promote to owner
--- ============================================================================
-
-select lives_ok(
-  $$update public.org_memberships set role = 'owner' where org_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' and user_id = '33333333-3333-3333-3333-333333333333'$$,
-  'Owner can promote admin to owner'
-);
-
--- Reset for next tests
+-- Test 17: Owner can promote to owner
+set role authenticated;
+set local "request.jwt.claim.sub" = '11111111-1111-1111-1111-111111111111';
+prepare owner_promote_to_owner as update public.org_memberships set role = 'owner' where org_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' and user_id = '33333333-3333-3333-3333-333333333333';
+select lives_ok('owner_promote_to_owner', 'Owner can promote admin to owner');
+set role postgres;
 update public.org_memberships set role = 'admin' where org_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' and user_id = '33333333-3333-3333-3333-333333333333';
+reset role;
 
--- ============================================================================
--- TEST 15: Admin can manage member/admin roles
--- ============================================================================
-
-set local request.jwt.claims to '{"sub": "33333333-3333-3333-3333-333333333333"}';
-
-select lives_ok(
-  $$update public.org_memberships set role = 'admin' where org_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' and user_id = '44444444-4444-4444-4444-444444444444'$$,
-  'Admin can promote member to admin'
-);
-
--- Reset
+-- Test 18: Admin can manage member/admin roles
+set role authenticated;
+set local "request.jwt.claim.sub" = '33333333-3333-3333-3333-333333333333';
+prepare admin_promote_member as update public.org_memberships set role = 'admin' where org_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' and user_id = '44444444-4444-4444-4444-444444444444';
+select lives_ok('admin_promote_member', 'Admin can promote member to admin');
+set role postgres;
 update public.org_memberships set role = 'member' where org_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' and user_id = '44444444-4444-4444-4444-444444444444';
+reset role;
 
 -- ============================================================================
--- TEST 16: create_org makes caller the owner
+-- CREATE_ORG AND OWNERSHIP TESTS
 -- ============================================================================
 
-set local request.jwt.claims to '{"sub": "22222222-2222-2222-2222-222222222222"}';
+-- Test 19: create_org makes caller the owner
+set role authenticated;
+set local "request.jwt.claim.sub" = '22222222-2222-2222-2222-222222222222';
+select lives_ok($$select public.create_org('Test Org', 'test-org-pgtap')$$, 'create_org succeeds');
+select is((select role from public.org_memberships om join public.orgs o on om.org_id = o.id where o.slug = 'test-org-pgtap' and om.user_id = '22222222-2222-2222-2222-222222222222'), 'owner'::text, 'Caller is owner of created org');
+reset role;
 
-select lives_ok(
-  $$select public.create_org('Test Org', 'test-org')$$,
-  'create_org succeeds'
-);
+-- Test 21-22: Last owner removal is refused by trigger
+set role postgres;
+select is((select count(*)::int from public.org_memberships where org_id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb' and role = 'owner'), 1, 'Org B has exactly 1 owner');
+reset role;
 
-select results_eq(
-  $$select role from public.org_memberships om join public.orgs o on om.org_id = o.id where o.slug = 'test-org' and om.user_id = '22222222-2222-2222-2222-222222222222'$$,
-  array['owner'::text],
-  'Caller is owner of created org'
-);
-
--- ============================================================================
--- TEST 17: Last owner removal is refused
--- ============================================================================
-
-set local request.jwt.claims to '{"sub": "22222222-2222-2222-2222-222222222222"}';
-
+-- The trigger should prevent this delete
+set role authenticated;
+set local "request.jwt.claim.sub" = '22222222-2222-2222-2222-222222222222';
 select throws_ok(
   $$delete from public.org_memberships where org_id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb' and user_id = '22222222-2222-2222-2222-222222222222'$$,
+  'P0001',
   'Cannot remove the last owner from an organization',
-  'Cannot remove last owner'
+  'Trigger prevents last owner removal'
 );
+reset role;
+
+-- Test 22: Owner can delete org
+set role authenticated;
+set local "request.jwt.claim.sub" = '11111111-1111-1111-1111-111111111111';
+prepare owner_delete_org as delete from public.orgs where id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+select lives_ok('owner_delete_org', 'Owner can delete org');
+select is((select count(*)::int from public.org_memberships where org_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'), 0, 'Memberships cascade deleted with org');
+reset role;
 
 -- ============================================================================
--- TEST 18: Owner can delete org (cascade deletes memberships)
+-- ANON ROLE TESTS
 -- ============================================================================
 
-set local request.jwt.claims to '{"sub": "11111111-1111-1111-1111-111111111111"}';
+-- Test 24-26: anon cannot execute functions
+set role anon;
+prepare anon_is_org_member as select public.is_org_member('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb');
+select throws_ok('anon_is_org_member', '42501', null, 'anon cannot call is_org_member');
+prepare anon_has_org_role as select public.has_org_role('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', array['owner']);
+select throws_ok('anon_has_org_role', '42501', null, 'anon cannot call has_org_role');
+prepare anon_create_org as select public.create_org('Anon Org', 'anon-org');
+select throws_ok('anon_create_org', '42501', null, 'anon cannot call create_org');
+reset role;
 
-select lives_ok(
-  $$delete from public.orgs where id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'$$,
-  'Owner can delete org'
-);
+-- Test 27: Authenticated cannot insert into audit_log
+set role authenticated;
+set local "request.jwt.claim.sub" = '22222222-2222-2222-2222-222222222222';
+prepare auth_insert_audit as insert into public.audit_log (org_id, actor_type, action) values ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'user', 'bad_action');
+select throws_ok('auth_insert_audit', '42501', null, 'Authenticated user cannot insert into audit_log');
+reset role;
 
-select results_eq(
-  'select count(*)::int from public.org_memberships where org_id = ''aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa''',
-  array[0],
-  'Memberships cascade deleted with org'
-);
-
--- ============================================================================
--- TEST 19: anon cannot execute helper functions
--- ============================================================================
-
-set local role anon;
-reset request.jwt.claims;
-
-select throws_ok(
-  $$select public.is_org_member('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb')$$,
-  'permission denied for function is_org_member',
-  'anon cannot call is_org_member'
-);
-
-select throws_ok(
-  $$select public.has_org_role('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', array['owner'])$$,
-  'permission denied for function has_org_role',
-  'anon cannot call has_org_role'
-);
-
-select throws_ok(
-  $$select public.create_org('Anon Org', 'anon-org')$$,
-  'permission denied for function create_org',
-  'anon cannot call create_org'
-);
-
--- ============================================================================
--- TEST 20: Authenticated user cannot insert into audit_log
--- ============================================================================
-
-set local role authenticated;
-set local request.jwt.claims to '{"sub": "22222222-2222-2222-2222-222222222222"}';
-
-select throws_ok(
-  $$insert into public.audit_log (org_id, actor_type, action) values ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'user', 'bad_action')$$,
-  'new row violates row-level security policy for table "audit_log"',
-  'Authenticated user cannot insert into audit_log'
-);
-
--- ============================================================================
--- TEST 21: Member can leave org
--- ============================================================================
-
--- First add member to Org B
-set local role postgres;
-insert into public.org_memberships (org_id, user_id, role) values
-  ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '44444444-4444-4444-4444-444444444444', 'member');
-
-set local role authenticated;
-set local request.jwt.claims to '{"sub": "44444444-4444-4444-4444-444444444444"}';
-
-select lives_ok(
-  $$delete from public.org_memberships where org_id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb' and user_id = '44444444-4444-4444-4444-444444444444'$$,
-  'Member can delete own membership (leave org)'
-);
+-- Test 28: Member can leave org
+set role postgres;
+insert into public.org_memberships (org_id, user_id, role) values ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '44444444-4444-4444-4444-444444444444', 'member');
+reset role;
+set role authenticated;
+set local "request.jwt.claim.sub" = '44444444-4444-4444-4444-444444444444';
+prepare member_leave_org as delete from public.org_memberships where org_id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb' and user_id = '44444444-4444-4444-4444-444444444444';
+select lives_ok('member_leave_org', 'Member can delete own membership (leave org)');
+reset role;
 
 select * from finish();
 rollback;

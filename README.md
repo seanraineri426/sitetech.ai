@@ -159,10 +159,10 @@ All tables use Row Level Security (RLS) to enforce tenant isolation. See `supaba
 ### Running the Security Tests
 
 **Prerequisites:**
-- Docker installed and running
-- Local Supabase instance
+- Docker installed and running (for `test:db`)
+- OR PostgreSQL installed locally (for `test:db:nodocker`)
 
-**Full test suite** (reset DB + pgTAP + RLS integration tests):
+**Full test suite with Docker** (reset DB + pgTAP + RLS integration tests):
 
 ```bash
 # Start Supabase (if not already running)
@@ -172,18 +172,26 @@ pnpm supabase start
 pnpm test:db
 ```
 
+**Full test suite without Docker** (uses local PostgreSQL):
+
+```bash
+# Requires PostgreSQL and pgTAP installed locally
+pnpm test:db:nodocker
+```
+
 This command:
-1. Resets the database and applies all migrations
-2. Runs pgTAP test suite (21 test cases)
-3. Runs Vitest RLS integration tests (19 test cases)
+1. Creates a fresh test database
+2. Applies bootstrap script (auth schema, roles, grants)
+3. Applies all migrations
+4. Runs pgTAP test suite (28 test cases)
 
 **Individual test commands:**
 
 ```bash
-# pgTAP tests only
+# pgTAP tests only (requires Supabase running)
 pnpm supabase test db
 
-# RLS integration tests only
+# RLS integration tests only (requires Supabase running)
 pnpm test lib/supabase/__tests__/rls.test.ts
 
 # Unit tests (RLS tests skipped without Supabase)
