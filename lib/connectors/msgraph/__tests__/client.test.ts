@@ -91,6 +91,46 @@ describe("GraphClient", () => {
       ).rejects.toThrow("Path outside allowed scope");
     });
 
+    it("accepts nextLinks with plain commas in siteId (vs %2C)", async () => {
+      const client = new GraphClient({
+        ...mockConfig,
+        siteId: "example.com,abc-123,def-456",
+      });
+
+      mockFetch.mockResolvedValueOnce(mockTokenResponse);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ value: [] }),
+      });
+
+      // nextLink may come back with plain commas instead of %2C
+      await client.get(
+        "https://graph.microsoft.com/v1.0/sites/example.com,abc-123,def-456/drive/root?$skiptoken=xyz"
+      );
+
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+
+    it("accepts nextLinks with plain @ in mailbox (vs %40)", async () => {
+      const client = new GraphClient({
+        ...mockConfig,
+        mailbox: "pm@example.com",
+      });
+
+      mockFetch.mockResolvedValueOnce(mockTokenResponse);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ value: [] }),
+      });
+
+      // nextLink may come back with plain @ instead of %40
+      await client.get(
+        "https://graph.microsoft.com/v1.0/users/pm@example.com/mailFolders/inbox/messages/delta?$skiptoken=abc"
+      );
+
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+
     it("URL-encodes mailbox in path validation", async () => {
       const client = new GraphClient({
         ...mockConfig,
@@ -330,6 +370,92 @@ describe("GraphClient", () => {
           "token"
         )
       ).rejects.toThrow("Method POST not allowed");
+
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("blocks PUT before fetch", async () => {
+      const client = new GraphClient(mockConfig);
+      const clientInternal = client as unknown as {
+        request: (url: string, method: string, token: string) => Promise<Response>;
+      };
+
+      await expect(
+        clientInternal.request(
+          "https://graph.microsoft.com/v1.0/users/user%40example.com/messages/msg1",
+          "PUT",
+          "token"
+        )
+      ).rejects.toThrow("Method PUT not allowed");
+
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("blocks PATCH before fetch", async () => {
+      const client = new GraphClient(mockConfig);
+      const clientInternal = client as unknown as {
+        request: (url: string, method: string, token: string) => Promise<Response>;
+      };
+
+      await expect(
+        clientInternal.request(
+          "https://graph.microsoft.com/v1.0/users/user%40example.com/messages/msg1",
+          "PATCH",
+          "token"
+        )
+      ).rejects.toThrow("Method PATCH not allowed");
+
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("blocks DELETE before fetch", async () => {
+      const client = new GraphClient(mockConfig);
+      const clientInternal = client as unknown as {
+        request: (url: string, method: string, token: string) => Promise<Response>;
+      };
+
+      await expect(
+        clientInternal.request(
+          "https://graph.microsoft.com/v1.0/users/user%40example.com/messages/msg1",
+          "DELETE",
+          "token"
+        )
+      ).rejects.toThrow("Method DELETE not allowed");
+
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("blocks foreign host before token attached", async () => {
+      const client = new GraphClient(mockConfig);
+      const clientInternal = client as unknown as {
+        request: (url: string, method: string, token: string) => Promise<Response>;
+      };
+
+      await expect(
+        clientInternal.request(
+          "https://evil.com/v1.0/users/user%40example.com/messages",
+          "GET",
+          "token"
+        )
+      ).rejects.toThrow("Foreign origin not allowed");
+
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("blocks foreign nextLink before token attached", async () => {
+      const client = new GraphClient(mockConfig);
+      const clientInternal = client as unknown as {
+        request: (url: string, method: string, token: string) => Promise<Response>;
+      };
+
+      // Attacker tries to hijack token via manipulated nextLink
+      await expect(
+        clientInternal.request(
+          "https://attacker.com/steal?token=",
+          "GET",
+          "token"
+        )
+      ).rejects.toThrow("Foreign origin not allowed");
 
       expect(mockFetch).not.toHaveBeenCalled();
     });

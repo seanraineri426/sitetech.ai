@@ -45,8 +45,7 @@ export interface GraphResponse<T> {
 export interface DeltaResult<T> {
   items: T[];
   removed: string[];
-  nextLink?: string;
-  deltaLink?: string;
+  checkpoint?: string; // nextLink while paging, deltaLink at the end
 }
 
 /**
@@ -124,16 +123,27 @@ export class GraphClient {
     }
 
     // Validate scope: must be under /users/{mailbox}/ or /sites/{siteId}/
-    const encodedMailbox = encodeURIComponent(this.config.mailbox);
-    const encodedSiteId = encodeURIComponent(this.config.siteId);
-    const path = urlObj.pathname;
+    // Parse and decode path segments to handle nextLinks with plain commas, @ signs, etc.
+    const pathSegments = urlObj.pathname.split("/").map((seg) => decodeURIComponent(seg));
 
-    const isMailboxPath = path.startsWith(`/v1.0/users/${encodedMailbox}/`);
-    const isSitePath = path.startsWith(`/v1.0/sites/${encodedSiteId}/`);
+    // Expected patterns:
+    // /v1.0/users/{mailbox}/...
+    // /v1.0/sites/{siteId}/...
+    const isMailboxPath =
+      pathSegments.length >= 4 &&
+      pathSegments[1] === "v1.0" &&
+      pathSegments[2] === "users" &&
+      pathSegments[3] === this.config.mailbox;
+
+    const isSitePath =
+      pathSegments.length >= 4 &&
+      pathSegments[1] === "v1.0" &&
+      pathSegments[2] === "sites" &&
+      pathSegments[3] === this.config.siteId;
 
     if (!isMailboxPath && !isSitePath) {
       throw new Error(
-        `Path outside allowed scope: ${path} (must be under /users/${encodedMailbox}/ or /sites/${encodedSiteId}/)`
+        `Path outside allowed scope: ${urlObj.pathname} (must be under /users/${this.config.mailbox}/ or /sites/${this.config.siteId}/)`
       );
     }
 
@@ -202,7 +212,8 @@ export class GraphClient {
   }
 
   /**
-   * Delta query support.
+   * Delta query support - returns ONE page with checkpoint for resumability.
+   * The fetcher drives the loop page-by-page.
    * Handles removals correctly: items with @removed property in value array,
    * and drive items with deleted facet.
    */
@@ -211,9 +222,6 @@ export class GraphClient {
     deltaLink?: string,
     selectFields?: string
   ): Promise<DeltaResult<T>> {
-    const items: T[] = [];
-    const removed: string[] = [];
-    
     // Build initial URL: /delta first, then query params
     let currentUrl: string;
     
@@ -227,44 +235,34 @@ export class GraphClient {
       currentUrl = url.toString();
     }
 
-    let finalDeltaLink: string | undefined;
-    let finalNextLink: string | undefined;
+    const response: GraphResponse<T> = await this.get<T>(currentUrl);
 
-    while (currentUrl) {
-      const response: GraphResponse<T> = await this.get<T>(currentUrl);
+    const items: T[] = [];
+    const removed: string[] = [];
 
-      // Process items: check for @removed property or deleted facet
-      for (const item of response.value) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const itemAny = item as any;
-        
-        if (itemAny["@removed"]) {
-          // Message or other item with @removed annotation
-          removed.push(item.id);
-        } else if (itemAny.deleted) {
-          // DriveItem with deleted facet
-          removed.push(item.id);
-        } else {
-          items.push(item);
-        }
-      }
-
-      if (response["@odata.deltaLink"]) {
-        finalDeltaLink = response["@odata.deltaLink"];
-        break;
-      }
-
-      currentUrl = response["@odata.nextLink"] || "";
-      if (!currentUrl) {
-        finalNextLink = response["@odata.nextLink"];
+    // Process items: check for @removed property or deleted facet
+    for (const item of response.value) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const itemAny = item as any;
+      
+      if (itemAny["@removed"]) {
+        // Message or other item with @removed annotation
+        removed.push(item.id);
+      } else if (itemAny.deleted) {
+        // DriveItem with deleted facet
+        removed.push(item.id);
+      } else {
+        items.push(item);
       }
     }
+
+    // Return checkpoint: nextLink while paging, deltaLink at the end
+    const checkpoint = response["@odata.deltaLink"] || response["@odata.nextLink"];
 
     return {
       items,
       removed,
-      nextLink: finalNextLink,
-      deltaLink: finalDeltaLink,
+      checkpoint,
     };
   }
 }

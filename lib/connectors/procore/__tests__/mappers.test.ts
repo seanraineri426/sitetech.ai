@@ -246,6 +246,76 @@ describe("Procore mappers", () => {
 
       expect(normalized1.fingerprint).not.toBe(normalized2.fingerprint);
     });
+
+    it("does NOT change when non-allowlisted field changes (approver email)", () => {
+      const normalized1 = mapProcoreSubmittalToNormalized(mockSubmittal);
+      const modified = {
+        ...mockSubmittal,
+        approvers: [
+          {
+            ...mockSubmittal.approvers[0],
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            email: "new-email@example.com", // Non-allowlisted field
+          } as any,
+        ],
+      };
+      const normalized2 = mapProcoreSubmittalToNormalized(modified);
+
+      // Fingerprint should be SAME because email is not in allowlist
+      expect(normalized1.fingerprint).toBe(normalized2.fingerprint);
+    });
+  });
+
+  describe("RFI nested object fingerprinting", () => {
+    it("does NOT change when non-allowlisted contractor field changes (email)", () => {
+      const normalized1 = mapProcoreRFIToNormalized(mockRFI);
+      const modified = {
+        ...mockRFI,
+        responsible_contractor: {
+          ...mockRFI.responsible_contractor!,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          email: "new-email@contractor.com", // Non-allowlisted field
+        } as any,
+      };
+      const normalized2 = mapProcoreRFIToNormalized(modified);
+
+      // Fingerprint should be SAME because contractor email is not in allowlist
+      expect(normalized1.fingerprint).toBe(normalized2.fingerprint);
+    });
+
+    it("does NOT change when non-allowlisted cost_code field changes", () => {
+      const normalized1 = mapProcoreRFIToNormalized(mockRFI);
+      const modified = {
+        ...mockRFI,
+        cost_code: {
+          ...mockRFI.cost_code!,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          description: "New description", // Non-allowlisted field
+        } as any,
+      };
+      const normalized2 = mapProcoreRFIToNormalized(modified);
+
+      // Fingerprint should be SAME because description is not in allowlist
+      expect(normalized1.fingerprint).toBe(normalized2.fingerprint);
+    });
+
+    it("does NOT change when non-allowlisted assignee field changes (login)", () => {
+      const normalized1 = mapProcoreRFIToNormalized(mockRFI);
+      const modified = {
+        ...mockRFI,
+        assignees: [
+          {
+            ...mockRFI.assignees[0],
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            login: "new-login@example.com", // Non-allowlisted field per CTO
+          } as any,
+        ],
+      };
+      const normalized2 = mapProcoreRFIToNormalized(modified);
+
+      // Fingerprint should be SAME because login/email is not in allowlist
+      expect(normalized1.fingerprint).toBe(normalized2.fingerprint);
+    });
   });
 
   describe("Field allowlists (CTO-approved trim)", () => {

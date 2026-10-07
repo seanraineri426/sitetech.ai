@@ -10,19 +10,13 @@ import { MESSAGE_ALLOWLIST, DRIVEITEM_ALLOWLIST } from "./types";
 export interface MailDeltaPage {
   messages: GraphMessage[];
   removed: string[];
-  checkpoint: {
-    nextLink?: string;
-    deltaLink?: string;
-  };
+  checkpoint?: string; // nextLink while paging, deltaLink at the end
 }
 
 export interface DriveDeltaPage {
   items: GraphDriveItem[];
   removed: string[];
-  checkpoint: {
-    nextLink?: string;
-    deltaLink?: string;
-  };
+  checkpoint?: string; // nextLink while paging, deltaLink at the end
 }
 
 export async function fetchMailFolders(
@@ -41,8 +35,9 @@ export async function fetchMailFolders(
 }
 
 /**
- * Delta sync for a single mail folder.
+ * Delta sync for a single mail folder - ONE page at a time.
  * Returns page with checkpoint for resumption.
+ * The caller drives the loop page-by-page.
  */
 export async function fetchMailFolderDelta(
   client: GraphClient,
@@ -51,7 +46,9 @@ export async function fetchMailFolderDelta(
   checkpoint?: string
 ): Promise<MailDeltaPage> {
   const selectFields = MESSAGE_ALLOWLIST.join(",");
-  const path = `/users/${encodeURIComponent(mailbox)}/mailFolders/${folderId}/messages`;
+  const encodedMailbox = encodeURIComponent(mailbox);
+  const encodedFolderId = encodeURIComponent(folderId);
+  const path = `/users/${encodedMailbox}/mailFolders/${encodedFolderId}/messages`;
 
   const result = await client.delta<GraphMessage>(
     path,
@@ -62,16 +59,14 @@ export async function fetchMailFolderDelta(
   return {
     messages: result.items,
     removed: result.removed,
-    checkpoint: {
-      nextLink: result.nextLink,
-      deltaLink: result.deltaLink,
-    },
+    checkpoint: result.checkpoint,
   };
 }
 
 /**
- * Delta sync for SharePoint drive.
+ * Delta sync for SharePoint drive - ONE page at a time.
  * Returns page with checkpoint for resumption.
+ * The caller drives the loop page-by-page.
  */
 export async function fetchDriveDelta(
   client: GraphClient,
@@ -79,7 +74,8 @@ export async function fetchDriveDelta(
   checkpoint?: string
 ): Promise<DriveDeltaPage> {
   const selectFields = DRIVEITEM_ALLOWLIST.join(",");
-  const path = `/sites/${encodeURIComponent(siteId)}/drive/root`;
+  const encodedSiteId = encodeURIComponent(siteId);
+  const path = `/sites/${encodedSiteId}/drive/root`;
 
   const result = await client.delta<GraphDriveItem>(
     path,
@@ -90,15 +86,13 @@ export async function fetchDriveDelta(
   return {
     items: result.items,
     removed: result.removed,
-    checkpoint: {
-      nextLink: result.nextLink,
-      deltaLink: result.deltaLink,
-    },
+    checkpoint: result.checkpoint,
   };
 }
 
 /**
  * Check if a 410 Gone error means resync is required.
+ * Detect by status code, not error text.
  */
 export function shouldResync(error: unknown): boolean {
   if (error instanceof Error) {

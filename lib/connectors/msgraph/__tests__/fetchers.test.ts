@@ -1,8 +1,8 @@
 /**
- * Tests for Microsoft Graph fetchers.
+ * Tests for Microsoft Graph fetchers with real client and mocked fetch.
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 // Mock server-only
 vi.mock("server-only", () => ({}));
@@ -16,14 +16,34 @@ import { GraphClient } from "../client";
 import type { GraphMessage, GraphDriveItem, GraphMailFolder } from "../types";
 
 describe("Microsoft Graph fetchers", () => {
-  let mockClient: GraphClient;
+  let mockFetch: ReturnType<typeof vi.fn>;
+  let client: GraphClient;
 
   beforeEach(() => {
-    mockClient = {
-      delta: vi.fn(),
-      paginate: vi.fn(),
-    } as unknown as GraphClient;
+    mockFetch = vi.fn();
+    global.fetch = mockFetch;
+
+    client = new GraphClient({
+      tenantId: "tenant-123",
+      clientId: "client-123",
+      clientSecret: "secret-123",
+      mailbox: "user@example.com",
+      siteId: "site-123",
+    });
   });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  const mockTokenResponse = {
+    ok: true,
+    json: async () => ({
+      access_token: "token-123",
+      token_type: "Bearer",
+      expires_in: 3600,
+    }),
+  };
 
   describe("fetchMailFolders", () => {
     it("fetches all mail folders", async () => {
@@ -46,23 +66,22 @@ describe("Microsoft Graph fetchers", () => {
         },
       ];
 
-      (mockClient.paginate as ReturnType<typeof vi.fn>).mockReturnValue(
-        (async function* () {
-          yield mockFolders;
-        })()
-      );
+      mockFetch.mockResolvedValueOnce(mockTokenResponse);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          value: mockFolders,
+        }),
+      });
 
-      const folders = await fetchMailFolders(mockClient, "user@example.com");
+      const folders = await fetchMailFolders(client, "user@example.com");
 
       expect(folders).toEqual(mockFolders);
-      expect(mockClient.paginate).toHaveBeenCalledWith(
-        "/users/user%40example.com/mailFolders"
-      );
     });
   });
 
-  describe("fetchMailFolderDelta", () => {
-    it("yields page with checkpoint", async () => {
+  describe("fetchMailFolderDelta - page-by-page with real client", () => {
+    it("returns ONE page with nextLink checkpoint", async () => {
       const mockMessages: GraphMessage[] = [
         {
           id: "msg1",
@@ -72,8 +91,8 @@ describe("Microsoft Graph fetchers", () => {
           from: { emailAddress: { name: "Sender", address: "sender@example.com" } },
           toRecipients: [],
           ccRecipients: [],
-          receivedDateTime: "2026-10-01",
-          sentDateTime: "2026-10-01",
+          receivedDateTime: "2026-10-01T10:00:00Z",
+          sentDateTime: "2026-10-01T09:59:00Z",
           hasAttachments: false,
           importance: "normal",
           isRead: false,
@@ -81,70 +100,106 @@ describe("Microsoft Graph fetchers", () => {
         },
       ];
 
-      (mockClient.delta as ReturnType<typeof vi.fn>).mockResolvedValue({
-        items: mockMessages,
-        removed: [],
-        deltaLink: "delta-link-123",
+      mockFetch.mockResolvedValueOnce(mockTokenResponse);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          value: mockMessages,
+          "@odata.nextLink": "https://graph.microsoft.com/v1.0/users/user%40example.com/mailFolders/inbox/messages/delta?$skiptoken=abc",
+        }),
       });
 
-      const result = await fetchMailFolderDelta(mockClient, "user@example.com", "inbox");
+      const result = await fetchMailFolderDelta(client, "user@example.com", "inbox");
 
       expect(result.messages).toEqual(mockMessages);
       expect(result.removed).toEqual([]);
-      expect(result.checkpoint.deltaLink).toBe("delta-link-123");
+      expect(result.checkpoint).toBe("https://graph.microsoft.com/v1.0/users/user%40example.com/mailFolders/inbox/messages/delta?$skiptoken=abc");
     });
 
-    it("resumes from checkpoint", async () => {
-      const checkpoint = "previous-delta-link";
-
-      (mockClient.delta as ReturnType<typeof vi.fn>).mockResolvedValue({
-        items: [],
-        removed: [],
-        deltaLink: "new-delta-link",
+    it("returns ONE page with deltaLink at the end", async () => {
+      mockFetch.mockResolvedValueOnce(mockTokenResponse);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          value: [],
+          "@odata.deltaLink": "https://graph.microsoft.com/v1.0/users/user%40example.com/mailFolders/inbox/messages/delta?$deltatoken=xyz",
+        }),
       });
 
-      const result = await fetchMailFolderDelta(
-        mockClient,
-        "user@example.com",
-        "inbox",
-        checkpoint
-      );
+      const result = await fetchMailFolderDelta(client, "user@example.com", "inbox");
 
-      expect(mockClient.delta).toHaveBeenCalledWith(
-        "/users/user%40example.com/mailFolders/inbox/messages",
-        checkpoint,
-        expect.any(String)
-      );
-      expect(result.checkpoint.deltaLink).toBe("new-delta-link");
+      expect(result.messages).toEqual([]);
+      expect(result.checkpoint).toBe("https://graph.microsoft.com/v1.0/users/user%40example.com/mailFolders/inbox/messages/delta?$deltatoken=xyz");
     });
 
-    it("includes removed items", async () => {
-      (mockClient.delta as ReturnType<typeof vi.fn>).mockResolvedValue({
-        items: [],
-        removed: ["msg1", "msg2"],
-        deltaLink: "delta-link",
+    it("resumes from checkpoint (nextLink)", async () => {
+      const checkpoint = "https://graph.microsoft.com/v1.0/users/user%40example.com/mailFolders/inbox/messages/delta?$skiptoken=abc";
+
+      mockFetch.mockResolvedValueOnce(mockTokenResponse);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          value: [],
+          "@odata.deltaLink": "https://graph.microsoft.com/v1.0/users/user%40example.com/mailFolders/inbox/messages/delta?$deltatoken=xyz",
+        }),
       });
 
-      const result = await fetchMailFolderDelta(mockClient, "user@example.com", "inbox");
+      const result = await fetchMailFolderDelta(client, "user@example.com", "inbox", checkpoint);
+
+      expect(result.checkpoint).toBe("https://graph.microsoft.com/v1.0/users/user%40example.com/mailFolders/inbox/messages/delta?$deltatoken=xyz");
+    });
+
+    it("includes removed items with @removed", async () => {
+      mockFetch.mockResolvedValueOnce(mockTokenResponse);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          value: [
+            { id: "msg1", "@removed": { reason: "deleted" } },
+            { id: "msg2", "@removed": { reason: "deleted" } },
+          ],
+          "@odata.deltaLink": "https://graph.microsoft.com/v1.0/delta-link",
+        }),
+      });
+
+      const result = await fetchMailFolderDelta(client, "user@example.com", "inbox");
 
       expect(result.removed).toEqual(["msg1", "msg2"]);
     });
 
-    it("handles nextLink for pagination", async () => {
-      (mockClient.delta as ReturnType<typeof vi.fn>).mockResolvedValue({
-        items: [],
-        removed: [],
-        nextLink: "next-page-link",
+    it("page-by-page: fetcher drives the loop, not the client", async () => {
+      // First page
+      mockFetch.mockResolvedValueOnce(mockTokenResponse);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          value: [{ id: "msg1", subject: "Page 1", conversationId: "", bodyPreview: "", from: { emailAddress: { name: "", address: "" } }, toRecipients: [], ccRecipients: [], receivedDateTime: "", sentDateTime: "", hasAttachments: false, importance: "normal", isRead: false, categories: [] }],
+          "@odata.nextLink": "https://graph.microsoft.com/v1.0/next-page",
+        }),
       });
 
-      const result = await fetchMailFolderDelta(mockClient, "user@example.com", "inbox");
+      const page1 = await fetchMailFolderDelta(client, "user@example.com", "inbox");
+      expect(page1.messages).toHaveLength(1);
+      expect(page1.checkpoint).toBeTruthy();
 
-      expect(result.checkpoint.nextLink).toBe("next-page-link");
+      // Second page - fetcher drives with checkpoint
+      mockFetch.mockResolvedValueOnce(mockTokenResponse);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          value: [{ id: "msg2", subject: "Page 2", conversationId: "", bodyPreview: "", from: { emailAddress: { name: "", address: "" } }, toRecipients: [], ccRecipients: [], receivedDateTime: "", sentDateTime: "", hasAttachments: false, importance: "normal", isRead: false, categories: [] }],
+          "@odata.deltaLink": "https://graph.microsoft.com/v1.0/delta-final",
+        }),
+      });
+
+      const page2 = await fetchMailFolderDelta(client, "user@example.com", "inbox", page1.checkpoint);
+      expect(page2.messages).toHaveLength(1);
+      expect(page2.checkpoint).toContain("delta-final");
     });
   });
 
-  describe("fetchDriveDelta", () => {
-    it("yields page with checkpoint", async () => {
+  describe("fetchDriveDelta - page-by-page with real client", () => {
+    it("returns ONE page with nextLink checkpoint", async () => {
       const mockItems: GraphDriveItem[] = [
         {
           id: "item1",
@@ -159,48 +214,83 @@ describe("Microsoft Graph fetchers", () => {
         },
       ];
 
-      (mockClient.delta as ReturnType<typeof vi.fn>).mockResolvedValue({
-        items: mockItems,
-        removed: [],
-        deltaLink: "drive-delta-link",
+      mockFetch.mockResolvedValueOnce(mockTokenResponse);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          value: mockItems,
+          "@odata.nextLink": "https://graph.microsoft.com/v1.0/sites/site-123/drive/root/delta?$skiptoken=abc",
+        }),
       });
 
-      const result = await fetchDriveDelta(mockClient, "site-123");
+      const result = await fetchDriveDelta(client, "site-123");
 
       expect(result.items).toEqual(mockItems);
       expect(result.removed).toEqual([]);
-      expect(result.checkpoint.deltaLink).toBe("drive-delta-link");
+      expect(result.checkpoint).toContain("skiptoken");
     });
 
-    it("resumes from checkpoint", async () => {
-      const checkpoint = "previous-drive-delta";
-
-      (mockClient.delta as ReturnType<typeof vi.fn>).mockResolvedValue({
-        items: [],
-        removed: [],
-        deltaLink: "new-drive-delta",
+    it("returns ONE page with deltaLink at the end", async () => {
+      mockFetch.mockResolvedValueOnce(mockTokenResponse);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          value: [],
+          "@odata.deltaLink": "https://graph.microsoft.com/v1.0/sites/site-123/drive/root/delta?$deltatoken=xyz",
+        }),
       });
 
-      const result = await fetchDriveDelta(mockClient, "site-123", checkpoint);
+      const result = await fetchDriveDelta(client, "site-123");
 
-      expect(mockClient.delta).toHaveBeenCalledWith(
-        "/sites/site-123/drive/root",
-        checkpoint,
-        expect.any(String)
-      );
-      expect(result.checkpoint.deltaLink).toBe("new-drive-delta");
+      expect(result.items).toEqual([]);
+      expect(result.checkpoint).toContain("deltatoken");
     });
 
     it("includes removed items with deleted facet", async () => {
-      (mockClient.delta as ReturnType<typeof vi.fn>).mockResolvedValue({
-        items: [],
-        removed: ["item1", "item2"],
-        deltaLink: "delta-link",
+      mockFetch.mockResolvedValueOnce(mockTokenResponse);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          value: [
+            { id: "item1", deleted: { state: "deleted" } },
+            { id: "item2", deleted: { state: "deleted" } },
+          ],
+          "@odata.deltaLink": "https://graph.microsoft.com/v1.0/delta-link",
+        }),
       });
 
-      const result = await fetchDriveDelta(mockClient, "site-123");
+      const result = await fetchDriveDelta(client, "site-123");
 
       expect(result.removed).toEqual(["item1", "item2"]);
+    });
+
+    it("page-by-page: fetcher drives the loop", async () => {
+      // First page
+      mockFetch.mockResolvedValueOnce(mockTokenResponse);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          value: [{ id: "item1", name: "Page 1", webUrl: "", size: 0, createdDateTime: "", lastModifiedDateTime: "", createdBy: { user: { displayName: "" } }, lastModifiedBy: { user: { displayName: "" } }, parentReference: { driveId: "", id: "", path: "" } }],
+          "@odata.nextLink": "https://graph.microsoft.com/v1.0/next",
+        }),
+      });
+
+      const page1 = await fetchDriveDelta(client, "site-123");
+      expect(page1.items).toHaveLength(1);
+
+      // Second page
+      mockFetch.mockResolvedValueOnce(mockTokenResponse);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          value: [{ id: "item2", name: "Page 2", webUrl: "", size: 0, createdDateTime: "", lastModifiedDateTime: "", createdBy: { user: { displayName: "" } }, lastModifiedBy: { user: { displayName: "" } }, parentReference: { driveId: "", id: "", path: "" } }],
+          "@odata.deltaLink": "https://graph.microsoft.com/v1.0/delta-final",
+        }),
+      });
+
+      const page2 = await fetchDriveDelta(client, "site-123", page1.checkpoint);
+      expect(page2.items).toHaveLength(1);
+      expect(page2.checkpoint).toContain("delta-final");
     });
   });
 });
