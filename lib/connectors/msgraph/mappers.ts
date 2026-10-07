@@ -127,23 +127,25 @@ export function emailToRawRecord(email: NormalizedEmail): RawRecord {
  * CTO Decision (2026-10-07): createdBy.user.email and lastModifiedBy.user.email DROPPED.
  * Returns only {displayName, id}.
  */
-export function stripDriveItemEmails(item: any): any {
+export function stripDriveItemEmails(item: Record<string, unknown>): Record<string, unknown> {
   const result = { ...item };
   
-  if (result.createdBy?.user) {
+  if (result.createdBy && typeof result.createdBy === "object" && "user" in result.createdBy) {
+    const user = (result.createdBy as { user: Record<string, unknown> }).user;
     result.createdBy = {
       user: {
-        displayName: result.createdBy.user.displayName,
-        id: result.createdBy.user.id,
+        displayName: user.displayName,
+        id: user.id,
       },
     };
   }
   
-  if (result.lastModifiedBy?.user) {
+  if (result.lastModifiedBy && typeof result.lastModifiedBy === "object" && "user" in result.lastModifiedBy) {
+    const user = (result.lastModifiedBy as { user: Record<string, unknown> }).user;
     result.lastModifiedBy = {
       user: {
-        displayName: result.lastModifiedBy.user.displayName,
-        id: result.lastModifiedBy.user.id,
+        displayName: user.displayName,
+        id: user.id,
       },
     };
   }

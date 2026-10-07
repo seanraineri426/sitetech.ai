@@ -294,34 +294,34 @@ describe("Microsoft Graph fetchers", () => {
   });
 
   describe("shouldResync (410 detection)", () => {
-    it("detects 410 by status property, not message text", () => {
-      const { shouldResync } = require("../fetchers");
+    it("detects 410 by status property, not message text", async () => {
+      const { shouldResync } = await import("../fetchers");
       
       // Error with status property (typed error from client)
       const error410 = new Error("Graph API error: 410 (code: GONE)");
-      (error410 as any).status = 410;
+      (error410 as Error & { status: number }).status = 410;
       
       expect(shouldResync(error410)).toBe(true);
     });
 
-    it("returns false for non-410 status", () => {
-      const { shouldResync } = require("../fetchers");
+    it("returns false for non-410 status", async () => {
+      const { shouldResync } = await import("../fetchers");
       
       const error404 = new Error("Graph API error: 404 (code: NOT_FOUND)");
-      (error404 as any).status = 404;
+      (error404 as Error & { status: number }).status = 404;
       
       expect(shouldResync(error404)).toBe(false);
     });
 
-    it("returns false when no status property present", () => {
-      const { shouldResync } = require("../fetchers");
+    it("returns false when no status property present", async () => {
+      const { shouldResync } = await import("../fetchers");
       
       const error = new Error("Some other error");
       expect(shouldResync(error)).toBe(false);
     });
 
-    it("returns false for null/undefined", () => {
-      const { shouldResync } = require("../fetchers");
+    it("returns false for null/undefined", async () => {
+      const { shouldResync } = await import("../fetchers");
       
       expect(shouldResync(null)).toBe(false);
       expect(shouldResync(undefined)).toBe(false);

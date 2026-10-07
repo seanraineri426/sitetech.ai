@@ -97,7 +97,7 @@ export async function fetchDriveDelta(
 export function shouldResync(error: unknown): boolean {
   // Check for status property (typed errors from client)
   if (error && typeof error === "object" && "status" in error) {
-    return (error as any).status === 410;
+    return (error as { status: number }).status === 410;
   }
   return false;
 }

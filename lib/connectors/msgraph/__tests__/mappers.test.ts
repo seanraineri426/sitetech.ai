@@ -232,8 +232,8 @@ describe("Microsoft Graph mappers", () => {
   });
 
   describe("DriveItem email stripping", () => {
-    it("strips emails from createdBy and lastModifiedBy", () => {
-      const { stripDriveItemEmails } = require("../mappers");
+    it("strips emails from createdBy and lastModifiedBy", async () => {
+      const { stripDriveItemEmails } = await import("../mappers");
       
       const driveItem = {
         id: "item123",
@@ -267,8 +267,8 @@ describe("Microsoft Graph mappers", () => {
       expect(stripped.lastModifiedBy.user.id).toBe("user-456");
     });
 
-    it("handles missing createdBy/lastModifiedBy gracefully", () => {
-      const { stripDriveItemEmails } = require("../mappers");
+    it("handles missing createdBy/lastModifiedBy gracefully", async () => {
+      const { stripDriveItemEmails } = await import("../mappers");
       
       const driveItem = {
         id: "item123",

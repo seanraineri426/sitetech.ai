@@ -189,7 +189,7 @@ export class GraphClient {
       const errorCode = response.headers.get("X-Error-Code") || "UNKNOWN";
       const error = new Error(`Graph API error: ${response.status} (code: ${errorCode})`);
       // Attach status for typed error detection (e.g., 410 resync check)
-      (error as any).status = response.status;
+      (error as Error & { status: number }).status = response.status;
       throw error;
     }
 
