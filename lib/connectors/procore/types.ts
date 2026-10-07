@@ -5,8 +5,14 @@
 import { z } from "zod";
 
 // Zod schemas for validation (passthrough to allow new provider fields)
+const ProcoreLocationSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+}).passthrough();
+
 const ProcoreCostCodeSchema = z.object({
   id: z.number().nullable(),
+  code: z.string().nullable(),
   name: z.string().nullable(),
 }).passthrough();
 
@@ -54,7 +60,7 @@ export const ProcoreRFISchema = z.object({
   question: z.string().nullable(),
   official_response: z.string().nullable(),
   status: z.string(),
-  location: z.string().nullable(),
+  location: ProcoreLocationSchema.nullable(),
   cost_code: ProcoreCostCodeSchema.nullable(),
   assignees: z.array(ProcoreAssigneeSchema),
   responsible_contractor: ProcoreResponsibleContractorSchema.nullable(),
@@ -75,7 +81,7 @@ export const ProcoreSubmittalSchema = z.object({
   revision: z.string().nullable(),
   status: z.string(),
   specification_section: z.string().nullable(),
-  location: z.string().nullable(),
+  location: ProcoreLocationSchema.nullable(),
   cost_code: ProcoreCostCodeSchema.nullable(),
   created_at: z.string(),
   updated_at: z.string(),

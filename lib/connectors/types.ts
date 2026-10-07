@@ -27,7 +27,7 @@ export interface NormalizedRFI {
   source_status: string;
   
   // Classification
-  location: string | null;
+  location: { id: string; name: string } | null;
   cost_code: string | null;
   
   // People (IDs and names only, no emails)

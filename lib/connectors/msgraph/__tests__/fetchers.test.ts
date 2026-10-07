@@ -21,7 +21,7 @@ describe("Microsoft Graph fetchers", () => {
 
   beforeEach(() => {
     mockFetch = vi.fn();
-    global.fetch = mockFetch;
+    global.fetch = mockFetch as unknown as typeof fetch;
 
     client = new GraphClient({
       tenantId: "tenant-123",
@@ -183,7 +183,7 @@ describe("Microsoft Graph fetchers", () => {
       expect(page1.checkpoint).toBeTruthy();
 
       // Second page - fetcher drives with checkpoint
-      mockFetch.mockResolvedValueOnce(mockTokenResponse);
+      // Token is cached, so no token fetch needed
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
@@ -278,8 +278,7 @@ describe("Microsoft Graph fetchers", () => {
       const page1 = await fetchDriveDelta(client, "site-123");
       expect(page1.items).toHaveLength(1);
 
-      // Second page
-      mockFetch.mockResolvedValueOnce(mockTokenResponse);
+      // Second page - token is cached
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({

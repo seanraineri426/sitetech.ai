@@ -27,8 +27,8 @@ describe("Procore mappers", () => {
     question: "Test question?",
     official_response: "Test response",
     status: "answered",
-    location: "Building A",
-    cost_code: { id: 456, name: "03-30-00" },
+    location: { id: 100, name: "Building A" },
+    cost_code: { id: 456, code: "03-30-00", name: "Concrete" },
     assignees: [{ id: 789, name: "Jane Smith" }],
     responsible_contractor: { id: 111, name: "ABC Construction" },
     initiated_at: "2026-10-01T10:00:00Z",
@@ -48,8 +48,8 @@ describe("Procore mappers", () => {
     revision: "Rev B",
     status: "approved_as_noted",
     specification_section: "05 12 00",
-    location: "Building A",
-    cost_code: { id: 789, name: "05-12-00" },
+    location: { id: 200, name: "Building A" },
+    cost_code: { id: 789, code: "05-12-00", name: "Structural Steel" },
     created_at: "2026-09-15T08:00:00Z",
     updated_at: "2026-10-05T16:00:00Z",
     received_date: "2026-09-15",
@@ -254,9 +254,8 @@ describe("Procore mappers", () => {
         approvers: [
           {
             ...mockSubmittal.approvers[0],
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             email: "new-email@example.com", // Non-allowlisted field
-          } as any,
+          } as unknown as typeof mockSubmittal.approvers[0],
         ],
       };
       const normalized2 = mapProcoreSubmittalToNormalized(modified);
@@ -273,9 +272,8 @@ describe("Procore mappers", () => {
         ...mockRFI,
         responsible_contractor: {
           ...mockRFI.responsible_contractor!,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           email: "new-email@contractor.com", // Non-allowlisted field
-        } as any,
+        } as unknown as typeof mockRFI.responsible_contractor,
       };
       const normalized2 = mapProcoreRFIToNormalized(modified);
 
@@ -289,9 +287,8 @@ describe("Procore mappers", () => {
         ...mockRFI,
         cost_code: {
           ...mockRFI.cost_code!,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           description: "New description", // Non-allowlisted field
-        } as any,
+        } as unknown as typeof mockRFI.cost_code,
       };
       const normalized2 = mapProcoreRFIToNormalized(modified);
 
@@ -306,9 +303,8 @@ describe("Procore mappers", () => {
         assignees: [
           {
             ...mockRFI.assignees[0],
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             login: "new-login@example.com", // Non-allowlisted field per CTO
-          } as any,
+          } as unknown as typeof mockRFI.assignees[0],
         ],
       };
       const normalized2 = mapProcoreRFIToNormalized(modified);
