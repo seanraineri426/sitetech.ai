@@ -153,12 +153,15 @@ export class ProcoreClient {
 
   /**
    * GET request with retry and rate limit handling.
+   * Validates response with Zod before returning.
    * 
    * @throws Error if response is not ok
+   * @throws ZodError if response doesn't match expected schema
    */
   async get<T>(
     path: string,
-    params?: Record<string, string | number | boolean>
+    params?: Record<string, string | number | boolean>,
+    schema?: z.ZodType<T>
   ): Promise<ProcoreResponse<T>> {
     const token = await this.getAccessToken();
 
@@ -180,10 +183,13 @@ export class ProcoreClient {
       );
     }
 
-    const data = await response.json();
+    const json = await response.json();
+    
+    // Validate with Zod if schema provided
+    const data = schema ? schema.parse(json) : (json as T);
 
     return {
-      data: data as T,
+      data,
       headers: {
         link: response.headers.get("Link"),
         total: response.headers.get("Total"),
@@ -208,21 +214,27 @@ export class ProcoreClient {
 
   /**
    * Paginate through all results of a GET request.
+   * Validates each page with Zod if schema provided.
    */
   async *paginate<T>(
     path: string,
     params?: Record<string, string | number | boolean>,
-    perPage = 100
+    perPage = 100,
+    schema?: z.ZodType<T[]>
   ): AsyncIterable<T[]> {
     let currentPage = 1;
     let hasMore = true;
 
     while (hasMore) {
-      const response = await this.get<T[]>(path, {
-        ...params,
-        page: currentPage,
-        per_page: perPage,
-      });
+      const response = await this.get<T[]>(
+        path,
+        {
+          ...params,
+          page: currentPage,
+          per_page: perPage,
+        },
+        schema
+      );
 
       yield response.data;
 

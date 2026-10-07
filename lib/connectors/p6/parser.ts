@@ -68,16 +68,13 @@ const NEEDED_TABLES = ["PROJECT", "PROJWBS", "TASK", "TASKPRED"];
 
 /**
  * Detect BOM and return encoding.
- * Note: windows-1252 is not a standard Node.js encoding.
- * For production use, consider using the 'iconv-lite' package.
- * For now, we fall back to latin1 which is similar to windows-1252 for most cases.
+ * Uses TextDecoder with windows-1252 support (Node's full ICU).
  */
-function detectEncoding(buffer: Buffer): BufferEncoding {
+function detectEncoding(buffer: Buffer): string {
   if (buffer.length >= 3 && buffer[0] === 0xef && buffer[1] === 0xbb && buffer[2] === 0xbf) {
     return "utf-8";
   }
-  // Fall back to latin1 (close to windows-1252 for common characters)
-  return "latin1";
+  return "windows-1252";
 }
 
 /**
@@ -90,10 +87,25 @@ async function parseXERStream(
   const tables = new Map<string, XERTable>();
   let currentTable: XERTable | null = null;
 
-  const stream = Buffer.isBuffer(input) ? Readable.from(input) : input;
-  const encoding = Buffer.isBuffer(input) ? detectEncoding(input) : "latin1";
-
-  stream.setEncoding(encoding);
+  let stream: Readable;
+  
+  if (Buffer.isBuffer(input)) {
+    const encoding = detectEncoding(input);
+    const decoder = new TextDecoder(encoding);
+    const text = decoder.decode(input);
+    stream = Readable.from(text);
+  } else {
+    // For streams, collect chunks first
+    const chunks: Buffer[] = [];
+    for await (const chunk of input) {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    }
+    const buffer = Buffer.concat(chunks);
+    const encoding = detectEncoding(buffer);
+    const decoder = new TextDecoder(encoding);
+    const text = decoder.decode(buffer);
+    stream = Readable.from(text);
+  }
 
   const rl = createInterface({
     input: stream,

@@ -81,7 +81,8 @@ describe("Procore fetchers", () => {
         expect.objectContaining({
           "filters[updated_at]": expect.stringContaining("2026-10-01"),
         }),
-        100
+        100,
+        expect.anything() // Schema argument
       );
 
       const call = (mockClient.paginate as ReturnType<typeof vi.fn>).mock.calls[0];
@@ -113,7 +114,8 @@ describe("Procore fetchers", () => {
         expect.objectContaining({
           "filters[include_deleted]": "only",
         }),
-        100
+        100,
+        expect.anything() // Schema argument
       );
     });
 
@@ -134,7 +136,8 @@ describe("Procore fetchers", () => {
       expect(mockClient.paginate).toHaveBeenCalledWith(
         "/rest/v1.0/projects/999/rfis",
         {},
-        50
+        50,
+        expect.anything() // Schema argument
       );
     });
   });
@@ -207,7 +210,8 @@ describe("Procore fetchers", () => {
       expect(mockClient.paginate).toHaveBeenCalledWith(
         "/rest/v1.0/projects/999/rfis",
         {},
-        1000
+        1000,
+        expect.anything() // Schema argument
       );
     });
   });
@@ -278,7 +282,8 @@ describe("Procore fetchers", () => {
           "filters[updated_at]": expect.any(String),
           "filters[include_deleted]": "only",
         }),
-        25
+        25,
+        expect.anything() // Schema argument
       );
     });
   });

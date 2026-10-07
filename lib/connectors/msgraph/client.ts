@@ -158,7 +158,8 @@ export class GraphClient {
 
   async get<T>(
     path: string,
-    params?: Record<string, string>
+    params?: Record<string, string>,
+    schema?: z.ZodType<GraphResponse<T>>
   ): Promise<GraphResponse<T>> {
     const token = await this.getAccessToken();
 
@@ -178,7 +179,10 @@ export class GraphClient {
       throw new Error(`Graph API error: ${response.status} (code: ${errorCode})`);
     }
 
-    return (await response.json()) as GraphResponse<T>;
+    const json = await response.json();
+    
+    // Validate with Zod if schema provided
+    return schema ? schema.parse(json) : (json as GraphResponse<T>);
   }
 
   async *paginate<T>(

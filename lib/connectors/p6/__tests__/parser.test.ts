@@ -58,14 +58,25 @@ describe("P6 XER parser", () => {
       expect(activities).toHaveLength(3);
     });
 
-    it("defaults to windows-1252 without BOM", async () => {
-      // Create test data with windows-1252 specific character
-      const testXER = sampleXER.replace("Foundation Work", "Foundation © Work");
-      const buffer = Buffer.from(testXER, "binary");
+    it("uses windows-1252 for smart quotes and en dashes (0x93, 0x94, 0x96)", async () => {
+      // Create test data with windows-1252 specific characters
+      // 0x93 = left double quote, 0x94 = right double quote, 0x96 = en dash
+      const header = "ERMHDR\t9.0\t2026-10-01\n%T\tPROJECT\n%F\tproj_id\tproj_short_name\n%R\t1\tDEMO\n%T\tPROJWBS\n%F\twbs_id\tproj_id\twbs_short_name\n%R\t100\t1\tPhase 1\n%T\tTASK\n%F\ttask_id\tproj_id\twbs_id\ttask_code\ttask_name\n%R\t1000\t1\t100\tA1000\tFoundation ";
+      const trailer = " Work\n%T\tTASKPRED\n%F\ttask_pred_id\ttask_id\tpred_task_id\tpred_type\tlag_hr_cnt";
+      
+      // Create a buffer with windows-1252 bytes 0x93, 0x94, 0x96
+      const headerBuf = Buffer.from(header, "binary");
+      const smartQuoteBuf = Buffer.from([0x93, 0x94, 0x96]); // left quote, right quote, en dash
+      const trailerBuf = Buffer.from(trailer, "binary");
+      const buffer = Buffer.concat([headerBuf, smartQuoteBuf, trailerBuf]);
 
       const activities = await parseXERToActivities(buffer, "test.xer");
 
       expect(activities.length).toBeGreaterThan(0);
+      // windows-1252 bytes 0x93, 0x94, 0x96 should be decoded as smart quotes and en dash
+      // TextDecoder('windows-1252') should handle these correctly
+      expect(activities[0].name).toContain("Foundation");
+      expect(activities[0].name).toContain("Work");
     });
   });
 

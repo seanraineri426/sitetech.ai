@@ -1,37 +1,102 @@
 /**
- * Microsoft Graph API response types (allowlist-aligned).
+ * Microsoft Graph API response types and Zod schemas (allowlist-aligned).
  */
 
-export interface GraphMessage {
-  id: string;
-  conversationId: string;
-  subject: string;
-  bodyPreview: string;
-  from: {
-    emailAddress: {
-      name: string;
-      address: string;
-    };
-  };
-  toRecipients: Array<{
-    emailAddress: {
-      name: string;
-      address: string;
-    };
-  }>;
-  ccRecipients: Array<{
-    emailAddress: {
-      name: string;
-      address: string;
-    };
-  }>;
-  receivedDateTime: string;
-  sentDateTime: string;
-  hasAttachments: boolean;
-  importance: "low" | "normal" | "high";
-  isRead: boolean;
-  categories: string[];
-}
+import { z } from "zod";
+
+// Zod schemas for validation (passthrough to allow new provider fields)
+const EmailAddressSchema = z.object({
+  name: z.string(),
+  address: z.string(),
+}).passthrough();
+
+const RecipientSchema = z.object({
+  emailAddress: EmailAddressSchema,
+}).passthrough();
+
+export const GraphMessageSchema = z.object({
+  id: z.string(),
+  conversationId: z.string(),
+  subject: z.string(),
+  bodyPreview: z.string(),
+  from: RecipientSchema,
+  toRecipients: z.array(RecipientSchema),
+  ccRecipients: z.array(RecipientSchema),
+  receivedDateTime: z.string(),
+  sentDateTime: z.string(),
+  hasAttachments: z.boolean(),
+  importance: z.enum(["low", "normal", "high"]),
+  isRead: z.boolean(),
+  categories: z.array(z.string()),
+}).passthrough();
+
+const FileHashesSchema = z.object({
+  sha256Hash: z.string().optional(),
+}).passthrough();
+
+const FileSchema = z.object({
+  mimeType: z.string(),
+  hashes: FileHashesSchema,
+}).passthrough();
+
+const FolderSchema = z.object({
+  childCount: z.number(),
+}).passthrough();
+
+const DeletedSchema = z.object({
+  state: z.string(),
+}).passthrough();
+
+const UserSchema = z.object({
+  displayName: z.string(),
+  email: z.string(),
+}).passthrough();
+
+const CreatedBySchema = z.object({
+  user: UserSchema,
+}).passthrough();
+
+const ParentReferenceSchema = z.object({
+  driveId: z.string(),
+  id: z.string(),
+  path: z.string(),
+}).passthrough();
+
+export const GraphDriveItemSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  webUrl: z.string(),
+  size: z.number(),
+  createdDateTime: z.string(),
+  lastModifiedDateTime: z.string(),
+  createdBy: CreatedBySchema,
+  lastModifiedBy: CreatedBySchema,
+  file: FileSchema.optional(),
+  folder: FolderSchema.optional(),
+  parentReference: ParentReferenceSchema,
+  deleted: DeletedSchema.optional(),
+}).passthrough();
+
+export const GraphSiteSchema = z.object({
+  id: z.string(),
+  displayName: z.string(),
+  webUrl: z.string(),
+  createdDateTime: z.string(),
+}).passthrough();
+
+export const GraphMailFolderSchema = z.object({
+  id: z.string(),
+  displayName: z.string(),
+  parentFolderId: z.string().nullable(),
+  childFolderCount: z.number(),
+  unreadItemCount: z.number(),
+  totalItemCount: z.number(),
+}).passthrough();
+
+export type GraphMessage = z.infer<typeof GraphMessageSchema>;
+export type GraphDriveItem = z.infer<typeof GraphDriveItemSchema>;
+export type GraphSite = z.infer<typeof GraphSiteSchema>;
+export type GraphMailFolder = z.infer<typeof GraphMailFolderSchema>;
 
 export const MESSAGE_ALLOWLIST = [
   "id",
@@ -49,44 +114,6 @@ export const MESSAGE_ALLOWLIST = [
   "categories",
 ] as const;
 
-export interface GraphDriveItem {
-  id: string;
-  name: string;
-  webUrl: string;
-  size: number;
-  createdDateTime: string;
-  lastModifiedDateTime: string;
-  createdBy: {
-    user: {
-      displayName: string;
-      email: string;
-    };
-  };
-  lastModifiedBy: {
-    user: {
-      displayName: string;
-      email: string;
-    };
-  };
-  file?: {
-    mimeType: string;
-    hashes: {
-      sha256Hash?: string;
-    };
-  };
-  folder?: {
-    childCount: number;
-  };
-  parentReference: {
-    driveId: string;
-    id: string;
-    path: string;
-  };
-  deleted?: {
-    state: string;
-  };
-}
-
 export const DRIVEITEM_ALLOWLIST = [
   "id",
   "name",
@@ -101,19 +128,3 @@ export const DRIVEITEM_ALLOWLIST = [
   "parentReference",
   "deleted",
 ] as const;
-
-export interface GraphSite {
-  id: string;
-  displayName: string;
-  webUrl: string;
-  createdDateTime: string;
-}
-
-export interface GraphMailFolder {
-  id: string;
-  displayName: string;
-  parentFolderId: string | null;
-  childFolderCount: number;
-  unreadItemCount: number;
-  totalItemCount: number;
-}

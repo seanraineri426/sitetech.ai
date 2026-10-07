@@ -148,6 +148,44 @@ export interface NormalizedScheduleActivity {
   }>;
 }
 
+export interface NormalizedEmail {
+  // Entity identification
+  entity_type: "email";
+  external_id: string;
+  fingerprint: string;
+  
+  // Source identifiers
+  source_mailbox: string;
+  
+  // Core fields
+  subject: string;
+  body_preview: string;
+  from: {
+    name: string;
+    address: string;
+  };
+  to_recipients: Array<{
+    name: string;
+    address: string;
+  }>;
+  cc_recipients: Array<{
+    name: string;
+    address: string;
+  }>;
+  
+  // Dates (ISO-8601 UTC strings)
+  received_at: string;
+  sent_at: string;
+  received_at_source: "graph" | "forwarded_text";
+  
+  // Metadata
+  has_attachments: boolean;
+  importance: "low" | "normal" | "high";
+  is_read: boolean;
+  categories: string[];
+  conversation_id: string;
+}
+
 /**
  * Raw record shape for storage layer.
  * Contains allowlisted payload and fingerprint.
