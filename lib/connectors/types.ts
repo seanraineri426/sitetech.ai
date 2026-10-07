@@ -114,11 +114,12 @@ export interface NormalizedSubmittal {
 export interface NormalizedScheduleActivity {
   // Entity identification
   entity_type: "schedule_activity";
-  external_id: string;
+  external_id: string; // Composite: {proj_short_name}:{task_code}
   fingerprint: string;
   
   // Source identifiers
   source_project_id: string;
+  task_id: string; // Internal P6 task_id (not in fingerprint)
   
   // Core fields
   activity_code: string | null;

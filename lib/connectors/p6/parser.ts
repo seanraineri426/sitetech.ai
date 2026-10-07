@@ -211,27 +211,21 @@ function buildPredecessorIndex(
 }
 
 /**
- * Parse XER date with timezone offset.
- * XER dates are in project local time without timezone info.
+ * Parse XER date to ISO date format (date only, no time or timezone).
+ * 
+ * XER dates are project-local wall-clock times with NO timezone information.
+ * The rules layer applies projects.timezone for interpretation.
  * We extract just the date part (yyyy-mm-dd) for date-only fields.
  * 
  * @param dateStr XER date string (yyyy-mm-dd hh:mm)
- * @param timezoneOffset Hours offset from UTC (e.g., -8 for PST) - for future timezone-aware conversions
  * @returns ISO date string (date only, no time)
  */
-function parseXERDate(dateStr: string | null, timezoneOffset: number): string | null {
+function parseXERDate(dateStr: string | null): string | null {
   if (!dateStr || dateStr === "") return null;
 
   try {
-    // For now, extract date part only
-    // timezoneOffset reserved for future date-time conversions with proper timezone handling
+    // Extract date part only - XER dates are wall-clock times with no zone
     const [datePart] = dateStr.split(" ");
-    
-    if (timezoneOffset !== 0) {
-      // Timezone conversion could be applied here for date-time fields
-      // Current implementation focuses on date-only fields
-    }
-    
     return datePart || null;
   } catch {
     return null;
@@ -255,12 +249,10 @@ function hoursToDays(hours: string | null): number | null {
  * 
  * @param input Buffer or Readable stream
  * @param sourceFile Source filename for metadata
- * @param projectTimezone Timezone offset in hours for date parsing (e.g., -8 for PST)
  */
 export async function parseXERToActivities(
   input: Buffer | Readable,
-  sourceFile: string,
-  projectTimezone = 0
+  sourceFile: string
 ): Promise<NormalizedScheduleActivity[]> {
   const tables = await parseXERStream(input);
 
@@ -283,7 +275,10 @@ export async function parseXERToActivities(
   const wbsMap = buildWBSMap(tables);
   const predIndex = buildPredecessorIndex(tables);
 
-  const activities: NormalizedScheduleActivity[] = [];
+  // First pass: build task_id to composite external_id map
+  // Guard empty task_code - skip with warning
+  const taskIdToExternalId = new Map<string, string>();
+  const validTasks: XERTask[] = [];
 
   for (const row of taskTable.rows) {
     const task: XERTask = {
@@ -305,20 +300,46 @@ export async function parseXERToActivities(
       status_code: row.status_code || "",
     };
 
-    const predecessors = (predIndex.get(task.task_id) || []).map((pred) => ({
-      activity_id: pred.pred_task_id,
-      type: PRED_TYPE_MAP[pred.pred_type] || "FS",
-      lag: hoursToDays(pred.lag_hr_cnt),
-    }));
+    // Guard empty task_code: skip + warning, never emit colliding PROJ: IDs
+    if (!task.task_code || task.task_code.trim() === "") {
+      console.warn(`[P6 Parser] Skipping task ${task.task_id} with empty task_code in project ${task.proj_id}`);
+      continue;
+    }
 
+    const projShortName = projectMap.get(task.proj_id) || task.proj_id;
+    const externalId = `${projShortName}:${task.task_code}`;
+    taskIdToExternalId.set(task.task_id, externalId);
+    validTasks.push(task);
+  }
+
+  // Second pass: build activities with mapped predecessors
+  const activities: NormalizedScheduleActivity[] = [];
+
+  for (const task of validTasks) {
     const wbsPath = wbsMap.get(task.wbs_id) || null;
     const totalFloat = hoursToDays(task.total_float_hr_cnt);
     const isCritical = totalFloat !== null && totalFloat <= 0;
 
-    // Build composite external_id: {proj_short_name}:{task_code}
     const projShortName = projectMap.get(task.proj_id) || task.proj_id;
     const externalId = `${projShortName}:${task.task_code}`;
 
+    // Map predecessors to composite IDs, not raw pred_task_id
+    const predecessors = (predIndex.get(task.task_id) || [])
+      .map((pred) => {
+        const predExternalId = taskIdToExternalId.get(pred.pred_task_id);
+        if (!predExternalId) {
+          // Predecessor task was skipped (empty task_code) or doesn't exist
+          return null;
+        }
+        return {
+          activity_id: predExternalId, // Composite ID, not internal P6 task_id
+          type: PRED_TYPE_MAP[pred.pred_type] || "FS",
+          lag: hoursToDays(pred.lag_hr_cnt),
+        };
+      })
+      .filter((p): p is NonNullable<typeof p> => p !== null);
+
+    // Fingerprint: keep internal P6 task_id OUT of fingerprint
     const fingerprintData = {
       proj_id: task.proj_id,
       task_code: task.task_code,
@@ -331,7 +352,7 @@ export async function parseXERToActivities(
       phys_complete_pct: task.phys_complete_pct,
       total_float_hr_cnt: task.total_float_hr_cnt,
       status_code: task.status_code,
-      predecessors,
+      predecessors, // Composite IDs only
     };
 
     const fingerprint = createHash("sha256")
@@ -344,19 +365,20 @@ export async function parseXERToActivities(
       fingerprint,
       
       source_project_id: task.proj_id,
+      task_id: task.task_id, // Internal P6 ID (not in fingerprint)
       
       activity_code: task.task_code || null,
       name: task.task_name,
       wbs: wbsPath,
       
-      planned_start: parseXERDate(task.target_start_date, projectTimezone),
-      planned_finish: parseXERDate(task.target_end_date, projectTimezone),
-      actual_start: parseXERDate(task.act_start_date, projectTimezone),
-      actual_finish: parseXERDate(task.act_end_date, projectTimezone),
-      early_start: parseXERDate(task.early_start_date, projectTimezone),
-      early_finish: parseXERDate(task.early_end_date, projectTimezone),
-      late_start: parseXERDate(task.late_start_date, projectTimezone),
-      late_finish: parseXERDate(task.late_end_date, projectTimezone),
+      planned_start: parseXERDate(task.target_start_date),
+      planned_finish: parseXERDate(task.target_end_date),
+      actual_start: parseXERDate(task.act_start_date),
+      actual_finish: parseXERDate(task.act_end_date),
+      early_start: parseXERDate(task.early_start_date),
+      early_finish: parseXERDate(task.early_end_date),
+      late_start: parseXERDate(task.late_start_date),
+      late_finish: parseXERDate(task.late_end_date),
       
       percent_complete: parsePercent(task.phys_complete_pct),
       total_float: totalFloat,

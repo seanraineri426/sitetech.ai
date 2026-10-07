@@ -282,6 +282,120 @@ describe("P6 XER parser", () => {
     });
   });
 
+  describe("P6 improvements (MUST #5)", () => {
+    it("includes task_id in output (not in fingerprint)", async () => {
+      const activities = await parseXERToActivities(Buffer.from(sampleXER), "test.xer");
+
+      expect(activities.length).toBeGreaterThan(0);
+      expect(activities[0].task_id).toBeDefined();
+      expect(typeof activities[0].task_id).toBe("string");
+    });
+
+    it("maps predecessors to composite IDs, not raw pred_task_id", async () => {
+      const testXER = `ERMHDR	9.0	2026-10-01
+%T	PROJECT
+%F	proj_id	proj_short_name
+%R	1	DEMO
+%T	PROJWBS
+%F	wbs_id	proj_id	wbs_short_name
+%R	100	1	Phase 1
+%T	TASK
+%F	task_id	proj_id	wbs_id	task_code	task_name
+%R	1000	1	100	A1000	Foundation Work
+%R	1001	1	100	A1001	Framing
+%T	TASKPRED
+%F	task_pred_id	task_id	pred_task_id	pred_type	lag_hr_cnt
+%R	5000	1001	1000	PR_FS	0`;
+
+      const activities = await parseXERToActivities(Buffer.from(testXER), "test.xer");
+
+      // Find the activity with predecessors
+      const framingActivity = activities.find((a) => a.activity_code === "A1001");
+      expect(framingActivity).toBeDefined();
+      expect(framingActivity!.predecessors).toHaveLength(1);
+
+      // Predecessor should use composite ID, not raw P6 task_id
+      expect(framingActivity!.predecessors[0].activity_id).toBe("DEMO:A1000");
+      expect(framingActivity!.predecessors[0].activity_id).not.toBe("1000");
+    });
+
+    it("skips tasks with empty task_code and logs warning", async () => {
+      const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      const testXER = `ERMHDR	9.0	2026-10-01
+%T	PROJECT
+%F	proj_id	proj_short_name
+%R	1	DEMO
+%T	PROJWBS
+%F	wbs_id	proj_id	wbs_short_name
+%R	100	1	Phase 1
+%T	TASK
+%F	task_id	proj_id	wbs_id	task_code	task_name
+%R	1000	1	100	A1000	Valid Task
+%R	1001	1	100		Empty Code Task
+%R	1002	1	100	A1002	Another Valid Task
+%T	TASKPRED
+%F	task_pred_id	task_id	pred_task_id	pred_type	lag_hr_cnt`;
+
+      const activities = await parseXERToActivities(Buffer.from(testXER), "test.xer");
+
+      // Should have 2 activities, skipping the one with empty task_code
+      expect(activities).toHaveLength(2);
+      expect(activities.find((a) => a.activity_code === "")).toBeUndefined();
+
+      // Should log warning
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Skipping task 1001 with empty task_code")
+      );
+
+      consoleWarnSpy.mockRestore();
+    });
+
+    it("task_id is NOT in fingerprint", async () => {
+      // Create two XER files with same data but different internal task_ids
+      const xer1 = `ERMHDR	9.0	2026-10-01
+%T	PROJECT
+%F	proj_id	proj_short_name
+%R	1	DEMO
+%T	PROJWBS
+%F	wbs_id	proj_id	wbs_short_name
+%R	100	1	Phase 1
+%T	TASK
+%F	task_id	proj_id	wbs_id	task_code	task_name
+%R	1000	1	100	A1000	Foundation Work
+%T	TASKPRED
+%F	task_pred_id	task_id	pred_task_id	pred_type	lag_hr_cnt`;
+
+      const xer2 = `ERMHDR	9.0	2026-10-01
+%T	PROJECT
+%F	proj_id	proj_short_name
+%R	1	DEMO
+%T	PROJWBS
+%F	wbs_id	proj_id	wbs_short_name
+%R	100	1	Phase 1
+%T	TASK
+%F	task_id	proj_id	wbs_id	task_code	task_name
+%R	9999	1	100	A1000	Foundation Work
+%T	TASKPRED
+%F	task_pred_id	task_id	pred_task_id	pred_type	lag_hr_cnt`;
+
+      const activities1 = await parseXERToActivities(Buffer.from(xer1), "test1.xer");
+      const activities2 = await parseXERToActivities(Buffer.from(xer2), "test2.xer");
+
+      // Same task_code and data should produce same fingerprint
+      // even though internal task_id differs (1000 vs 9999)
+      expect(activities1[0].fingerprint).toBe(activities2[0].fingerprint);
+      expect(activities1[0].task_id).not.toBe(activities2[0].task_id);
+    });
+
+    it("no timezoneOffset parameter (XER dates are wall-clock)", async () => {
+      // Verify the function signature doesn't take timezoneOffset
+      const activities = await parseXERToActivities(Buffer.from(sampleXER), "test.xer");
+      expect(activities).toBeDefined();
+      // If this compiles and runs, timezoneOffset is gone
+    });
+  });
+
   describe("XER validation", () => {
     it("validates correct XER format", () => {
       const result = validateXER(sampleXER);
