@@ -519,15 +519,21 @@ describe("Procore mappers", () => {
   });
 
   describe("Docs fixtures validation", () => {
-    it("validates RFI docs fixture", async () => {
-      const rfiFixture = await import("../../../../fixtures/procore/docs/rfi-with-questions.json");
-      const result = ProcoreRFISchema.safeParse(rfiFixture.default);
+    it("validates RFI docs fixture", () => {
+      const fs = require("fs");
+      const path = require("path");
+      const fixturePath = path.join(__dirname, "../../../../fixtures/procore/docs/rfi-with-questions.json");
+      const rfiFixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
+      const result = ProcoreRFISchema.safeParse(rfiFixture);
       expect(result.success).toBe(true);
     });
 
-    it("validates Submittal docs fixture", async () => {
-      const submittalFixture = await import("../../../../fixtures/procore/docs/submittal-with-approvers.json");
-      const result = ProcoreSubmittalSchema.safeParse(submittalFixture.default);
+    it("validates Submittal docs fixture", () => {
+      const fs = require("fs");
+      const path = require("path");
+      const fixturePath = path.join(__dirname, "../../../../fixtures/procore/docs/submittal-with-approvers.json");
+      const submittalFixture = JSON.parse(fs.readFileSync(fixturePath, "utf-8"));
+      const result = ProcoreSubmittalSchema.safeParse(submittalFixture);
       expect(result.success).toBe(true);
     });
   });
