@@ -523,7 +523,10 @@ describe("Procore mappers", () => {
       const { readFileSync } = await import("fs");
       const { join } = await import("path");
       const fixturePath = join(__dirname, "../../../../fixtures/procore/docs/rfi-with-questions.json");
-      const rfiFixture = JSON.parse(readFileSync(fixturePath, "utf-8"));
+      const content = readFileSync(fixturePath, "utf-8");
+      // Strip leading comment block (/** ... */)
+      const jsonContent = content.replace(/^\/\*\*[\s\S]*?\*\/\s*/, "");
+      const rfiFixture = JSON.parse(jsonContent);
       const result = ProcoreRFISchema.safeParse(rfiFixture);
       expect(result.success).toBe(true);
     });
@@ -532,7 +535,10 @@ describe("Procore mappers", () => {
       const { readFileSync } = await import("fs");
       const { join } = await import("path");
       const fixturePath = join(__dirname, "../../../../fixtures/procore/docs/submittal-with-approvers.json");
-      const submittalFixture = JSON.parse(readFileSync(fixturePath, "utf-8"));
+      const content = readFileSync(fixturePath, "utf-8");
+      // Strip leading comment block (/** ... */)
+      const jsonContent = content.replace(/^\/\*\*[\s\S]*?\*\/\s*/, "");
+      const submittalFixture = JSON.parse(jsonContent);
       const result = ProcoreSubmittalSchema.safeParse(submittalFixture);
       expect(result.success).toBe(true);
     });
