@@ -59,6 +59,25 @@ export class ProcoreClient {
     this.config = ProcoreConfigSchema.parse(config);
     this.apiOrigin = new URL(this.config.baseUrl).origin;
     this.authOrigin = new URL(this.config.authUrl).origin;
+
+    // Pin to known Procore hosts
+    const allowedApiOrigins = [
+      "https://api.procore.com",
+      "https://sandbox.procore.com",
+      "https://api-staging.procore.com", // Internal staging
+    ];
+    const allowedAuthOrigins = [
+      "https://login.procore.com",
+      "https://login-sandbox.procore.com",
+      "https://login-staging.procore.com", // Internal staging
+    ];
+
+    if (!allowedApiOrigins.includes(this.apiOrigin)) {
+      throw new Error(`Procore baseUrl not in allowlist: ${this.apiOrigin}`);
+    }
+    if (!allowedAuthOrigins.includes(this.authOrigin)) {
+      throw new Error(`Procore authUrl not in allowlist: ${this.authOrigin}`);
+    }
   }
 
   /**
@@ -90,6 +109,7 @@ export class ProcoreClient {
         client_id: this.config.clientId,
         client_secret: this.config.clientSecret,
       }),
+      signal: AbortSignal.timeout(30000), // 30s timeout
     });
 
     if (!response.ok) {
@@ -142,6 +162,7 @@ export class ProcoreClient {
             Accept: "application/json",
           },
           redirect: "error",
+          signal: AbortSignal.timeout(30000), // 30s request timeout
         }),
       {
         maxRetries: 3,

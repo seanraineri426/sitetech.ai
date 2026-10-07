@@ -82,6 +82,7 @@ export class GraphClient {
         client_secret: this.config.clientSecret,
         scope: this.config.scopes.join(" "),
       }),
+      signal: AbortSignal.timeout(30000), // 30s timeout
     });
 
     if (!response.ok) {
@@ -155,6 +156,7 @@ export class GraphClient {
             "User-Agent": "ISV|SiteTech|1.0",
           },
           redirect: "error",
+          signal: AbortSignal.timeout(30000), // 30s request timeout
         }),
       {
         maxRetries: 3,

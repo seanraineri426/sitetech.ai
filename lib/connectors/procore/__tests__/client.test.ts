@@ -192,20 +192,13 @@ describe("ProcoreClient", () => {
     });
 
     it("rejects token URL origin mismatch", async () => {
-      const client = new ProcoreClient({
-        ...mockConfig,
-        authUrl: "https://fake.procore.test",
-      });
-
-      // Try to get token with mismatched origin in internal state
-      const clientInternal = client as unknown as {
-        authOrigin: string;
-        config: { authUrl: string };
-        getAccessToken: () => Promise<string>;
-      };
-
-      // Verify the origin check would work
-      expect(clientInternal.authOrigin).toBe("https://fake.procore.test");
+      // Constructor should throw when authUrl is not in allowlist
+      expect(() => {
+        new ProcoreClient({
+          ...mockConfig,
+          authUrl: "https://fake.procore.test",
+        });
+      }).toThrow("Procore authUrl not in allowlist");
     });
   });
 
