@@ -111,8 +111,8 @@ export const ProcoreSubmittalSchema = z.object({
   revision: z.string().nullable(),
   status: z.string(),
   specification_section: z.string().nullable(),
-  location: ProcoreLocationSchema.nullable(),
-  cost_code: ProcoreCostCodeSchema.nullable(),
+  location: ProcoreLocationSchema.nullish(), // CTO dropped; optional for backward compat
+  cost_code: ProcoreCostCodeSchema.nullish(), // CTO dropped; optional for backward compat
   created_at: z.string(),
   updated_at: z.string(),
   received_date: z.string().nullable(),

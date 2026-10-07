@@ -121,3 +121,32 @@ export function emailToRawRecord(email: NormalizedEmail): RawRecord {
     fingerprint: email.fingerprint,
   };
 }
+
+/**
+ * Strip email addresses from DriveItem user objects before storage/fingerprint.
+ * CTO Decision (2026-10-07): createdBy.user.email and lastModifiedBy.user.email DROPPED.
+ * Returns only {displayName, id}.
+ */
+export function stripDriveItemEmails(item: any): any {
+  const result = { ...item };
+  
+  if (result.createdBy?.user) {
+    result.createdBy = {
+      user: {
+        displayName: result.createdBy.user.displayName,
+        id: result.createdBy.user.id,
+      },
+    };
+  }
+  
+  if (result.lastModifiedBy?.user) {
+    result.lastModifiedBy = {
+      user: {
+        displayName: result.lastModifiedBy.user.displayName,
+        id: result.lastModifiedBy.user.id,
+      },
+    };
+  }
+  
+  return result;
+}

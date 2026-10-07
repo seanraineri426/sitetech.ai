@@ -292,4 +292,39 @@ describe("Microsoft Graph fetchers", () => {
       expect(page2.checkpoint).toContain("delta-final");
     });
   });
+
+  describe("shouldResync (410 detection)", () => {
+    it("detects 410 by status property, not message text", () => {
+      const { shouldResync } = require("../fetchers");
+      
+      // Error with status property (typed error from client)
+      const error410 = new Error("Graph API error: 410 (code: GONE)");
+      (error410 as any).status = 410;
+      
+      expect(shouldResync(error410)).toBe(true);
+    });
+
+    it("returns false for non-410 status", () => {
+      const { shouldResync } = require("../fetchers");
+      
+      const error404 = new Error("Graph API error: 404 (code: NOT_FOUND)");
+      (error404 as any).status = 404;
+      
+      expect(shouldResync(error404)).toBe(false);
+    });
+
+    it("returns false when no status property present", () => {
+      const { shouldResync } = require("../fetchers");
+      
+      const error = new Error("Some other error");
+      expect(shouldResync(error)).toBe(false);
+    });
+
+    it("returns false for null/undefined", () => {
+      const { shouldResync } = require("../fetchers");
+      
+      expect(shouldResync(null)).toBe(false);
+      expect(shouldResync(undefined)).toBe(false);
+    });
+  });
 });

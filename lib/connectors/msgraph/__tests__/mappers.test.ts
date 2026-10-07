@@ -230,4 +230,53 @@ describe("Microsoft Graph mappers", () => {
       expect(source).toBe("forwarded_text");
     });
   });
+
+  describe("DriveItem email stripping", () => {
+    it("strips emails from createdBy and lastModifiedBy", () => {
+      const { stripDriveItemEmails } = require("../mappers");
+      
+      const driveItem = {
+        id: "item123",
+        name: "document.pdf",
+        createdBy: {
+          user: {
+            displayName: "Alice Creator",
+            id: "user-123",
+            email: "alice@example.com",
+          },
+        },
+        lastModifiedBy: {
+          user: {
+            displayName: "Bob Modifier",
+            id: "user-456",
+            email: "bob@example.com",
+          },
+        },
+      };
+
+      const stripped = stripDriveItemEmails(driveItem);
+
+      // Emails must not be present
+      expect(stripped.createdBy.user.email).toBeUndefined();
+      expect(stripped.lastModifiedBy.user.email).toBeUndefined();
+
+      // displayName and id must be preserved
+      expect(stripped.createdBy.user.displayName).toBe("Alice Creator");
+      expect(stripped.createdBy.user.id).toBe("user-123");
+      expect(stripped.lastModifiedBy.user.displayName).toBe("Bob Modifier");
+      expect(stripped.lastModifiedBy.user.id).toBe("user-456");
+    });
+
+    it("handles missing createdBy/lastModifiedBy gracefully", () => {
+      const { stripDriveItemEmails } = require("../mappers");
+      
+      const driveItem = {
+        id: "item123",
+        name: "document.pdf",
+      };
+
+      const stripped = stripDriveItemEmails(driveItem);
+      expect(stripped).toEqual(driveItem);
+    });
+  });
 });

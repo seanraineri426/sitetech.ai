@@ -6,7 +6,7 @@ Standalone, pure-TypeScript connector modules for Procore, Microsoft Graph (Mail
 
 ## Test Status
 
-✅ **175/175 tests passing** (9 test files)
+✅ **178/178 tests passing** (9 test files)
 - Procore client: 27 tests
 - Procore mappers: 41 tests  
 - Procore fetchers: 8 tests

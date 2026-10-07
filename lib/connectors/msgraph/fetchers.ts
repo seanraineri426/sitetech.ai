@@ -92,11 +92,12 @@ export async function fetchDriveDelta(
 
 /**
  * Check if a 410 Gone error means resync is required.
- * Detect by status code, not error text.
+ * Detects by HTTP status code (not error message text).
  */
 export function shouldResync(error: unknown): boolean {
-  if (error instanceof Error) {
-    return error.message.includes("410");
+  // Check for status property (typed errors from client)
+  if (error && typeof error === "object" && "status" in error) {
+    return (error as any).status === 410;
   }
   return false;
 }

@@ -365,8 +365,8 @@ export function mapProcoreSubmittalToNormalized(
     scheduled_task: submittal.scheduled_task
       ? {
           id: String(submittal.scheduled_task.id),
-          code: submittal.scheduled_task.code,
           name: submittal.scheduled_task.name,
+          // code not on CTO allowlist - omitted
         }
       : null,
   };

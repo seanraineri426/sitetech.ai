@@ -17,6 +17,7 @@ import {
   RFI_ALLOWLIST,
   SUBMITTAL_ALLOWLIST,
 } from "../mappers";
+import { ProcoreRFISchema, ProcoreSubmittalSchema } from "../types";
 import type { ProcoreRFI, ProcoreSubmittal } from "../types";
 
 describe("Procore mappers", () => {
@@ -514,6 +515,20 @@ describe("Procore mappers", () => {
       const submittal = { ...mockSubmittal, scheduled_task: null };
       const normalized = mapProcoreSubmittalToNormalized(submittal);
       expect(normalized.scheduled_task).toBeNull();
+    });
+  });
+
+  describe("Docs fixtures validation", () => {
+    it("validates RFI docs fixture", async () => {
+      const rfiFixture = await import("@/fixtures/procore/docs/rfi-with-questions.json");
+      const result = ProcoreRFISchema.safeParse(rfiFixture);
+      expect(result.success).toBe(true);
+    });
+
+    it("validates Submittal docs fixture", async () => {
+      const submittalFixture = await import("@/fixtures/procore/docs/submittal-with-approvers.json");
+      const result = ProcoreSubmittalSchema.safeParse(submittalFixture);
+      expect(result.success).toBe(true);
     });
   });
 });

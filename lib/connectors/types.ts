@@ -106,8 +106,8 @@ export interface NormalizedSubmittal {
   // Schedule linkage
   scheduled_task: {
     id: string | null;
-    code: string | null;
     name: string | null;
+    // code not on CTO allowlist
   } | null;
 }
 
