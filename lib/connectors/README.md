@@ -1,135 +1,207 @@
 # SiteTech Connector Building Blocks
 
-Standalone, pure-TypeScript connector modules for Procore, Microsoft Graph (Mail/SharePoint), and P6 XER parsing. These will be wired into the shared connector interface once it lands.
+Standalone, pure-TypeScript connector modules for Procore, Microsoft Graph (Mail/SharePoint), and P6 XER parsing.
+
+---
+
+## Test Status
+
+✅ **175/175 tests passing** (9 test files)
+- Procore client: 27 tests
+- Procore mappers: 41 tests  
+- Procore fetchers: 8 tests
+- Graph client: 30 tests
+- Graph mappers: 25 tests
+- Graph fetchers: 12 tests
+- P6 parser: 30 tests
+- Shared retry: 15 tests
+- Canonical stringify: 7 tests
+
+---
 
 ## Structure
 
 ```
 lib/connectors/
-├── types.ts                 # Provisional normalized types
-├── procore/                 # Procore REST API connector
-│   ├── client.ts           # GET-only HTTP client with OAuth
-│   ├── types.ts            # Procore API response types
-│   ├── mappers.ts          # Field allowlists and mapping functions
-│   ├── fetchers.ts         # Typed fetchers for RFIs and Submittals
-│   └── __tests__/          # Full test coverage
-├── msgraph/                # Microsoft Graph connector
-│   ├── client.ts           # GET-only HTTP client with delta sync
-│   ├── types.ts            # Graph API response types
-│   ├── fetchers.ts         # Mail and SharePoint delta fetchers
-│   └── __tests__/          # Full test coverage
-└── p6/                     # P6 XER parser
-    ├── parser.ts           # Tab-delimited XER format parser
-    └── __tests__/          # Full test coverage
+├── types.ts                 # Normalized types
+├── shared/
+│   ├── retry.ts            # Shared retry with Retry-After + backoff
+│   └── canonical-stringify.ts  # Deterministic fingerprinting
+├── procore/
+│   ├── client.ts           # GET-only OAuth client
+│   ├── types.ts            # Zod schemas (docs-derived, sandbox pending)
+│   ├── mappers.ts          # Allowlist + fingerprinting
+│   ├── fetchers.ts         # RFI/Submittal/Project fetchers
+│   └── __tests__/
+├── msgraph/
+│   ├── client.ts           # GET-only client with delta sync
+│   ├── types.ts            # Zod schemas  
+│   ├── mappers.ts          # Email mapper with domain fingerprinting
+│   ├── fetchers.ts         # Page-by-page delta fetchers
+│   └── __tests__/
+└── p6/
+    ├── parser.ts           # Streaming XER parser
+    └── __tests__/
 ```
 
-## Features Implemented
+---
 
-### 1. Procore Client (`lib/connectors/procore/`)
+## Features
 
-**OAuth & HTTP:**
-- ✅ Client credentials flow (DMSA) with in-memory token caching
-- ✅ Sandbox and production base URLs configurable via env
-- ✅ GET-only enforcement (throws on POST/PUT/PATCH/DELETE)
-- ✅ Required `Procore-Company-Id` header on all requests
-- ✅ Pagination handling via Link headers
-- ✅ Rate limit handling (429 + `X-Rate-Limit-*` headers with exponential backoff)
-- ✅ 503 with `Retry-After` support
-- ✅ Record mode for fixture generation (writes to `fixtures/procore/`)
+### Procore Client
 
-**Typed Fetchers:**
-- ✅ `fetchRFIs()` - paginated RFI fetch with `updated_since` filter
-- ✅ `fetchSubmittals()` - paginated Submittal fetch with `updated_since` filter
-- ✅ `listRFIIds()` - ID-only listing for deletion detection
-- ✅ `listSubmittalIds()` - ID-only listing for deletion detection
+**Security:**
+- ✅ GET-only enforcement at request chokepoint (before token attached)
+- ✅ Foreign origin URLs blocked before token reaches fetch
+- ✅ Token endpoint pinned (`PROCORE_AUTH_URL`)
+- ✅ `redirect: 'error'` (no silent redirects)
+- ✅ Request timeout via AbortSignal
 
-**Field Allowlists (CTO-approved 2026-10-06):**
+**OAuth:**
+- ✅ Client credentials (DMSA) with in-memory token cache (5min buffer)
 
-**RFI:**
-- Core: `id`, `number`, `subject`, `question`, `official_response`, `status`
-- Location/Classification: `location`, `cost_code`, `specification_section`, `drawing_number`
-- People: `ball_in_court`, `assignees`, `responsible_contractor`, `rfi_manager`, `received_from`
-- Dates: `initiated_at`, `due_date`, `created_at`, `updated_at`
-- Impact: `cost_impact` (raw structure: `{status, value}`), `schedule_impact` (raw structure: `{status, value}`)
-- **Never stored:** attachments, file data
-- **Not computed here:** `is_overdue`, `days_overdue` (rules layer owns these)
+**Resilience:**
+- ✅ Retry-After (seconds + HTTP-date), exponential backoff with jitter
+- ✅ 60s max wait cap, RateLimitError when Retry-After exceeds cap
+- ✅ Response body cancellation on retry
+- ✅ Procore rate limit header logging
 
-**Submittal:**
-- Core: `id`, `number`, `title`, `revision`, `status`, `specification_section`
-- Location/Classification: `location`, `cost_code`
-- People: `responsible_contractor`, `ball_in_court`, `approvers[]` (with full revision history)
-- Dates: `created_at`, `updated_at`, `received_date`, `due_date`, `required_on_site_date`
-- Timing: `lead_time`, `design_team_review_time`, `internal_review_time`, `buffer_time`
-- Schedule: `scheduled_task` (linked activity)
-- **Explicitly excluded:** `description` field
-- **Never stored:** attachments, file data
-- **Preserves:** `revise_resubmit` as an approver response (not collapsed)
+**Validation:**
+- ✅ Zod validation for ALL API responses (RFI, Submittal, Project)
+- ✅ Tolerant schemas (`.passthrough()`) allow new provider fields
+- ✅ Malformed payloads yield ZodError without body exposure
 
-**Fingerprinting:**
-- ✅ SHA-256 hash of allowlisted fields (sorted keys for stability)
-- ✅ Used for change detection
-- ✅ Tested for stability (same input → same hash)
+**Pagination:**
+- ✅ Link header parsing with per-page Zod validation
 
-### 2. Microsoft Graph Client (`lib/connectors/msgraph/`)
+### Microsoft Graph Client
 
-**OAuth & HTTP:**
-- ✅ App-only client credentials (multi-tenant support)
-- ✅ GET-only enforcement (throws on write verbs)
-- ✅ Throttling handling (429, 503 with `Retry-After`)
-- ✅ `@odata.nextLink` pagination
-- ✅ `ISV|SiteTech|1.0` User-Agent for SharePoint throttling optimization
+**Security:**
+- ✅ GET-only enforcement (PUT/PATCH/DELETE blocked before token attached)
+- ✅ Scoped to `/users/{mailbox}/` and `/sites/{siteId}/` (decoded path segments)
+- ✅ Foreign host and foreign nextLink blocked before token attached
+- ✅ Handles nextLinks with plain commas/@ signs (not just URL-encoded)
+- ✅ `redirect: 'error'`
+- ✅ Request timeout via AbortSignal
+
+**OAuth:**
+- ✅ App-only client credentials with in-memory token cache
+
+**Resilience:**
+- ✅ Retry-After, backoff, 60s cap, RateLimitError
+- ✅ 410 detection by HTTP status (not error text)
+- ✅ Response body cancellation on retry
+
+**Validation:**
+- ✅ Zod validation for paginate and delta pages (Message, DriveItem, MailFolder, Site)
 
 **Delta Sync:**
-- ✅ `delta()` method with `@odata.deltaLink` state management
-- ✅ Tracks `@removed` items for deletions
-- ✅ Supports starting from previous `deltaLink` or fresh sync
-- ✅ `getLatestDeltaLink()` for initializing without full fetch
+- ✅ Returns ONE page with checkpoint (nextLink or deltaLink)
+- ✅ Fetcher drives the loop page-by-page for mid-run resumability
+- ✅ Handles `@removed` and `deleted` facet for deletions
 
-**Fetchers:**
-- ✅ `fetchMailFolderDelta()` - per-folder mail delta (Inbox, Sent Items)
-- ✅ `fetchMailDelta()` - combined multi-folder delta with state per folder
-- ✅ `fetchDriveDelta()` - SharePoint drive delta (Sites.Selected model)
-- ✅ `$select` parameter to fetch only allowlisted fields (no attachment content)
+### P6 XER Parser
 
-**Field Allowlists:**
-- **Message:** `id`, `conversationId`, `subject`, `bodyPreview`, `from`, `to/ccRecipients`, `receivedDateTime`, `hasAttachments`, `categories` (no `body.content` or attachment data)
-- **DriveItem:** `id`, `name`, `webUrl`, `size`, `createdDateTime`, `lastModifiedDateTime`, `file/folder`, `parentReference` (no file content)
-
-### 3. P6 XER Parser (`lib/connectors/p6/`)
-
-**Format Support:**
-- ✅ Tab-delimited XER format (`%T`, `%F`, `%R` lines)
-- ✅ Extracts `PROJECT`, `PROJWBS`, `TASK`, `TASKPRED` tables
-- ✅ Handles Windows (CRLF) and Unix (LF) line endings
-- ✅ Validates XER format before parsing
+**Format:**
+- ✅ Tab-delimited XER (`%T`, `%F`, `%R`)
+- ✅ Streaming via readline over decoded text (not buffered)
+- ✅ Encoding detection: UTF-8 BOM or windows-1252
+- ✅ True `TextDecoder('windows-1252')` for bytes 0x80-0x9F (smart quotes, en-dash)
 
 **Mapping:**
-- ✅ Builds full WBS paths (e.g., "Project Root / Phase 1")
-- ✅ Parses XER dates (ISO date only, no time)
-- ✅ Converts percent complete (0-100 → 0-1 decimal)
-- ✅ Converts float hours to days (÷8)
-- ✅ Identifies critical activities (total float ≤ 0)
-- ✅ Maps predecessors with type (FS/SS/FF/SF) and lag
+- ✅ External ID: `{proj_short_name}:{task_code}` composite
+- ✅ task_id: Internal P6 ID (output field, NOT in fingerprint)
+- ✅ Predecessors mapped to composite IDs, not raw P6 task_id
+- ✅ Guards empty task_code: skip + warning, never emit colliding `PROJ:` IDs
+- ✅ XER dates are project-local wall-clock times with NO timezone (rules layer applies projects.timezone)
+- ✅ Single-pass TASKPRED indexing
 
-**Output:**
-- ✅ `NormalizedScheduleActivity[]` with all required fields
-- ✅ Stable fingerprints for change detection
-- ✅ Source metadata (`source_system: "p6_xer"`, `source_file`, `parsed_at`)
+---
 
-## Provisional Normalized Types
+## CTO-Approved Allowlists (2026-10-07)
 
-Defined in `lib/connectors/types.ts`:
+### RFI
+```typescript
+[
+  "id", "number", "subject",
+  "questions", // Array with answers[] - derived: question, official_response
+  "status",
+  "location", // Object: {id, name} - KEEP per CTO
+  "cost_code", // Object: {id, code, name}
+  "assignees", // Array: {id, name} NO login/email
+  "responsible_contractor", // Object: {id, name}
+  "initiated_at", "due_date", "created_at", "updated_at",
+  "cost_impact", // Object: {status, value}
+  "schedule_impact", // Object: {status, value}
+  "project.id", "company.id"
+]
+```
 
-- `NormalizedRFI` - with fingerprint, all allowlisted fields, source metadata
-- `NormalizedSubmittal` - with fingerprint, approver revision history, timing fields
-- `NormalizedScheduleActivity` - with WBS, dates, float, criticality, predecessors
-- `ConnectorContract<T>` - interface contract for `authorize`, `backfill`, `incrementalSync`, `listAllIds`, `mapToNormalized`
+**DROPPED:** `drawing_number`, `rfi_manager`, `received_from`, `ball_in_court`, `specification_section`, ALL emails (assignee.login, etc.)
 
-These types will be reconciled with the actual DB tables once the shared schema lands.
+### Submittal
+```typescript
+[
+  "id", "number", "title", "revision", "status",
+  "specification_section", // KEEP per CTO
+  // location DROPPED per CTO 2026-10-07
+  // cost_code DROPPED per CTO 2026-10-07
+  "created_at", "updated_at", "received_date", "due_date",
+  "required_on_site_date", "lead_time",
+  "design_team_review_time", "internal_review_time", "buffer_time",
+  "approvers", // Array: {id, name, revision, response, responded_at} NO emails
+  "scheduled_task", // Object: {id, name} KEEP per CTO
+  "project.id", "company.id"
+]
+```
+
+**DROPPED:** `location`, `cost_code`, `responsible_contractor`, `ball_in_court`, `description`, ALL emails
+
+### Graph Mail
+```typescript
+[
+  "id", "conversationId", "subject", "bodyPreview",
+  "from", "toRecipients", "ccRecipients", // Stored (approved for email records)
+  "receivedDateTime", "sentDateTime",
+  "hasAttachments", "importance", "categories"
+  // isRead: stored but NOT fingerprinted
+]
+```
+
+**Fingerprint:** id + received_at + subject + body + **domains** (not full addresses) + categories
+
+**NOT fingerprinted:** isRead (read status), raw email addresses (only domains)
+
+### Graph DriveItem
+```typescript
+[
+  "id", "name", "webUrl", "size",
+  "createdDateTime", "lastModifiedDateTime",
+  "createdBy", // user: {displayName, id} NO email
+  "lastModifiedBy", // user: {displayName, id} NO email
+  "file", "folder", "parentReference", "deleted"
+]
+```
+
+**DROPPED:** `createdBy.email`, `lastModifiedBy.email` per CTO
+
+---
+
+## Fingerprinting
+
+**Procore:**
+- SHA-256 of exact allowlisted payload (nested objects built from allowlisted subfields only)
+- Recursive canonical stringify (sorted keys at every depth, Date → ISO string)
+- Internal P6 task_id NOT in fingerprint
+
+**Graph Mail:**
+- Fingerprint: id + received_at + subject + body + **participant domains** + categories
+- Raw addresses stored but NOT fingerprinted as content (RLS + 30-day purge)
+- Model layer maps addresses → company+role
+
+---
 
 ## Environment Variables
-
-See `.env.example`:
 
 ```bash
 # Procore
@@ -138,97 +210,51 @@ PROCORE_CLIENT_SECRET=
 PROCORE_COMPANY_ID=
 PROCORE_BASE_URL=https://api.procore.com
 PROCORE_AUTH_URL=https://login.procore.com
-PROCORE_RECORD_MODE=false
 
 # Microsoft Graph
 GRAPH_TENANT_ID=
 GRAPH_CLIENT_ID=
 GRAPH_CLIENT_SECRET=
+GRAPH_MAILBOX=
+GRAPH_SITE_ID=
 ```
 
-**Never commit secrets.** Use Supabase Vault for production.
+**Never commit secrets.** Use Cursor Cloud Agents > Secrets or Supabase Vault.
+
+---
 
 ## Testing
 
-All connectors have comprehensive test coverage:
-
 ```bash
-npm run test        # Run all tests
-npm run typecheck   # TypeScript strict mode
-npm run lint        # ESLint
-npm run build       # Production build
+pnpm lint && pnpm typecheck && pnpm test && pnpm build
 ```
 
-**Test Coverage:**
-- ✅ GET-only enforcement (throws on write verbs)
-- ✅ Pagination (Link headers, `@odata.nextLink`)
-- ✅ Rate limiting (429, 503 with retry and backoff)
-- ✅ Token caching
-- ✅ Field allowlists
-- ✅ Fingerprint stability (same input → same hash, different input → different hash)
-- ✅ Mapping accuracy (all allowlisted fields preserved)
-- ✅ XER parsing (tables, WBS paths, dates, float, criticality, predecessors)
-- ✅ Edge cases (empty fields, null dates, Windows line endings)
+All commands must exit 0 before merge.
 
-## Glue Needed for Shared Connector Interface
+---
 
-When the shared connector interface lands, wire these modules in:
+## Procore Schemas Status
 
-1. **Config mapping:** Map `ConnectorConfig` → `ProcoreConfig` / `GraphConfig`
-2. **State storage:** Store Procore cursors and Graph delta links in Vault-adjacent sync state
-3. **Error handling:** Wrap client errors in `ConnectorError` with retry metadata
-4. **Batching:** Chunk `backfill()` results by page for Inngest step boundaries
-5. **ID normalization:** String IDs are already used; no conversion needed
-6. **Fingerprint comparison:** Compare `fingerprint` field to detect changes
+**Docs-derived (NOT VERIFIED AGAINST SANDBOX)**
 
-Example glue layer:
+RFI and Submittal schemas rebuilt from official Procore REST API docs:
+- developers.procore.com
+- RFI v1.0, Submittal v1.1
 
-```typescript
-import { Procore } from "@/lib/connectors";
+Real API shape:
+- RFI: `questions[]` with nested `answers[]`
+- Derived fields: `question` = first question body, `official_response` = first answer marked `official: true`
 
-class ProcoreRFIConnector implements ConnectorContract<NormalizedRFI> {
-  async authorize(config: ConnectorConfig) {
-    const client = new Procore.ProcoreClient({
-      clientId: config.credentials.clientId,
-      clientSecret: config.credentials.clientSecret,
-      companyId: config.companyId,
-    });
-    // Test with GET /rest/v1.0/companies
-    // ...
-  }
+**Sandbox verification pending** - Sean is creating free developer account.
 
-  async *backfill(config, since) {
-    const client = new Procore.ProcoreClient(config.credentials);
-    for await (const rfis of Procore.fetchRFIs(client, config.projectId, { updatedSince: since })) {
-      yield rfis; // Already normalized
-    }
-  }
+Fixtures: `fixtures/procore/docs/` (header notes docs-derived)
 
-  // incrementalSync, listAllIds, mapToNormalized similarly
-}
-```
-
-## Unverified Items (from evaluation doc)
-
-These were called out as unverified and should be confirmed against official docs when integrating:
-
-- Procore: exact field names for `cost_impact`, `schedule_impact`, submittal `lead_time` / `required_on_site_date`
-- Graph: Teams protected-API requirement post-metering removal (Aug 2025)
-- P6: Primavera Cloud API capabilities (not used in V1; V1 uses weekly XER upload)
-
-## Next Steps
-
-1. ✅ **Done:** Connector building blocks with GET-only enforcement, pagination, rate limiting, field allowlists, fingerprinting, and tests
-2. **Next (other engineer):** Shared connector interface (`authorize`, `backfill`, `incrementalSync`, `listAllIds`, `mapToNormalized`)
-3. **Next (other engineer):** DB tables (`connections`, `sync_runs`, `raw_records`, `rfis`, `submittals`)
-4. **Then:** Wire these modules into the shared interface with minimal glue
-5. **Then:** Inngest nightly sync job calling the connectors
-6. **Then:** Brief generation from normalized records
+---
 
 ## Contributing
 
-- Follow strict TypeScript mode (already configured)
-- Add tests for new features
-- Update field allowlists only with CTO approval
-- Never store attachments or file data
+- Strict TypeScript mode
+- 175/175 tests must pass
+- Update allowlists only with CTO approval
+- Never store attachments or file content
 - Keep dependencies minimal

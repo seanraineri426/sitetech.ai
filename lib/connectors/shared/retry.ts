@@ -23,6 +23,19 @@ interface RateLimitHeaders {
 }
 
 /**
+ * Thrown when Retry-After exceeds maxWaitMs cap.
+ */
+export class RateLimitError extends Error {
+  constructor(
+    public retryAfterMs: number,
+    public maxWaitMs: number
+  ) {
+    super(`Rate limit Retry-After (${retryAfterMs}ms) exceeds max wait cap (${maxWaitMs}ms)`);
+    this.name = "RateLimitError";
+  }
+}
+
+/**
  * Parse Retry-After header (seconds or HTTP-date).
  */
 function parseRetryAfter(retryAfter: string | null): number | null {
@@ -118,7 +131,11 @@ export async function retryRequest(
       const retryAfter = parseRetryAfter(response.headers.get("Retry-After"));
       
       if (retryAfter !== null) {
-        waitMs = Math.min(retryAfter, maxWaitMs);
+        if (retryAfter > maxWaitMs) {
+          // Throw RateLimitError when Retry-After exceeds cap
+          throw new RateLimitError(retryAfter, maxWaitMs);
+        }
+        waitMs = retryAfter;
       } else {
         // No Retry-After header, use exponential backoff
         waitMs = Math.min(calculateBackoff(attempt, baseDelayMs), maxWaitMs);
@@ -138,6 +155,13 @@ export async function retryRequest(
     } else {
       // 5xx errors use exponential backoff
       waitMs = Math.min(calculateBackoff(attempt, baseDelayMs), maxWaitMs);
+    }
+
+    // Cancel/consume response body before retry
+    try {
+      await response.body?.cancel();
+    } catch {
+      // Ignore cancellation errors
     }
 
     console.log(
