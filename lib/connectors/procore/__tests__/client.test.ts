@@ -398,12 +398,16 @@ describe("ProcoreClient", () => {
 
       const promise = client.get("/rest/v1.0/test");
       
+      // Capture the rejection assertion BEFORE advancing timers
+      const p = expect(promise).rejects.toThrow();
+      
       // Advance through all retries
       for (let i = 0; i < 4; i++) {
         await vi.advanceTimersByTimeAsync(10000);
       }
 
-      await expect(promise).rejects.toThrow();
+      // Now await the assertion
+      await p;
     });
 
     it("logs Procore rate limit headers", async () => {

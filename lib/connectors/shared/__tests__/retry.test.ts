@@ -241,10 +241,14 @@ describe("Shared retry helper", () => {
 
       const promise = retryRequest(mockFn, { maxRetries: 2, maxWaitMs: 60000, baseDelayMs: 1000 }, "Test");
       
+      // Capture the rejection assertion BEFORE advancing timers
+      const p = expect(promise).rejects.toThrow("Test: All retries exhausted");
+      
       // Advance through all retries
       await vi.advanceTimersByTimeAsync(10000);
-
-      await expect(promise).rejects.toThrow("Test: All retries exhausted");
+      
+      // Now await the assertion
+      await p;
       expect(mockFn).toHaveBeenCalledTimes(3); // initial + 2 retries
     });
   });
