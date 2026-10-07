@@ -185,7 +185,7 @@ describe("GraphClient", () => {
         "id,subject"
       );
 
-      expect(result.deltaLink).toBeDefined();
+      expect(result.checkpoint).toBeDefined();
       
       // Verify the fetch was called with /delta path
       const fetchCalls = mockFetch.mock.calls;
@@ -213,13 +213,13 @@ describe("GraphClient", () => {
         deltaLink
       );
 
-      expect(result.deltaLink).toBe(deltaLink);
+      expect(result.checkpoint).toBe(deltaLink);
       
       const fetchCalls = mockFetch.mock.calls;
       expect(fetchCalls[1][0]).toBe(deltaLink);
     });
 
-    it("saves nextLink for pagination", async () => {
+    it("returns ONE page with nextLink checkpoint for pagination", async () => {
       const client = new GraphClient(mockConfig);
       const nextLink = "https://graph.microsoft.com/v1.0/users/user%40example.com/messages/delta?$skiptoken=abc";
 
@@ -231,13 +231,6 @@ describe("GraphClient", () => {
           "@odata.nextLink": nextLink,
         }),
       });
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          value: [{ id: "msg2", subject: "Test 2" }],
-          "@odata.deltaLink": "final-delta",
-        }),
-      });
 
       const result = await client.delta<{ id: string; subject: string }>(
         "/users/user%40example.com/messages",
@@ -245,8 +238,11 @@ describe("GraphClient", () => {
         "id,subject"
       );
 
-      expect(result.items).toHaveLength(2);
-      expect(result.deltaLink).toBe("final-delta");
+      // Returns ONE page, not all pages
+      expect(result.items).toHaveLength(1);
+      expect(result.checkpoint).toBe(nextLink);
+      // Only 2 fetches: 1 token + 1 page
+      expect(mockFetch).toHaveBeenCalledTimes(2);
     });
   });
 

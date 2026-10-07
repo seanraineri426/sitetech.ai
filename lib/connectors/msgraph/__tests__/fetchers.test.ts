@@ -174,7 +174,7 @@ describe("Microsoft Graph fetchers", () => {
         ok: true,
         json: async () => ({
           value: [{ id: "msg1", subject: "Page 1", conversationId: "", bodyPreview: "", from: { emailAddress: { name: "", address: "" } }, toRecipients: [], ccRecipients: [], receivedDateTime: "", sentDateTime: "", hasAttachments: false, importance: "normal", isRead: false, categories: [] }],
-          "@odata.nextLink": "https://graph.microsoft.com/v1.0/next-page",
+          "@odata.nextLink": "https://graph.microsoft.com/v1.0/users/user@example.com/mailFolders/inbox/messages/delta?$skiptoken=page2",
         }),
       });
 
@@ -271,7 +271,7 @@ describe("Microsoft Graph fetchers", () => {
         ok: true,
         json: async () => ({
           value: [{ id: "item1", name: "Page 1", webUrl: "", size: 0, createdDateTime: "", lastModifiedDateTime: "", createdBy: { user: { displayName: "" } }, lastModifiedBy: { user: { displayName: "" } }, parentReference: { driveId: "", id: "", path: "" } }],
-          "@odata.nextLink": "https://graph.microsoft.com/v1.0/next",
+          "@odata.nextLink": "https://graph.microsoft.com/v1.0/sites/site-123/drive/root/delta?$skiptoken=page2",
         }),
       });
 
