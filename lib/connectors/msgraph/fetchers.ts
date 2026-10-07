@@ -83,8 +83,11 @@ export async function fetchDriveDelta(
     selectFields
   );
 
+  // Import stripDriveItemEmails from mappers
+  const { stripDriveItemEmails } = await import("./mappers");
+
   return {
-    items: result.items,
+    items: result.items.map((item) => stripDriveItemEmails(item) as GraphDriveItem),
     removed: result.removed,
     checkpoint: result.checkpoint,
   };

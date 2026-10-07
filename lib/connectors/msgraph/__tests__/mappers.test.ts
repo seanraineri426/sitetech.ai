@@ -232,39 +232,80 @@ describe("Microsoft Graph mappers", () => {
   });
 
   describe("DriveItem email stripping", () => {
-    it("strips emails from createdBy and lastModifiedBy", async () => {
-      const { stripDriveItemEmails } = await import("../mappers");
+    it("strips emails from createdBy and lastModifiedBy via real fetcher", async () => {
+      const { fetchDriveDelta } = await import("../fetchers");
+      const { GraphClient } = await import("../client");
       
-      const driveItem = {
-        id: "item123",
-        name: "document.pdf",
-        createdBy: {
-          user: {
-            displayName: "Alice Creator",
-            id: "user-123",
-            email: "alice@example.com",
-          },
-        },
-        lastModifiedBy: {
-          user: {
-            displayName: "Bob Modifier",
-            id: "user-456",
-            email: "bob@example.com",
-          },
-        },
+      // Mock fetch
+      const mockFetch = vi.fn();
+      (global as any).fetch = mockFetch;
+
+      const mockConfig = {
+        tenantId: "tenant-123",
+        clientId: "client-123",
+        clientSecret: "secret",
+        mailbox: "user@example.com",
+        siteId: "site-123",
+        scopes: ["https://graph.microsoft.com/.default"],
       };
 
-      const stripped = stripDriveItemEmails(driveItem) as typeof driveItem;
+      const client = new GraphClient(mockConfig);
 
-      // Emails must not be present
-      expect((stripped.createdBy.user as { email?: string }).email).toBeUndefined();
-      expect((stripped.lastModifiedBy.user as { email?: string }).email).toBeUndefined();
+      // Mock token response
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          access_token: "test-token",
+          expires_in: 3600,
+        }),
+      });
+
+      // Mock delta response with emails
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          value: [
+            {
+              id: "item123",
+              name: "document.pdf",
+              webUrl: "https://example.com",
+              size: 1024,
+              createdDateTime: "2026-01-01T00:00:00Z",
+              lastModifiedDateTime: "2026-01-02T00:00:00Z",
+              createdBy: {
+                user: {
+                  displayName: "Alice Creator",
+                  id: "user-123",
+                  email: "alice@example.com",
+                },
+              },
+              lastModifiedBy: {
+                user: {
+                  displayName: "Bob Modifier",
+                  id: "user-456",
+                  email: "bob@example.com",
+                },
+              },
+              file: {},
+              parentReference: { driveId: "drive-123", id: "root", path: "/" },
+            },
+          ],
+          "@odata.deltaLink": "https://graph.microsoft.com/delta",
+        }),
+      });
+
+      const result = await fetchDriveDelta(client, "site-123");
+
+      // Emails must not be present in exported items
+      const item = result.items[0] as any;
+      expect(item.createdBy.user.email).toBeUndefined();
+      expect(item.lastModifiedBy.user.email).toBeUndefined();
 
       // displayName and id must be preserved
-      expect(stripped.createdBy.user.displayName).toBe("Alice Creator");
-      expect(stripped.createdBy.user.id).toBe("user-123");
-      expect(stripped.lastModifiedBy.user.displayName).toBe("Bob Modifier");
-      expect(stripped.lastModifiedBy.user.id).toBe("user-456");
+      expect(item.createdBy.user.displayName).toBe("Alice Creator");
+      expect(item.createdBy.user.id).toBe("user-123");
+      expect(item.lastModifiedBy.user.displayName).toBe("Bob Modifier");
+      expect(item.lastModifiedBy.user.id).toBe("user-456");
     });
 
     it("handles missing createdBy/lastModifiedBy gracefully", async () => {

@@ -6,13 +6,13 @@ Standalone, pure-TypeScript connector modules for Procore, Microsoft Graph (Mail
 
 ## Test Status
 
-✅ **178/178 tests passing** (9 test files)
+✅ **186/186 tests passing** (9 test files)
 - Procore client: 27 tests
-- Procore mappers: 41 tests  
+- Procore mappers: 48 tests  
 - Procore fetchers: 8 tests
 - Graph client: 30 tests
-- Graph mappers: 25 tests
-- Graph fetchers: 12 tests
+- Graph mappers: 29 tests
+- Graph fetchers: 16 tests
 - P6 parser: 30 tests
 - Shared retry: 15 tests
 - Canonical stringify: 7 tests
@@ -254,7 +254,7 @@ Fixtures: `fixtures/procore/docs/` (header notes docs-derived)
 ## Contributing
 
 - Strict TypeScript mode
-- 175/175 tests must pass
+- 186/186 tests must pass
 - Update allowlists only with CTO approval
 - Never store attachments or file content
 - Keep dependencies minimal
