@@ -135,6 +135,66 @@ describe("Microsoft Graph mappers", () => {
     });
   });
 
+  describe("Email fingerprinting (CTO decision 2026-10-07)", () => {
+    it("does NOT change fingerprint when isRead changes", () => {
+      const normalized1 = mapGraphMessageToNormalized(mockMessage, "user@example.com");
+      
+      const modified = {
+        ...mockMessage,
+        isRead: !mockMessage.isRead,
+      };
+      const normalized2 = mapGraphMessageToNormalized(modified, "user@example.com");
+
+      // isRead is stored but not fingerprinted as content
+      expect(normalized1.fingerprint).toBe(normalized2.fingerprint);
+    });
+
+    it("does NOT change fingerprint when email address changes but domain stays same", () => {
+      const normalized1 = mapGraphMessageToNormalized(mockMessage, "user@example.com");
+      
+      const modified = {
+        ...mockMessage,
+        from: {
+          emailAddress: {
+            name: "John Sender",
+            address: "different-user@example.com", // Same domain
+          },
+        },
+      };
+      const normalized2 = mapGraphMessageToNormalized(modified, "user@example.com");
+
+      // Only domains are fingerprinted, not full addresses
+      expect(normalized1.fingerprint).toBe(normalized2.fingerprint);
+    });
+
+    it("DOES change fingerprint when email domain changes", () => {
+      const normalized1 = mapGraphMessageToNormalized(mockMessage, "user@example.com");
+      
+      const modified = {
+        ...mockMessage,
+        from: {
+          emailAddress: {
+            name: "John Sender",
+            address: "john@different-domain.com", // Different domain
+          },
+        },
+      };
+      const normalized2 = mapGraphMessageToNormalized(modified, "user@example.com");
+
+      // Domain changes should affect fingerprint
+      expect(normalized1.fingerprint).not.toBe(normalized2.fingerprint);
+    });
+
+    it("stores raw email addresses even though not fingerprinted", () => {
+      const normalized = mapGraphMessageToNormalized(mockMessage, "user@example.com");
+
+      // Addresses are stored per CTO approval for email records
+      expect(normalized.from.address).toBe("john@example.com");
+      expect(normalized.to_recipients[0].address).toBe("jane@example.com");
+      expect(normalized.cc_recipients[0].address).toBe("bob@example.com");
+    });
+  });
+
   describe("emailToRawRecord", () => {
     it("converts normalized email to raw record shape", () => {
       const normalized = mapGraphMessageToNormalized(mockMessage, "user@example.com");

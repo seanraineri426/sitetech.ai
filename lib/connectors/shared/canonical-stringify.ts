@@ -6,10 +6,16 @@
 /**
  * Recursively sort object keys at every depth.
  * Arrays are kept in order.
+ * Date objects are serialized as ISO strings.
  */
 function sortKeysRecursive(obj: unknown): unknown {
   if (obj === null || obj === undefined) {
     return obj;
+  }
+
+  // Handle Date objects
+  if (obj instanceof Date) {
+    return obj.toISOString();
   }
 
   if (Array.isArray(obj)) {

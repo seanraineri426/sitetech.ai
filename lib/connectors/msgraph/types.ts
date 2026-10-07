@@ -49,7 +49,9 @@ const DeletedSchema = z.object({
 
 const UserSchema = z.object({
   displayName: z.string(),
-  email: z.string(),
+  id: z.string().optional(),
+  // email DROPPED per CTO 2026-10-07 - accepted for validation but must be stripped before storage
+  email: z.string().optional(),
 }).passthrough();
 
 const CreatedBySchema = z.object({

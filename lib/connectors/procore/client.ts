@@ -141,6 +141,7 @@ export class ProcoreClient {
             "Procore-Company-Id": this.config.companyId,
             Accept: "application/json",
           },
+          redirect: "error",
         }),
       {
         maxRetries: 3,

@@ -55,12 +55,10 @@ export class GraphClient {
   private config: GraphConfig;
   private tokenCache: CachedToken | null = null;
   private apiOrigin: string;
-  private authOrigin: string;
 
   constructor(config: Partial<GraphConfig>) {
     this.config = GraphConfigSchema.parse(config);
     this.apiOrigin = new URL(this.config.baseUrl).origin;
-    this.authOrigin = "https://login.microsoftonline.com";
   }
 
   private async getAccessToken(): Promise<string> {
@@ -156,6 +154,7 @@ export class GraphClient {
             Accept: "application/json",
             "User-Agent": "ISV|SiteTech|1.0",
           },
+          redirect: "error",
         }),
       {
         maxRetries: 3,

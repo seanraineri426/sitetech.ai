@@ -1,6 +1,13 @@
 /**
  * Microsoft Graph message mappers.
  * Maps Graph API messages to normalized SiteTech email records.
+ * 
+ * CTO Decision (2026-10-07):
+ * - Email addresses ARE stored (from/to/cc) - approved for email records only
+ * - Email addresses are NOT fingerprinted as content (change signal)
+ * - Fingerprint: message id + received_at + subject + body preview + participant domains + categories
+ * - Exclude isRead from fingerprint (read status is not content)
+ * - Model layer will map addresses to company+role; we store them under RLS + 30-day purge
  */
 
 import { createHash } from "crypto";
@@ -9,31 +16,48 @@ import type { NormalizedEmail, RawRecord } from "../types";
 import type { GraphMessage } from "./types";
 
 /**
+ * Extract domain from email address for fingerprinting.
+ * Returns domain only, not the full address.
+ */
+function extractDomain(address: string): string {
+  const atIndex = address.indexOf("@");
+  return atIndex >= 0 ? address.substring(atIndex + 1).toLowerCase() : "";
+}
+
+/**
+ * Build fingerprint payload for email.
+ * Includes message identity, content, and participant domains (NOT full addresses).
+ * Excludes isRead (read status is not content).
+ */
+function buildEmailFingerprintPayload(message: GraphMessage): Record<string, unknown> {
+  return {
+    id: message.id,
+    conversationId: message.conversationId,
+    subject: message.subject,
+    bodyPreview: message.bodyPreview,
+    receivedDateTime: message.receivedDateTime,
+    sentDateTime: message.sentDateTime,
+    hasAttachments: message.hasAttachments,
+    importance: message.importance,
+    categories: message.categories,
+    // Participant domains only, NOT full addresses
+    fromDomain: extractDomain(message.from.emailAddress.address),
+    toDomains: message.toRecipients.map((r) => extractDomain(r.emailAddress.address)).sort(),
+    ccDomains: message.ccRecipients.map((r) => extractDomain(r.emailAddress.address)).sort(),
+  };
+}
+
+/**
  * Map Graph message to normalized SiteTech email.
- * Preserves receivedDateTime and sentDateTime as ISO UTC strings.
+ * Raw email addresses are stored but NOT fingerprinted as content.
  */
 export function mapGraphMessageToNormalized(
   message: GraphMessage,
   mailbox: string
 ): NormalizedEmail {
-  const allowlistedFields = {
-    id: message.id,
-    conversationId: message.conversationId,
-    subject: message.subject,
-    bodyPreview: message.bodyPreview,
-    from: message.from,
-    toRecipients: message.toRecipients,
-    ccRecipients: message.ccRecipients,
-    receivedDateTime: message.receivedDateTime,
-    sentDateTime: message.sentDateTime,
-    hasAttachments: message.hasAttachments,
-    importance: message.importance,
-    isRead: message.isRead,
-    categories: message.categories,
-  };
-
+  const fingerprintPayload = buildEmailFingerprintPayload(message);
   const fingerprint = createHash("sha256")
-    .update(canonicalStringify(allowlistedFields))
+    .update(canonicalStringify(fingerprintPayload))
     .digest("hex");
 
   return {
@@ -45,6 +69,7 @@ export function mapGraphMessageToNormalized(
     
     subject: message.subject,
     body_preview: message.bodyPreview,
+    // Raw addresses stored (CTO approved for email records only)
     from: {
       name: message.from.emailAddress.name,
       address: message.from.emailAddress.address,
@@ -65,7 +90,7 @@ export function mapGraphMessageToNormalized(
     
     has_attachments: message.hasAttachments,
     importance: message.importance,
-    is_read: message.isRead,
+    is_read: message.isRead, // Stored but not fingerprinted
     categories: message.categories,
     conversation_id: message.conversationId,
   };
