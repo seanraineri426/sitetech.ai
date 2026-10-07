@@ -248,11 +248,11 @@ function hoursToDays(hours: string | null): number | null {
  * Parse XER file and return normalized schedule activities.
  * 
  * @param input Buffer or Readable stream
- * @param sourceFile Source filename for metadata
+ * @param _sourceFile Source filename for metadata (reserved for future use)
  */
 export async function parseXERToActivities(
   input: Buffer | Readable,
-  sourceFile: string
+  _sourceFile: string
 ): Promise<NormalizedScheduleActivity[]> {
   const tables = await parseXERStream(input);
 

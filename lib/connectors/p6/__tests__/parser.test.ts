@@ -181,26 +181,6 @@ describe("P6 XER parser", () => {
     });
   });
 
-  describe("Timezone parameter", () => {
-    it("accepts timezone parameter", async () => {
-      const buffer = Buffer.from(sampleXER, "utf-8");
-      const activities = await parseXERToActivities(buffer, "test.xer", -8);
-
-      expect(activities).toHaveLength(3);
-      expect(activities[0].planned_start).toBe("2026-10-01");
-    });
-
-    it("extracts date part regardless of timezone", async () => {
-      const buffer = Buffer.from(sampleXER, "utf-8");
-      
-      const activitiesUTC = await parseXERToActivities(buffer, "test.xer", 0);
-      const activitiesPST = await parseXERToActivities(buffer, "test.xer", -8);
-
-      // Currently we extract date-only, so timezone doesn't affect output
-      expect(activitiesUTC[0].planned_start).toBe(activitiesPST[0].planned_start);
-    });
-  });
-
   describe("WBS hierarchy", () => {
     it("builds WBS path from hierarchy", async () => {
       const buffer = Buffer.from(sampleXER, "utf-8");
