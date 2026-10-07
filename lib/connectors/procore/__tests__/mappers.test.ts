@@ -520,14 +520,14 @@ describe("Procore mappers", () => {
 
   describe("Docs fixtures validation", () => {
     it("validates RFI docs fixture", async () => {
-      const rfiFixture = await import("@/fixtures/procore/docs/rfi-with-questions.json");
-      const result = ProcoreRFISchema.safeParse(rfiFixture);
+      const rfiFixture = await import("../../../../fixtures/procore/docs/rfi-with-questions.json");
+      const result = ProcoreRFISchema.safeParse(rfiFixture.default);
       expect(result.success).toBe(true);
     });
 
     it("validates Submittal docs fixture", async () => {
-      const submittalFixture = await import("@/fixtures/procore/docs/submittal-with-approvers.json");
-      const result = ProcoreSubmittalSchema.safeParse(submittalFixture);
+      const submittalFixture = await import("../../../../fixtures/procore/docs/submittal-with-approvers.json");
+      const result = ProcoreSubmittalSchema.safeParse(submittalFixture.default);
       expect(result.success).toBe(true);
     });
   });
