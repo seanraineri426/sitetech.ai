@@ -1,5 +1,6 @@
 /**
- * Tests for Procore mappers: recursive fingerprints, field allowlists, nested changes.
+ * Comprehensive tests for Procore mappers.
+ * Covers recursive fingerprints, allowlist trimming, and field mapping.
  */
 
 import { describe, it, expect, vi } from "vitest";
@@ -11,6 +12,8 @@ import {
   mapProcoreRFIToNormalized,
   mapProcoreSubmittalToNormalized,
   generateFingerprint,
+  rfiToRawRecord,
+  submittalToRawRecord,
   RFI_ALLOWLIST,
   SUBMITTAL_ALLOWLIST,
 } from "../mappers";
@@ -26,9 +29,7 @@ describe("Procore mappers", () => {
     status: "answered",
     location: "Building A",
     cost_code: { id: 456, name: "03-30-00" },
-    assignees: [
-      { id: 789, name: "Jane Smith" },
-    ],
+    assignees: [{ id: 789, name: "Jane Smith" }],
     responsible_contractor: { id: 111, name: "ABC Construction" },
     initiated_at: "2026-10-01T10:00:00Z",
     due_date: "2026-10-10",
@@ -40,6 +41,38 @@ describe("Procore mappers", () => {
     company: { id: 12345 },
   };
 
+  const mockSubmittal: ProcoreSubmittal = {
+    id: 456,
+    number: "SUB-025",
+    title: "Test submittal",
+    revision: "Rev B",
+    status: "approved_as_noted",
+    specification_section: "05 12 00",
+    location: "Building A",
+    cost_code: { id: 789, name: "05-12-00" },
+    created_at: "2026-09-15T08:00:00Z",
+    updated_at: "2026-10-05T16:00:00Z",
+    received_date: "2026-09-15",
+    due_date: "2026-09-30",
+    required_on_site_date: "2026-11-01",
+    lead_time: 45,
+    design_team_review_time: 10,
+    internal_review_time: 5,
+    buffer_time: 3,
+    approvers: [
+      {
+        id: 222,
+        name: "Sarah Engineer",
+        revision: "Rev A",
+        response: "revise_resubmit",
+        responded_at: "2026-09-25T14:00:00Z",
+      },
+    ],
+    scheduled_task: { id: 333, code: "A1020", name: "Install Steel" },
+    project: { id: 999 },
+    company: { id: 12345 },
+  };
+
   describe("Recursive fingerprints", () => {
     it("generates stable fingerprints for same data", () => {
       const fp1 = generateFingerprint({ a: 1, b: { c: 2, d: 3 } });
@@ -47,9 +80,40 @@ describe("Procore mappers", () => {
       expect(fp1).toBe(fp2);
     });
 
-    it("changes fingerprint when nested cost_impact.value changes", () => {
+    it("generates same fingerprint regardless of key order", () => {
+      const fp1 = generateFingerprint({ a: 1, b: 2, c: 3 });
+      const fp2 = generateFingerprint({ c: 3, a: 1, b: 2 });
+      expect(fp1).toBe(fp2);
+    });
+
+    it("generates same fingerprint regardless of nested key order", () => {
+      const fp1 = generateFingerprint({ outer: { a: 1, b: 2 }, x: 5 });
+      const fp2 = generateFingerprint({ x: 5, outer: { b: 2, a: 1 } });
+      expect(fp1).toBe(fp2);
+    });
+
+    it("generates same fingerprint regardless of deep nested key order", () => {
+      const fp1 = generateFingerprint({
+        a: { b: { c: 1, d: 2 }, e: 3 },
+        f: 4,
+      });
+      const fp2 = generateFingerprint({
+        f: 4,
+        a: { e: 3, b: { d: 2, c: 1 } },
+      });
+      expect(fp1).toBe(fp2);
+    });
+
+    it("preserves array order", () => {
+      const fp1 = generateFingerprint({ items: [1, 2, 3] });
+      const fp2 = generateFingerprint({ items: [3, 2, 1] });
+      expect(fp1).not.toBe(fp2);
+    });
+  });
+
+  describe("RFI fingerprint changes", () => {
+    it("changes when cost_impact.value changes", () => {
       const normalized1 = mapProcoreRFIToNormalized(mockRFI);
-      
       const modified = {
         ...mockRFI,
         cost_impact: { status: "yes_known", value: 10000 },
@@ -59,9 +123,30 @@ describe("Procore mappers", () => {
       expect(normalized1.fingerprint).not.toBe(normalized2.fingerprint);
     });
 
-    it("changes fingerprint when assignee details change", () => {
+    it("changes when cost_impact.status changes", () => {
       const normalized1 = mapProcoreRFIToNormalized(mockRFI);
-      
+      const modified = {
+        ...mockRFI,
+        cost_impact: { status: "no_impact", value: 5000 },
+      };
+      const normalized2 = mapProcoreRFIToNormalized(modified);
+
+      expect(normalized1.fingerprint).not.toBe(normalized2.fingerprint);
+    });
+
+    it("changes when schedule_impact.value changes", () => {
+      const normalized1 = mapProcoreRFIToNormalized(mockRFI);
+      const modified = {
+        ...mockRFI,
+        schedule_impact: { status: "yes_unknown", value: 7 },
+      };
+      const normalized2 = mapProcoreRFIToNormalized(modified);
+
+      expect(normalized1.fingerprint).not.toBe(normalized2.fingerprint);
+    });
+
+    it("changes when assignee name changes", () => {
+      const normalized1 = mapProcoreRFIToNormalized(mockRFI);
       const modified = {
         ...mockRFI,
         assignees: [{ id: 789, name: "John Doe" }],
@@ -71,55 +156,35 @@ describe("Procore mappers", () => {
       expect(normalized1.fingerprint).not.toBe(normalized2.fingerprint);
     });
 
-    it("fingerprint independent of key order", () => {
-      const fp1 = generateFingerprint({ a: 1, b: 2, c: 3 });
-      const fp2 = generateFingerprint({ c: 3, a: 1, b: 2 });
-      expect(fp1).toBe(fp2);
+    it("changes when assignee id changes", () => {
+      const normalized1 = mapProcoreRFIToNormalized(mockRFI);
+      const modified = {
+        ...mockRFI,
+        assignees: [{ id: 999, name: "Jane Smith" }],
+      };
+      const normalized2 = mapProcoreRFIToNormalized(modified);
+
+      expect(normalized1.fingerprint).not.toBe(normalized2.fingerprint);
     });
 
-    it("sorts nested object keys", () => {
-      const fp1 = generateFingerprint({ a: { x: 1, y: 2 } });
-      const fp2 = generateFingerprint({ a: { y: 2, x: 1 } });
-      expect(fp1).toBe(fp2);
+    it("changes when assignee is added", () => {
+      const normalized1 = mapProcoreRFIToNormalized(mockRFI);
+      const modified = {
+        ...mockRFI,
+        assignees: [
+          ...mockRFI.assignees,
+          { id: 888, name: "Bob Builder" },
+        ],
+      };
+      const normalized2 = mapProcoreRFIToNormalized(modified);
+
+      expect(normalized1.fingerprint).not.toBe(normalized2.fingerprint);
     });
   });
 
-  describe("Submittal fingerprints", () => {
-    const mockSubmittal: ProcoreSubmittal = {
-      id: 456,
-      number: "SUB-025",
-      title: "Test submittal",
-      revision: "Rev B",
-      status: "approved_as_noted",
-      specification_section: "05 12 00",
-      location: "Building A",
-      cost_code: { id: 789, name: "05-12-00" },
-      created_at: "2026-09-15T08:00:00Z",
-      updated_at: "2026-10-05T16:00:00Z",
-      received_date: "2026-09-15",
-      due_date: "2026-09-30",
-      required_on_site_date: "2026-11-01",
-      lead_time: 45,
-      design_team_review_time: 10,
-      internal_review_time: 5,
-      buffer_time: 3,
-      approvers: [
-        {
-          id: 222,
-          name: "Sarah Engineer",
-          revision: "Rev A",
-          response: "revise_resubmit",
-          responded_at: "2026-09-25T14:00:00Z",
-        },
-      ],
-      scheduled_task: { id: 333, code: "A1020", name: "Install Steel" },
-      project: { id: 999 },
-      company: { id: 12345 },
-    };
-
-    it("changes fingerprint when approver response changes", () => {
+  describe("Submittal fingerprint changes", () => {
+    it("changes when approver response changes", () => {
       const normalized1 = mapProcoreSubmittalToNormalized(mockSubmittal);
-      
       const modified = {
         ...mockSubmittal,
         approvers: [
@@ -134,15 +199,46 @@ describe("Procore mappers", () => {
       expect(normalized1.fingerprint).not.toBe(normalized2.fingerprint);
     });
 
-    it("changes fingerprint when approver responded_at changes", () => {
+    it("changes when approver responded_at changes", () => {
       const normalized1 = mapProcoreSubmittalToNormalized(mockSubmittal);
-      
       const modified = {
         ...mockSubmittal,
         approvers: [
           {
             ...mockSubmittal.approvers[0],
             responded_at: "2026-09-26T14:00:00Z",
+          },
+        ],
+      };
+      const normalized2 = mapProcoreSubmittalToNormalized(modified);
+
+      expect(normalized1.fingerprint).not.toBe(normalized2.fingerprint);
+    });
+
+    it("changes when approver name changes", () => {
+      const normalized1 = mapProcoreSubmittalToNormalized(mockSubmittal);
+      const modified = {
+        ...mockSubmittal,
+        approvers: [
+          {
+            ...mockSubmittal.approvers[0],
+            name: "John Architect",
+          },
+        ],
+      };
+      const normalized2 = mapProcoreSubmittalToNormalized(modified);
+
+      expect(normalized1.fingerprint).not.toBe(normalized2.fingerprint);
+    });
+
+    it("changes when approver revision changes", () => {
+      const normalized1 = mapProcoreSubmittalToNormalized(mockSubmittal);
+      const modified = {
+        ...mockSubmittal,
+        approvers: [
+          {
+            ...mockSubmittal.approvers[0],
+            revision: "Rev B",
           },
         ],
       };
@@ -160,61 +256,183 @@ describe("Procore mappers", () => {
       expect(RFI_ALLOWLIST).not.toContain("ball_in_court");
       expect(RFI_ALLOWLIST).not.toContain("specification_section");
       expect(RFI_ALLOWLIST).not.toContain("email_address");
+      expect(RFI_ALLOWLIST).not.toContain("email");
+    });
+
+    it("RFI allowlist includes approved fields", () => {
+      expect(RFI_ALLOWLIST).toContain("id");
+      expect(RFI_ALLOWLIST).toContain("number");
+      expect(RFI_ALLOWLIST).toContain("subject");
+      expect(RFI_ALLOWLIST).toContain("question");
+      expect(RFI_ALLOWLIST).toContain("official_response");
+      expect(RFI_ALLOWLIST).toContain("status");
+      expect(RFI_ALLOWLIST).toContain("cost_impact");
+      expect(RFI_ALLOWLIST).toContain("schedule_impact");
+      expect(RFI_ALLOWLIST).toContain("assignees");
+      expect(RFI_ALLOWLIST).toContain("responsible_contractor");
     });
 
     it("Submittal allowlist excludes dropped fields", () => {
       expect(SUBMITTAL_ALLOWLIST).not.toContain("responsible_contractor");
       expect(SUBMITTAL_ALLOWLIST).not.toContain("ball_in_court");
       expect(SUBMITTAL_ALLOWLIST).not.toContain("email_address");
+      expect(SUBMITTAL_ALLOWLIST).not.toContain("email");
       expect(SUBMITTAL_ALLOWLIST).not.toContain("description");
     });
 
-    it("RFI mapping excludes emails", () => {
-      const normalized = mapProcoreRFIToNormalized(mockRFI);
-      expect(normalized.assignees[0]).not.toHaveProperty("email");
+    it("Submittal allowlist includes approved fields", () => {
+      expect(SUBMITTAL_ALLOWLIST).toContain("id");
+      expect(SUBMITTAL_ALLOWLIST).toContain("number");
+      expect(SUBMITTAL_ALLOWLIST).toContain("title");
+      expect(SUBMITTAL_ALLOWLIST).toContain("specification_section");
+      expect(SUBMITTAL_ALLOWLIST).toContain("approvers");
+      expect(SUBMITTAL_ALLOWLIST).toContain("scheduled_task");
     });
 
-    it("Submittal mapping excludes emails", () => {
-      const mockSubmittal: ProcoreSubmittal = {
-        id: 456,
-        number: "SUB-001",
-        title: "Test",
-        revision: "A",
-        status: "open",
-        specification_section: null,
-        location: null,
-        cost_code: null,
-        created_at: "2026-10-01T00:00:00Z",
-        updated_at: "2026-10-01T00:00:00Z",
-        received_date: null,
-        due_date: null,
-        required_on_site_date: null,
-        lead_time: null,
-        design_team_review_time: null,
-        internal_review_time: null,
-        buffer_time: null,
-        approvers: [],
-        scheduled_task: null,
-        project: { id: 999 },
-        company: { id: 12345 },
-      };
-      
+    it("RFI mapping excludes emails from assignees", () => {
+      const normalized = mapProcoreRFIToNormalized(mockRFI);
+      expect(normalized.assignees[0]).not.toHaveProperty("email");
+      expect(normalized.assignees[0]).not.toHaveProperty("email_address");
+    });
+
+    it("Submittal mapping excludes emails from approvers", () => {
       const normalized = mapProcoreSubmittalToNormalized(mockSubmittal);
-      expect(normalized.approvers).toEqual([]);
+      expect(normalized.approvers[0]).not.toHaveProperty("email");
+      expect(normalized.approvers[0]).not.toHaveProperty("email_address");
+    });
+
+    it("RFI mapping drops description field", () => {
+      const normalized = mapProcoreRFIToNormalized(mockRFI);
+      expect(normalized).not.toHaveProperty("description");
+    });
+
+    it("Submittal mapping drops description field", () => {
+      const normalized = mapProcoreSubmittalToNormalized(mockSubmittal);
+      expect(normalized).not.toHaveProperty("description");
+    });
+
+    it("RFI mapping drops attachments", () => {
+      const normalized = mapProcoreRFIToNormalized(mockRFI);
+      expect(normalized).not.toHaveProperty("attachments");
+    });
+
+    it("Submittal mapping drops attachments", () => {
+      const normalized = mapProcoreSubmittalToNormalized(mockSubmittal);
+      expect(normalized).not.toHaveProperty("attachments");
     });
   });
 
   describe("Entity shape", () => {
-    it("RFI has entity_type and external_id", () => {
+    it("RFI has entity_type", () => {
       const normalized = mapProcoreRFIToNormalized(mockRFI);
       expect(normalized.entity_type).toBe("rfi");
+    });
+
+    it("RFI has external_id", () => {
+      const normalized = mapProcoreRFIToNormalized(mockRFI);
       expect(normalized.external_id).toBe("123");
     });
 
-    it("uses source_project_id and source_company_id", () => {
+    it("RFI uses source_project_id", () => {
       const normalized = mapProcoreRFIToNormalized(mockRFI);
       expect(normalized.source_project_id).toBe("999");
+      expect(normalized).not.toHaveProperty("project_id");
+    });
+
+    it("RFI uses source_company_id", () => {
+      const normalized = mapProcoreRFIToNormalized(mockRFI);
       expect(normalized.source_company_id).toBe("12345");
+      expect(normalized).not.toHaveProperty("company_id");
+    });
+
+    it("RFI does not have synced_at", () => {
+      const normalized = mapProcoreRFIToNormalized(mockRFI);
+      expect(normalized).not.toHaveProperty("synced_at");
+    });
+
+    it("Submittal has entity_type", () => {
+      const normalized = mapProcoreSubmittalToNormalized(mockSubmittal);
+      expect(normalized.entity_type).toBe("submittal");
+    });
+
+    it("Submittal has external_id", () => {
+      const normalized = mapProcoreSubmittalToNormalized(mockSubmittal);
+      expect(normalized.external_id).toBe("456");
+    });
+
+    it("Submittal does not have synced_at", () => {
+      const normalized = mapProcoreSubmittalToNormalized(mockSubmittal);
+      expect(normalized).not.toHaveProperty("synced_at");
+    });
+  });
+
+  describe("Raw record conversion", () => {
+    it("converts RFI to raw record shape", () => {
+      const normalized = mapProcoreRFIToNormalized(mockRFI);
+      const raw = rfiToRawRecord(normalized);
+
+      expect(raw.entityType).toBe("rfi");
+      expect(raw.externalId).toBe("123");
+      expect(raw.fingerprint).toBe(normalized.fingerprint);
+      expect(raw.allowlistedPayload).toHaveProperty("number");
+      expect(raw.allowlistedPayload).toHaveProperty("subject");
+      expect(raw.allowlistedPayload).toHaveProperty("cost_impact");
+    });
+
+    it("converts Submittal to raw record shape", () => {
+      const normalized = mapProcoreSubmittalToNormalized(mockSubmittal);
+      const raw = submittalToRawRecord(normalized);
+
+      expect(raw.entityType).toBe("submittal");
+      expect(raw.externalId).toBe("456");
+      expect(raw.fingerprint).toBe(normalized.fingerprint);
+      expect(raw.allowlistedPayload).toHaveProperty("number");
+      expect(raw.allowlistedPayload).toHaveProperty("title");
+      expect(raw.allowlistedPayload).toHaveProperty("approvers");
+    });
+  });
+
+  describe("Null and missing field handling", () => {
+    it("handles null cost_impact", () => {
+      const rfi = { ...mockRFI, cost_impact: null };
+      const normalized = mapProcoreRFIToNormalized(rfi);
+      expect(normalized.cost_impact).toBeNull();
+    });
+
+    it("handles null schedule_impact", () => {
+      const rfi = { ...mockRFI, schedule_impact: null };
+      const normalized = mapProcoreRFIToNormalized(rfi);
+      expect(normalized.schedule_impact).toBeNull();
+    });
+
+    it("handles null cost_code", () => {
+      const rfi = { ...mockRFI, cost_code: null };
+      const normalized = mapProcoreRFIToNormalized(rfi);
+      expect(normalized.cost_code).toBeNull();
+    });
+
+    it("handles null responsible_contractor", () => {
+      const rfi = { ...mockRFI, responsible_contractor: null };
+      const normalized = mapProcoreRFIToNormalized(rfi);
+      expect(normalized.responsible_contractor).toBeNull();
+    });
+
+    it("handles empty assignees array", () => {
+      const rfi = { ...mockRFI, assignees: [] };
+      const normalized = mapProcoreRFIToNormalized(rfi);
+      expect(normalized.assignees).toEqual([]);
+    });
+
+    it("handles empty approvers array", () => {
+      const submittal = { ...mockSubmittal, approvers: [] };
+      const normalized = mapProcoreSubmittalToNormalized(submittal);
+      expect(normalized.approvers).toEqual([]);
+    });
+
+    it("handles null scheduled_task", () => {
+      const submittal = { ...mockSubmittal, scheduled_task: null };
+      const normalized = mapProcoreSubmittalToNormalized(submittal);
+      expect(normalized.scheduled_task).toBeNull();
     });
   });
 });

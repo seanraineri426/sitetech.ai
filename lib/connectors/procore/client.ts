@@ -8,6 +8,7 @@
  * - Shared retry helper with rate limit logging
  * - In-memory token caching
  * - Pagination via Link headers
+ * - Zod validation of responses
  */
 
 import "server-only";
@@ -24,12 +25,12 @@ const ProcoreConfigSchema = z.object({
 
 export type ProcoreConfig = z.infer<typeof ProcoreConfigSchema>;
 
-interface TokenResponse {
-  access_token: string;
-  token_type: string;
-  expires_in: number;
-  created_at: number;
-}
+const TokenResponseSchema = z.object({
+  access_token: z.string(),
+  token_type: z.string(),
+  expires_in: z.number(),
+  created_at: z.number(),
+});
 
 interface CachedToken {
   token: string;
@@ -95,7 +96,8 @@ export class ProcoreClient {
       throw new Error(`Procore token fetch failed: ${response.status}`);
     }
 
-    const data: TokenResponse = await response.json();
+    const json = await response.json();
+    const data = TokenResponseSchema.parse(json);
 
     this.tokenCache = {
       token: data.access_token,

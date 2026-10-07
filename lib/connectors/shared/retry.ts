@@ -105,7 +105,10 @@ export async function retryRequest(
 
     // Last attempt exhausted
     if (attempt === maxRetries) {
-      return response;
+      if (response.ok) {
+        return response;
+      }
+      throw new Error(`${provider}: All retries exhausted`);
     }
 
     // Calculate wait time

@@ -25,11 +25,11 @@ const GraphConfigSchema = z.object({
 
 export type GraphConfig = z.infer<typeof GraphConfigSchema>;
 
-interface TokenResponse {
-  access_token: string;
-  token_type: string;
-  expires_in: number;
-}
+const TokenResponseSchema = z.object({
+  access_token: z.string(),
+  token_type: z.string(),
+  expires_in: z.number(),
+});
 
 interface CachedToken {
   token: string;
@@ -91,7 +91,8 @@ export class GraphClient {
       throw new Error(`Graph token fetch failed: ${response.status}`);
     }
 
-    const data: TokenResponse = await response.json();
+    const json = await response.json();
+    const data = TokenResponseSchema.parse(json);
 
     this.tokenCache = {
       token: data.access_token,

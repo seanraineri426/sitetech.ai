@@ -1,27 +1,29 @@
 /**
  * Primavera P6 XER (Extended Exchange Rate) format parser.
  * 
- * Stable External ID Investigation:
- * According to Oracle P6 EPPM documentation and the XER format specification,
- * `task_id` is the stable, system-generated unique identifier that persists
- * across updates, exports, and imports. `task_code` is a user-editable field
- * that can change and may not be unique across all activities in a project.
- * Therefore, we use `task_id` as the external_id for activities.
+ * **External ID Strategy:**
+ * Uses `{proj_short_name}:{task_code}` as the stable external_id.
  * 
- * Evidence: Oracle P6 EPPM Web Services Developer's Guide (Section 3.2.1)
- * states that task_id is the "unique identifier for the activity" and is
- * "system-generated and immutable."
+ * **Rationale:**
+ * - `task_id` is an internal database primary key that changes when a schedule
+ *   is exported from one P6 database and imported into another
+ * - `task_code` (Activity ID) is the user-visible, scheduler-maintained field
+ *   that remains stable across database migrations and updates
+ * - Combining with `proj_short_name` ensures uniqueness across projects while
+ *   maintaining stability within a project's lifecycle
+ * - `task_id` is preserved as a secondary field for reference but NOT used as
+ *   the external identifier
  * 
- * XER Format:
+ * **XER Format:**
  * - %T lines: table names
  * - %F lines: field names
  * - %R lines: data rows (tab-delimited)
  * 
- * Encoding:
+ * **Encoding:**
  * - windows-1252 by default
  * - UTF-8 if BOM present
  * 
- * Tables extracted: PROJECT, PROJWBS, TASK, TASKPRED
+ * **Tables extracted:** PROJECT, PROJWBS, TASK, TASKPRED
  */
 
 import { createHash } from "crypto";
@@ -66,12 +68,16 @@ const NEEDED_TABLES = ["PROJECT", "PROJWBS", "TASK", "TASKPRED"];
 
 /**
  * Detect BOM and return encoding.
+ * Note: windows-1252 is not a standard Node.js encoding.
+ * For production use, consider using the 'iconv-lite' package.
+ * For now, we fall back to latin1 which is similar to windows-1252 for most cases.
  */
-function detectEncoding(buffer: Buffer): "utf-8" | "windows-1252" {
+function detectEncoding(buffer: Buffer): BufferEncoding {
   if (buffer.length >= 3 && buffer[0] === 0xef && buffer[1] === 0xbb && buffer[2] === 0xbf) {
     return "utf-8";
   }
-  return "windows-1252";
+  // Fall back to latin1 (close to windows-1252 for common characters)
+  return "latin1";
 }
 
 /**
@@ -85,9 +91,9 @@ async function parseXERStream(
   let currentTable: XERTable | null = null;
 
   const stream = Buffer.isBuffer(input) ? Readable.from(input) : input;
-  const encoding = Buffer.isBuffer(input) ? detectEncoding(input) : "windows-1252";
+  const encoding = Buffer.isBuffer(input) ? detectEncoding(input) : "latin1";
 
-  stream.setEncoding(encoding as BufferEncoding);
+  stream.setEncoding(encoding);
 
   const rl = createInterface({
     input: stream,
@@ -194,17 +200,26 @@ function buildPredecessorIndex(
 
 /**
  * Parse XER date with timezone offset.
- * XER dates are in project local time.
+ * XER dates are in project local time without timezone info.
+ * We extract just the date part (yyyy-mm-dd) for date-only fields.
  * 
  * @param dateStr XER date string (yyyy-mm-dd hh:mm)
- * @param _timezoneOffset Hours offset from UTC (reserved for future use)
+ * @param timezoneOffset Hours offset from UTC (e.g., -8 for PST) - for future timezone-aware conversions
  * @returns ISO date string (date only, no time)
  */
-function parseXERDate(dateStr: string | null, _timezoneOffset: number): string | null {
+function parseXERDate(dateStr: string | null, timezoneOffset: number): string | null {
   if (!dateStr || dateStr === "") return null;
 
   try {
+    // For now, extract date part only
+    // timezoneOffset reserved for future date-time conversions with proper timezone handling
     const [datePart] = dateStr.split(" ");
+    
+    if (timezoneOffset !== 0) {
+      // Timezone conversion could be applied here for date-time fields
+      // Current implementation focuses on date-only fields
+    }
+    
     return datePart || null;
   } catch {
     return null;
@@ -228,7 +243,7 @@ function hoursToDays(hours: string | null): number | null {
  * 
  * @param input Buffer or Readable stream
  * @param sourceFile Source filename for metadata
- * @param projectTimezone Timezone offset in hours (e.g., -8 for PST)
+ * @param projectTimezone Timezone offset in hours for date parsing (e.g., -8 for PST)
  */
 export async function parseXERToActivities(
   input: Buffer | Readable,
@@ -240,6 +255,12 @@ export async function parseXERToActivities(
   const projectTable = tables.get("PROJECT");
   if (!projectTable || projectTable.rows.length === 0) {
     throw new Error("No PROJECT table found in XER file");
+  }
+
+  // Build project ID to short name map
+  const projectMap = new Map<string, string>();
+  for (const row of projectTable.rows) {
+    projectMap.set(row.proj_id, row.proj_short_name || row.proj_id);
   }
 
   const taskTable = tables.get("TASK");
@@ -282,8 +303,12 @@ export async function parseXERToActivities(
     const totalFloat = hoursToDays(task.total_float_hr_cnt);
     const isCritical = totalFloat !== null && totalFloat <= 0;
 
+    // Build composite external_id: {proj_short_name}:{task_code}
+    const projShortName = projectMap.get(task.proj_id) || task.proj_id;
+    const externalId = `${projShortName}:${task.task_code}`;
+
     const fingerprintData = {
-      task_id: task.task_id,
+      proj_id: task.proj_id,
       task_code: task.task_code,
       task_name: task.task_name,
       wbs: wbsPath,
@@ -303,7 +328,7 @@ export async function parseXERToActivities(
 
     activities.push({
       entity_type: "schedule_activity",
-      external_id: task.task_id, // Using task_id as stable ID (see doc comment)
+      external_id: externalId,
       fingerprint,
       
       source_project_id: task.proj_id,
