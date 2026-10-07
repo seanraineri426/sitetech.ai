@@ -256,6 +256,7 @@ describe("Microsoft Graph mappers", () => {
         ok: true,
         json: async () => ({
           access_token: "test-token",
+          token_type: "Bearer",
           expires_in: 3600,
         }),
       });

@@ -225,7 +225,11 @@ describe("Microsoft Graph fetchers", () => {
 
       const result = await fetchDriveDelta(client, "site-123");
 
-      expect(result.items).toEqual(mockItems);
+      // Emails are stripped by stripDriveItemEmails
+      expect(result.items[0].createdBy.user.displayName).toBe("User");
+      expect(result.items[0].lastModifiedBy.user.displayName).toBe("User");
+      expect((result.items[0].createdBy.user as { email?: string }).email).toBeUndefined();
+      expect((result.items[0].lastModifiedBy.user as { email?: string }).email).toBeUndefined();
       expect(result.removed).toEqual([]);
       expect(result.checkpoint).toContain("skiptoken");
     });
