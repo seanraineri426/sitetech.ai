@@ -238,7 +238,7 @@ describe("Microsoft Graph mappers", () => {
       
       // Mock fetch
       const mockFetch = vi.fn();
-      (global as any).fetch = mockFetch;
+      (global as typeof globalThis & { fetch: typeof mockFetch }).fetch = mockFetch;
 
       const mockConfig = {
         tenantId: "tenant-123",
@@ -297,7 +297,10 @@ describe("Microsoft Graph mappers", () => {
       const result = await fetchDriveDelta(client, "site-123");
 
       // Emails must not be present in exported items
-      const item = result.items[0] as any;
+      const item = result.items[0] as unknown as {
+        createdBy: { user: { email?: string; displayName: string; id: string } };
+        lastModifiedBy: { user: { email?: string; displayName: string; id: string } };
+      };
       expect(item.createdBy.user.email).toBeUndefined();
       expect(item.lastModifiedBy.user.email).toBeUndefined();
 
