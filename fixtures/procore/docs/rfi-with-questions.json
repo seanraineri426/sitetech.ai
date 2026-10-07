@@ -1,0 +1,80 @@
+/**
+ * Procore RFI fixture - docs-derived shape from developers.procore.com
+ * 
+ * NOT VERIFIED AGAINST SANDBOX - Sean is creating free developer account.
+ * Sandbox verification pending.
+ * 
+ * Based on Procore REST API v1.0 RFIs endpoint documentation.
+ * Real API shape has questions[] with nested answers[].
+ */
+
+{
+  "id": 12345,
+  "number": "RFI-001",
+  "subject": "Structural beam specification clarification",
+  "status": "open",
+  "questions": [
+    {
+      "id": 1001,
+      "body": "Please clarify the W12x26 beam specification on drawing S-201. Should this be W12x30 per the structural calculations?",
+      "created_at": "2026-10-01T10:00:00Z",
+      "created_by": {
+        "id": 5001,
+        "name": "Jane Smith",
+        "login": "jane.smith@contractor.com"
+      },
+      "answers": [
+        {
+          "id": 2001,
+          "body": "Correct, use W12x30 per structural calcs. Drawing will be revised in next submittal package.",
+          "created_at": "2026-10-05T14:30:00Z",
+          "created_by": {
+            "id": 5002,
+            "name": "Bob Architect",
+            "login": "bob@architectfirm.com"
+          },
+          "official": true
+        }
+      ]
+    }
+  ],
+  "location": {
+    "id": 100,
+    "name": "Building A - Level 3"
+  },
+  "cost_code": {
+    "id": 456,
+    "code": "03-30-00",
+    "name": "Cast-in-Place Concrete"
+  },
+  "assignees": [
+    {
+      "id": 789,
+      "name": "Jane Smith",
+      "login": "jane.smith@contractor.com"
+    }
+  ],
+  "responsible_contractor": {
+    "id": 111,
+    "name": "ABC Construction",
+    "vendor_number": "V-001"
+  },
+  "initiated_at": "2026-10-01T10:00:00Z",
+  "due_date": "2026-10-10",
+  "created_at": "2026-10-01T10:00:00Z",
+  "updated_at": "2026-10-05T14:30:00Z",
+  "cost_impact": {
+    "status": "yes_known",
+    "value": 5000.00
+  },
+  "schedule_impact": {
+    "status": "yes_unknown",
+    "value": null
+  },
+  "project": {
+    "id": 999
+  },
+  "company": {
+    "id": 12345
+  }
+}

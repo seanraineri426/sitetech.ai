@@ -88,8 +88,27 @@ export const SUBMITTAL_ALLOWLIST = [
 /**
  * Build allowlisted RFI payload from allowlisted subfields only.
  * Every nested object is explicitly constructed.
+ * 
+ * Derives question/official_response from questions[]/answers[] per Procore API docs:
+ * - question = first question's body
+ * - official_response = first answer marked official=true
  */
 function buildAllowlistedRFIPayload(rfi: ProcoreRFI): Record<string, unknown> {
+  // Derive question and official_response from questions[]/answers[]
+  // Per RECONCILE R3: never infer "answered" from "has an answer"
+  const firstQuestion = rfi.questions[0];
+  const question = firstQuestion?.body ?? null;
+  
+  // Find the first answer marked as official across all questions
+  let official_response: string | null = null;
+  for (const q of rfi.questions) {
+    const officialAnswer = q.answers.find((a) => a.official === true);
+    if (officialAnswer) {
+      official_response = officialAnswer.body;
+      break;
+    }
+  }
+
   // Build nested objects explicitly from allowlisted subfields
   const location = rfi.location
     ? {
@@ -127,6 +146,7 @@ function buildAllowlistedRFIPayload(rfi: ProcoreRFI): Record<string, unknown> {
       }
     : null;
 
+  // Strip login/email from assignees per CTO
   const assignees = rfi.assignees.map((a) => ({
     id: a.id,
     name: a.name,
@@ -137,8 +157,8 @@ function buildAllowlistedRFIPayload(rfi: ProcoreRFI): Record<string, unknown> {
     id: rfi.id,
     number: rfi.number,
     subject: rfi.subject,
-    question: rfi.question,
-    official_response: rfi.official_response,
+    question,
+    official_response,
     status: rfi.status,
     location,
     cost_code,
@@ -216,10 +236,24 @@ export function generateFingerprint(allowlistedPayload: Record<string, unknown>)
 
 /**
  * Map raw Procore RFI to normalized SiteTech RFI.
+ * Derives question/official_response from questions[]/answers[].
  */
 export function mapProcoreRFIToNormalized(rfi: ProcoreRFI): NormalizedRFI {
   const allowlistedPayload = buildAllowlistedRFIPayload(rfi);
   const fingerprint = generateFingerprint(allowlistedPayload);
+
+  // Derive question and official_response from questions[]/answers[]
+  const firstQuestion = rfi.questions[0];
+  const question = firstQuestion?.body ?? null;
+  
+  let official_response: string | null = null;
+  for (const q of rfi.questions) {
+    const officialAnswer = q.answers.find((a) => a.official === true);
+    if (officialAnswer) {
+      official_response = officialAnswer.body;
+      break;
+    }
+  }
 
   return {
     entity_type: "rfi",
@@ -231,8 +265,8 @@ export function mapProcoreRFIToNormalized(rfi: ProcoreRFI): NormalizedRFI {
     
     number: rfi.number,
     subject: rfi.subject,
-    question: rfi.question,
-    official_response: rfi.official_response,
+    question,
+    official_response,
     
     status: rfi.status,
     source_status: rfi.status,
@@ -245,6 +279,7 @@ export function mapProcoreRFIToNormalized(rfi: ProcoreRFI): NormalizedRFI {
       : null,
     cost_code: rfi.cost_code?.name ?? null,
     
+    // Strip login/email from assignees per CTO
     assignees: rfi.assignees.map((a) => ({
       id: String(a.id),
       name: a.name,
