@@ -254,11 +254,11 @@ describe("Microsoft Graph mappers", () => {
         },
       };
 
-      const stripped = stripDriveItemEmails(driveItem);
+      const stripped = stripDriveItemEmails(driveItem) as typeof driveItem;
 
       // Emails must not be present
-      expect(stripped.createdBy.user.email).toBeUndefined();
-      expect(stripped.lastModifiedBy.user.email).toBeUndefined();
+      expect((stripped.createdBy.user as { email?: string }).email).toBeUndefined();
+      expect((stripped.lastModifiedBy.user as { email?: string }).email).toBeUndefined();
 
       // displayName and id must be preserved
       expect(stripped.createdBy.user.displayName).toBe("Alice Creator");
