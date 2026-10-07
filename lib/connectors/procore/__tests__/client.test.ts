@@ -50,7 +50,7 @@ describe("ProcoreClient", () => {
       };
 
       await expect(
-        clientInternal.request("https://api.procore.test/test", "POST", "token")
+        clientInternal.request("https://api.procore.com/test", "POST", "token")
       ).rejects.toThrow("Method POST not allowed");
 
       // Verify fetch was NEVER called (blocked before fetch)
@@ -64,7 +64,7 @@ describe("ProcoreClient", () => {
       };
 
       await expect(
-        clientInternal.request("https://api.procore.test/test", "PUT", "token")
+        clientInternal.request("https://api.procore.com/test", "PUT", "token")
       ).rejects.toThrow("Method PUT not allowed");
 
       expect(mockFetch).not.toHaveBeenCalled();
@@ -77,7 +77,7 @@ describe("ProcoreClient", () => {
       };
 
       await expect(
-        clientInternal.request("https://api.procore.test/test", "PATCH", "token")
+        clientInternal.request("https://api.procore.com/test", "PATCH", "token")
       ).rejects.toThrow("Method PATCH not allowed");
 
       expect(mockFetch).not.toHaveBeenCalled();
@@ -90,7 +90,7 @@ describe("ProcoreClient", () => {
       };
 
       await expect(
-        clientInternal.request("https://api.procore.test/test", "DELETE", "token")
+        clientInternal.request("https://api.procore.com/test", "DELETE", "token")
       ).rejects.toThrow("Method DELETE not allowed");
 
       expect(mockFetch).not.toHaveBeenCalled();
@@ -149,7 +149,7 @@ describe("ProcoreClient", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         headers: new Headers({
-          Link: '<https://api.procore.test/rest/v1.0/test?page=2>; rel="next"',
+          Link: '<https://api.procore.com/rest/v1.0/test?page=2>; rel="next"',
         }),
         json: async () => [{ id: 1 }],
       });
@@ -181,7 +181,7 @@ describe("ProcoreClient", () => {
       await clientInternal.getAccessToken();
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "https://login.procore.test/oauth/token",
+        "https://login.procore.com/oauth/token",
         expect.objectContaining({
           method: "POST",
           headers: expect.objectContaining({
@@ -330,27 +330,20 @@ describe("ProcoreClient", () => {
       expect(mockFetch).toHaveBeenCalledTimes(3);
     });
 
-    it("caps maximum wait time", async () => {
+    it("throws RateLimitError when Retry-After exceeds maxWaitMs", async () => {
       const client = new ProcoreClient(mockConfig);
 
       mockFetch.mockResolvedValueOnce(mockTokenResponse);
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 429,
-        headers: new Headers({ "Retry-After": "120" }), // 2 minutes
-      });
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        headers: new Headers(),
-        json: async () => [],
+        headers: new Headers({ "Retry-After": "120" }), // 2 minutes > 60s max
       });
 
       const promise = client.get("/rest/v1.0/test");
-      // Should cap at 60s max wait
-      await vi.advanceTimersByTimeAsync(60000);
-      await promise;
-
-      expect(mockFetch).toHaveBeenCalledTimes(3);
+      
+      await expect(promise).rejects.toThrow("Rate limit Retry-After");
+      expect(mockFetch).toHaveBeenCalledTimes(2); // Token + first request, then throws
     });
 
     it("applies exponential backoff with jitter on 5xx", async () => {
@@ -449,7 +442,7 @@ describe("ProcoreClient", () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         headers: new Headers({
-          Link: '<https://api.procore.test/rest/v1.0/test?page=2>; rel="next"',
+          Link: '<https://api.procore.com/rest/v1.0/test?page=2>; rel="next"',
         }),
         json: async () => [{ id: 1 }],
       });
@@ -491,7 +484,7 @@ describe("ProcoreClient", () => {
       const client = new ProcoreClient(mockConfig);
 
       const result = client.parseLinkHeader(
-        '<https://api.procore.test/test?page=3>; rel="next"'
+        '<https://api.procore.com/test?page=3>; rel="next"'
       );
 
       expect(result.nextPage).toBe(3);
@@ -501,7 +494,7 @@ describe("ProcoreClient", () => {
       const client = new ProcoreClient(mockConfig);
 
       const result = client.parseLinkHeader(
-        '<https://api.procore.test/test?page=1>; rel="prev"'
+        '<https://api.procore.com/test?page=1>; rel="prev"'
       );
 
       expect(result.nextPage).toBeNull();
