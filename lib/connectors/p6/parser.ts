@@ -252,6 +252,7 @@ function hoursToDays(hours: string | null): number | null {
  */
 export async function parseXERToActivities(
   input: Buffer | Readable,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _sourceFile: string
 ): Promise<NormalizedScheduleActivity[]> {
   const tables = await parseXERStream(input);

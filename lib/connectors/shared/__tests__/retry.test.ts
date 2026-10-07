@@ -91,49 +91,34 @@ describe("Shared retry helper", () => {
   });
 
   describe("Maximum wait cap", () => {
-    it("caps wait time to maxWaitMs", async () => {
-      let attempt = 0;
+    it("throws RateLimitError when Retry-After exceeds maxWaitMs", async () => {
       const mockFn = vi.fn(async () => {
-        attempt++;
-        if (attempt === 1) {
-          return new Response(null, {
-            status: 429,
-            headers: { "Retry-After": "120" }, // 2 minutes
-          });
-        }
-        return new Response(null, { status: 200 });
+        return new Response(null, {
+          status: 429,
+          headers: { "Retry-After": "120" }, // 2 minutes > 10s max
+        });
       });
 
       const promise = retryRequest(mockFn, { maxRetries: 3, maxWaitMs: 10000, baseDelayMs: 1000 }, "Test");
       
-      // Should cap at 10 seconds, not wait 120 seconds
-      await vi.advanceTimersByTimeAsync(10000);
-      await promise;
-
-      expect(mockFn).toHaveBeenCalledTimes(2);
+      await expect(promise).rejects.toThrow("Rate limit Retry-After (120000ms) exceeds max wait cap (10000ms)");
+      expect(mockFn).toHaveBeenCalledTimes(1); // Only first attempt, then throws
     });
 
-    it("caps HTTP-date Retry-After to maxWaitMs", async () => {
-      let attempt = 0;
-      const retryDate = new Date(Date.now() + 90000).toUTCString(); // 90 seconds
+    it("throws RateLimitError when HTTP-date Retry-After exceeds maxWaitMs", async () => {
+      const retryDate = new Date(Date.now() + 90000).toUTCString(); // 90 seconds > 15s max
       
       const mockFn = vi.fn(async () => {
-        attempt++;
-        if (attempt === 1) {
-          return new Response(null, {
-            status: 429,
-            headers: { "Retry-After": retryDate },
-          });
-        }
-        return new Response(null, { status: 200 });
+        return new Response(null, {
+          status: 429,
+          headers: { "Retry-After": retryDate },
+        });
       });
 
       const promise = retryRequest(mockFn, { maxRetries: 3, maxWaitMs: 15000, baseDelayMs: 1000 }, "Test");
       
-      await vi.advanceTimersByTimeAsync(15000);
-      await promise;
-
-      expect(mockFn).toHaveBeenCalledTimes(2);
+      await expect(promise).rejects.toThrow("Rate limit Retry-After");
+      await expect(promise).rejects.toThrow("exceeds max wait cap");
     });
   });
 

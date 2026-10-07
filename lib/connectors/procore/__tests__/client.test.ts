@@ -28,8 +28,8 @@ describe("ProcoreClient", () => {
     clientId: "test-client-id",
     clientSecret: "test-secret",
     companyId: "12345",
-    baseUrl: "https://api.procore.test",
-    authUrl: "https://login.procore.test",
+    baseUrl: "https://api.procore.com",
+    authUrl: "https://login.procore.com",
   };
 
   const mockTokenResponse = {

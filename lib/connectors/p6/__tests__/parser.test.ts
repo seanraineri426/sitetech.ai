@@ -98,13 +98,18 @@ describe("P6 XER parser", () => {
       expect(activities[1].activity_code).toBe("A1010");
     });
 
-    it("handles missing task_code gracefully", async () => {
+    it("skips tasks with empty task_code (guarded)", async () => {
+      const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
       const xerWithEmptyCode = sampleXER.replace("A1000", "");
       const buffer = Buffer.from(xerWithEmptyCode, "utf-8");
       const activities = await parseXERToActivities(buffer, "test.xer");
 
-      expect(activities[0].external_id).toBe("DEMO:");
-      expect(activities[0].activity_code).toBeNull();
+      // Task with empty code should be skipped
+      expect(activities.every((a) => a.activity_code !== null && a.activity_code !== "")).toBe(true);
+      expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining("Skipping task"));
+
+      consoleWarnSpy.mockRestore();
     });
   });
 
@@ -115,7 +120,7 @@ describe("P6 XER parser", () => {
 
       const steelErection = activities.find((a) => a.activity_code === "A1010");
       expect(steelErection?.predecessors).toHaveLength(1);
-      expect(steelErection?.predecessors[0].activity_id).toBe("1000");
+      expect(steelErection?.predecessors[0].activity_id).toBe("DEMO:A1000"); // Composite ID
       expect(steelErection?.predecessors[0].type).toBe("FS");
       expect(steelErection?.predecessors[0].lag).toBe(0);
     });
