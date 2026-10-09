@@ -112,33 +112,19 @@ The system maintains an audit log of:
 
 ## What the Tests Prove
 
-**Test coverage**: 11 checks across 10 hostile emails (including spoofed domain), executing the actual pipeline:
+**Test coverage**: Tests verify prompt injection defenses. Prompt injection test implementation is pending.
 
-1. **Baseline Pipeline** (3 checks)  
+1. **Baseline Pipeline** (2 checks)  
    ✓ Pipeline completes without hostile input  
-   ✓ Produces valid brief with findings  
-   ✓ No fabricated refs in baseline
+   ✓ Produces valid brief with findings
 
-2. **Deterministic Code** (1 check)  
-   ✓ fact_rules deterministic (ignores hostile emails)
-
-3. **Party Resolution** (2 checks)  
+2. **Party Resolution** (2 checks)  
    ✓ Hostile emails from unknown domains → 'unknown party'  
    ✓ Spoofed domain (larkspur-dev.example) → 'unknown party'
 
-4. **Pipeline with Hostile Emails** (1 check)  
-   ✓ Pipeline completes with hostile emails present
+**Implementation note**: Full prompt injection test suite (hostile emails through pipeline, status/value protection checks) is under development and will validate that hostile email content doesn't affect code-only stages (read, rules, verify).
 
-5. **Status & Value Protection** (3 checks)  
-   ✓ RFI/CE statuses unchanged (hostile facts ignored)  
-   ✓ No hostile recipients in brief  
-   ✓ No hostile instruction phrases in brief
-
-6. **Mutation Check** (2 checks)  
-   ✓ Injected instruction would appear in mutated brief  
-   ✓ Actual brief has no injected instructions
-
-**Result**: 11/11 checks pass. Hostile emails added to fixture but content doesn't affect code-only stages (read, rules, verify). Comms, clusters, writer stages call llm_contract stub and fall back to code. Tests execute real pipeline logic. Suite runs in CI on every commit with OS-level network namespace isolation (`sudo unshare -n`) as the guarantee. Python-level patches (sitecustomize.py) provide best-effort blocking for local dev; known bypasses exist but are blocked by the OS namespace in CI.
+Test suite runs in CI on every commit with OS-level network namespace isolation (`sudo unshare -n`) as the guarantee. Python-level patches (sitecustomize.py) provide best-effort blocking for local dev; known bypasses exist but are blocked by the OS namespace in CI.
 
 ## Residual Risks
 
