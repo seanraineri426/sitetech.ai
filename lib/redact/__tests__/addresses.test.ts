@@ -94,4 +94,104 @@ describe("redactAddresses - isomorphic module", () => {
     // Should be fast even with many addresses (O(n) not O(n²))
     expect(elapsed).toBeLessThan(200);
   });
+
+  describe("trailing '@' and address chains", () => {
+    it("redacts address chains with trailing '@'", () => {
+      // Multiple addresses separated by '-' with trailing '@'
+      expect(redactAddresses("alice@acme.com-bob@acme.com-carol@acme.com@")).not.toContain("alice");
+      expect(redactAddresses("alice@acme.com-bob@acme.com-carol@acme.com@")).not.toContain("bob");
+      expect(redactAddresses("alice@acme.com-bob@acme.com-carol@acme.com@")).not.toContain("carol");
+      expect(redactAddresses("alice@acme.com-bob@acme.com-carol@acme.com@")).not.toMatch(/\w@\w/);
+    });
+
+    it("redacts addresses with trailing '@' variations", () => {
+      expect(redactAddresses("bob@x.com_@")).not.toContain("bob");
+      expect(redactAddresses("bob@x.com_@")).not.toMatch(/\w@\w/);
+      
+      expect(redactAddresses("bob@3m.com_carol@3m.com_@")).not.toContain("bob");
+      expect(redactAddresses("bob@3m.com_carol@3m.com_@")).not.toContain("carol");
+      expect(redactAddresses("bob@3m.com_carol@3m.com_@")).not.toMatch(/\w@\w/);
+    });
+
+    it("redacts glued address chains with trailing '@'", () => {
+      const result = redactAddresses("alice@acme.combob@acme.comcarol@acme.com@");
+      expect(result).not.toContain("alice");
+      expect(result).not.toContain("bob");
+      expect(result).not.toContain("carol");
+      expect(result).not.toMatch(/\w@\w/);
+    });
+
+    it("handles various trailing punctuation with '@'", () => {
+      // Trailing '@' alone
+      const result1 = redactAddresses("bob@x.com@");
+      expect(result1).not.toContain("bob");
+      expect(result1).not.toMatch(/\w@\w/);
+      
+      // Trailing '@@'
+      const result2 = redactAddresses("bob@x.com@@");
+      expect(result2).not.toContain("bob");
+      expect(result2).not.toMatch(/\w@\w/);
+      
+      // Trailing '@.'
+      const result3 = redactAddresses("bob@x.com@.");
+      expect(result3).not.toContain("bob");
+      expect(result3).not.toMatch(/\w@\w/);
+      
+      // Trailing '@-'
+      const result4 = redactAddresses("bob@x.com@-");
+      expect(result4).not.toContain("bob");
+      expect(result4).not.toMatch(/\w@\w/);
+      
+      // Trailing '@_'
+      const result5 = redactAddresses("bob@x.com@_");
+      expect(result5).not.toContain("bob");
+      expect(result5).not.toMatch(/\w@\w/);
+    });
+
+    it("handles full-width '@' at end", () => {
+      const result = redactAddresses("bob@x.com＠");
+      expect(result).not.toContain("bob");
+      expect(result).not.toMatch(/\w@\w/);
+    });
+
+    it("giant glued run with trailing '@' in bounded time, no leak", () => {
+      // 900K of repeated addresses with no separators, ending in '@'
+      const chunk = "a1@acme1.coma2@acme2.coma3@acme3.com";
+      const iterations = Math.ceil(900000 / chunk.length);
+      const hugeText = chunk.repeat(iterations) + "@";
+      
+      const t0 = performance.now();
+      const result = redactAddresses(hugeText);
+      const elapsed = performance.now() - t0;
+      
+      console.log("900K glued addresses", elapsed.toFixed(0), "ms");
+      expect(elapsed).toBeLessThan(1000);
+      
+      // Must not leak local parts
+      expect(result).not.toContain("a1");
+      expect(result).not.toContain("a2");
+      expect(result).not.toContain("a3");
+      expect(result).not.toMatch(/\w@\w/);
+    });
+
+    it("giant full-width glued run with trailing '@' in bounded time, no leak", () => {
+      // 900K of repeated addresses with full-width '@', ending in '＠'
+      const chunk = "a1＠acme1.coma2＠acme2.coma3＠acme3.com";
+      const iterations = Math.ceil(900000 / chunk.length);
+      const hugeText = chunk.repeat(iterations) + "＠";
+      
+      const t0 = performance.now();
+      const result = redactAddresses(hugeText);
+      const elapsed = performance.now() - t0;
+      
+      console.log("900K full-width glued addresses", elapsed.toFixed(0), "ms");
+      expect(elapsed).toBeLessThan(1000);
+      
+      // Must not leak local parts
+      expect(result).not.toContain("a1");
+      expect(result).not.toContain("a2");
+      expect(result).not.toContain("a3");
+      expect(result).not.toMatch(/\w@\w/);
+    });
+  });
 });
