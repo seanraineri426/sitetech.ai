@@ -10,6 +10,7 @@ joins them to records and decides.
   - RFI-CLOSED-IMPACT-NO-CE / COST-DIFFERING-SITE-CONDITION from RFI facts + record fields; never when a linked CE already covers it."""
 import datetime as dt, re
 from .calendar_util import d_
+from .unverified_senders import track_unverified_email_finding
 
 NEAR_DAYS = 14
 
@@ -92,16 +93,101 @@ def _received_later(V, e, f):
             if same or (f.get("submittal_no") and _norm_no(g.get("submittal_no")) == _norm_no(f.get("submittal_no"))): return x["ref"]
     return None
 
-def email_slip_rules(V):
+def _try_track_unverified_slip(T, V, email, unverified_list):
+    """Try to track an unknown-sender email that would have fired a slip rule."""
+    facts = efacts(T, email["ref"])
+    if facts is None:
+        return
+    
+    for f in facts:
+        if f["kind"] not in ("schedule_date_change", "conditional_slip"):
+            continue
+        if not (f.get("new_date") or f.get("delay_days")):
+            continue
+        
+        # Would it have been suppressed by received_later or delivery_complete?
+        # For unverified tracking, we assume it wouldn't be suppressed
+        
+        acts, conf, how, s = join_activity(V, email, f)
+        if not acts:
+            # Low-confidence match - still track it
+            nd = d_(f["new_date"]) if f.get("new_date") else None
+            if nd:
+                claim = f"Claims {f.get('item') or 'item'} ships {md(nd)}"
+                track_unverified_email_finding(
+                    T, V, email, "schedule_slip", claim,
+                    {"new_date": nd.isoformat(), "impact_tbd": True},
+                    {"quote": f.get("quote"), "item": f.get("item")}
+                )
+                unverified_list.append({
+                    "email_ref": email["ref"],
+                    "claim": claim,
+                    "type": "schedule_slip"
+                })
+            continue
+        
+        acts = [a for a in acts if not a.get("actual_finish") and a.get("pct_complete", 0) < 100]
+        if not acts or conf != "high":
+            continue
+            
+        acts.sort(key=lambda a: (0 if a.get("on_driving_path_to_tco") else 1, a["total_float_wd"], -d_(a["early_start"]).toordinal()))
+        a0 = acts[0]
+        started = bool(a0.get("actual_start"))
+        need = d_(a0["early_start"]) if not started else None
+        if s and s.get("required_on_site_date"):
+            need = min(filter(None, [need, d_(s["required_on_site_date"])]))
+        if need is None:
+            continue
+            
+        base = d_(f["old_date"]) if f.get("old_date") else need
+        new = d_(f["new_date"]) if f.get("new_date") else base + dt.timedelta(days=int(f["delay_days"]))
+        if new <= need:
+            continue
+            
+        slip_cd = (new - base).days
+        if slip_cd <= 0:
+            continue
+            
+        # Compute hypothetical impact
+        slip_wd = T.cal.wd_between(base, new)
+        beyond_float = max(0, slip_wd - a0["total_float_wd"])
+        
+        # Compute $ exposure (simplified - would use impact.delay_chain in production)
+        exposure_usd = beyond_float * 8000 if beyond_float > 0 else 0  # $8k/day placeholder
+        
+        claim = f"Claims {f.get('item') or a0['name']} ships {md(new)}, +{slip_cd} days"
+        if exposure_usd > 0:
+            claim += f", about ${exposure_usd//1000}k if verified"
+        
+        unverified_list.append({
+            "email_ref": email["ref"],
+            "claim": claim,
+            "type": "schedule_slip",
+            "hypothetical_impact": {
+                "slip_cd": slip_cd,
+                "slip_wd": slip_wd,
+                "beyond_float_wd": beyond_float,
+                "exposure_usd": exposure_usd
+            },
+            "activity": a0["activity_id"],
+            "quote": f.get("quote")
+        })
+
+def email_slip_rules(V, collect_unverified=True):
     from .rules_engine import _f
     from .parties import party_for_record
     T = V.T; out = []
+    unverified = getattr(V, '_unverified_findings', [])
     for e in V.emails:
         recv = T.local_date(e["received_at"])
         if recv > V.day or (V.day - recv).days > 7: continue
         # Only facts from project parties may create or suppress findings
         party = party_for_record(T.project, e)
-        if not party: continue
+        if not party:
+            # Track this as a potential unverified finding
+            if collect_unverified:
+                _try_track_unverified_slip(T, V, e, unverified)
+            continue
         facts = efacts(T, e["ref"])
         if facts is None: continue
         n = 0
