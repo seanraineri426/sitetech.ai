@@ -71,12 +71,17 @@ function calculateBackoff(attempt: number, baseDelayMs: number): number {
  */
 function logRateLimitHeaders(headers: RateLimitHeaders, provider: string): void {
   if (headers.limit || headers.remaining || headers.reset) {
+    let resetAt: string | null = null;
+    if (headers.reset) {
+      const resetTimestamp = parseInt(headers.reset, 10);
+      if (Number.isFinite(resetTimestamp)) {
+        resetAt = new Date(resetTimestamp * 1000).toISOString();
+      }
+    }
     logEvent(`${provider}.RateLimit`, {
-      limit: headers.limit || null,
-      remaining: headers.remaining || null,
-      reset: headers.reset
-        ? new Date(parseInt(headers.reset) * 1000).toISOString()
-        : null,
+      limit: headers.limit ? parseInt(headers.limit, 10) : null,
+      remaining: headers.remaining ? parseInt(headers.remaining, 10) : null,
+      reset_at: resetAt,
     });
   }
 }

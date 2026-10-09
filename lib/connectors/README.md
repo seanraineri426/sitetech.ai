@@ -33,6 +33,8 @@ A CI test (`lib/connectors/__tests__/log-scrub.test.ts`) runs all connectors ove
 
 ✅ **All tests passing**
 
+**Note:** There is no Granola connector yet. The logging rule applies to Procore, Microsoft Graph, and P6 connectors only.
+
 ---
 
 ## Structure

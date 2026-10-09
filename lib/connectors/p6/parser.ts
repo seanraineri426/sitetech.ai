@@ -281,6 +281,7 @@ export async function parseXERToActivities(
   // Guard empty task_code - skip with warning
   const taskIdToExternalId = new Map<string, string>();
   const validTasks: XERTask[] = [];
+  let emptyTaskCodeCount = 0;
 
   for (const row of taskTable.rows) {
     const task: XERTask = {
@@ -304,7 +305,7 @@ export async function parseXERToActivities(
 
     // Guard empty task_code: skip + warning, never emit colliding PROJ: IDs
     if (!task.task_code || task.task_code.trim() === "") {
-      logWarning("P6.Parser.EmptyTaskCode", { skipped_count: 1 });
+      emptyTaskCodeCount++;
       continue;
     }
 
@@ -312,6 +313,10 @@ export async function parseXERToActivities(
     const externalId = `${projShortName}:${task.task_code}`;
     taskIdToExternalId.set(task.task_id, externalId);
     validTasks.push(task);
+  }
+
+  if (emptyTaskCodeCount > 0) {
+    logWarning("P6.Parser.EmptyTaskCode", { skipped_count: emptyTaskCodeCount });
   }
 
   // Second pass: build activities with mapped predecessors

@@ -424,9 +424,9 @@ describe("ProcoreClient", () => {
       expect(consoleSpy).toHaveBeenCalledWith(
         "[Procore.RateLimit]",
         expect.objectContaining({
-          limit: "600",
-          remaining: "0",
-          reset: expect.any(String),
+          limit: 600,
+          remaining: 0,
+          reset_at: expect.any(String),
         })
       );
 
