@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { notFound } from 'next/navigation';
-import PreviewPage from '../page';
+import PreviewPage from '../page.dev';
 
 vi.mock('next/navigation', () => ({
   notFound: vi.fn(),

@@ -10,13 +10,28 @@ export type ActionType =
 export type OwnerRole = 'PE' | 'PM' | 'PX' | 'super';
 
 export type WhySource =
-  | { kind: 'email_quote'; label: string; quote: string; sourceUrl: string }
-  | { kind: 'record'; label: string; sourceUrl: string };
+  | {
+      kind: 'email_quote';
+      label: string;
+      quote: string;
+      senderCompany: string;
+      senderRole: string;
+      date: string;
+      subject: string;
+      secondaryLink: string | null;
+    }
+  | {
+      kind: 'record';
+      label: string;
+      description: string;
+      date: string;
+      secondaryLink: string | null;
+    };
 
 export type ConfirmFlag = 'confirm_owner' | 'confirm_activity';
 
 export type DraftKind =
-  | { kind: 'email'; to: string; subject: string; body: string }
+  | { kind: 'email'; to: string; toDisplay: string; subject: string; body: string }
   | { kind: 'procore_paste'; body: string; procoreUrl: string };
 
 export interface ActionCardData {

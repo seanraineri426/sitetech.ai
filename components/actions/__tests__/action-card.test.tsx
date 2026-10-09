@@ -87,9 +87,9 @@ describe('ActionCard', () => {
       expect(screen.getByText('under $1 at risk')).toBeInTheDocument();
     });
 
-    it('shows "-under $1" for negative cents between -99 and -1', () => {
+    it('shows "credit under $1" for negative cents between -99 and -1', () => {
       const data = { ...rfiEscalationFixture, dollarsAtRisk: -50, daysAtRisk: null };
-      render(
+      const { container } = render(
         <ActionCard
           data={data}
           onApprove={mockOnApprove}
@@ -98,7 +98,8 @@ describe('ActionCard', () => {
         />
       );
 
-      expect(screen.getByText('-under $1 at risk')).toBeInTheDocument();
+      expect(container).toBeTruthy();
+      expect(screen.getByText('credit under $1 at risk')).toBeInTheDocument();
     });
 
     it('formats negative dollars correctly', () => {
@@ -186,7 +187,7 @@ describe('ActionCard', () => {
       expect(screen.getByText('0 days · $42,000 at risk')).toBeInTheDocument();
     });
 
-    it('formats dates in project timezone', () => {
+    it('formats dates with UTC timezone', () => {
       const data = { ...rfiEscalationFixture, dueBy: '2026-10-12', timeZone: 'America/New_York' };
       const { container } = render(
         <ActionCard
@@ -199,6 +200,36 @@ describe('ActionCard', () => {
 
       const text = container.textContent || '';
       expect(text).toMatch(/Due:.*Oct.*12/);
+    });
+
+    it('rejects invalid dates like 2026-02-31', () => {
+      const data = { ...rfiEscalationFixture, dueBy: '2026-02-31' };
+      const { container } = render(
+        <ActionCard
+          data={data}
+          onApprove={mockOnApprove}
+          onEdit={mockOnEdit}
+          onDismiss={mockOnDismiss}
+        />
+      );
+
+      const text = container.textContent || '';
+      expect(text).not.toMatch(/Due:/);
+    });
+
+    it('rejects invalid timezone', () => {
+      const data = { ...rfiEscalationFixture, dueBy: '2026-10-12', timeZone: 'Invalid/Timezone' };
+      const { container } = render(
+        <ActionCard
+          data={data}
+          onApprove={mockOnApprove}
+          onEdit={mockOnEdit}
+          onDismiss={mockOnDismiss}
+        />
+      );
+
+      const text = container.textContent || '';
+      expect(text).not.toMatch(/Due:/);
     });
 
     it('shows nothing for invalid dates', () => {
@@ -641,9 +672,9 @@ describe('ActionCard', () => {
     });
   });
 
-  describe('Why section', () => {
-    it('starts collapsed', () => {
-      const { container } = render(
+  describe('Why panel', () => {
+    it('starts closed', () => {
+      render(
         <ActionCard
           data={rfiEscalationFixture}
           onApprove={mockOnApprove}
@@ -652,12 +683,11 @@ describe('ActionCard', () => {
         />
       );
 
-      const text = container.textContent || '';
-      expect(text).not.toContain('Need shaft-wall rating');
+      expect(screen.queryByText('Why this action')).not.toBeInTheDocument();
     });
 
-    it('expands when clicked', async () => {
-      const { container } = render(
+    it('opens panel when clicked', async () => {
+      render(
         <ActionCard
           data={rfiEscalationFixture}
           onApprove={mockOnApprove}
@@ -666,18 +696,15 @@ describe('ActionCard', () => {
         />
       );
 
-      const buttons = container.querySelectorAll('button');
-      const whyButton = Array.from(buttons).find((btn) => btn.textContent?.includes('Why'));
-      expect(whyButton).toBeDefined();
-      await userEvent.click(whyButton!);
+      const whyButton = screen.getByText('Why?');
+      await userEvent.click(whyButton);
 
-      const text = container.textContent || '';
-      expect(text).toContain('Need shaft-wall rating');
-      expect(text).toContain('RFI 112 overdue');
+      expect(screen.getByText('Why this action')).toBeInTheDocument();
+      expect(screen.getByText(/shaft-wall rating/)).toBeInTheDocument();
     });
 
-    it('shows quote for email_quote kind', async () => {
-      const { container } = render(
+    it('shows email quote details', async () => {
+      render(
         <ActionCard
           data={rfiEscalationFixture}
           onApprove={mockOnApprove}
@@ -686,16 +713,17 @@ describe('ActionCard', () => {
         />
       );
 
-      const buttons = container.querySelectorAll('button');
-      const whyButton = Array.from(buttons).find((btn) => btn.textContent?.includes('Why'));
-      await userEvent.click(whyButton!);
+      const whyButton = screen.getByText('Why?');
+      await userEvent.click(whyButton);
 
-      const text = container.textContent || '';
-      expect(text).toContain('Need shaft-wall rating');
+      expect(screen.getByText('ABC Architecture · Project Architect')).toBeInTheDocument();
+      expect(screen.getByText('Oct 3, 2026')).toBeInTheDocument();
+      expect(screen.getByText('RE: RFI 112 - Shaft wall fire rating')).toBeInTheDocument();
+      expect(screen.getByText(/Need shaft-wall rating/)).toBeInTheDocument();
     });
 
-    it('does not show quote for record kind', async () => {
-      const { container } = render(
+    it('shows record details for record kind', async () => {
+      render(
         <ActionCard
           data={submittalChaseFixture}
           onApprove={mockOnApprove}
@@ -704,16 +732,16 @@ describe('ActionCard', () => {
         />
       );
 
-      const buttons = container.querySelectorAll('button');
-      const whyButton = Array.from(buttons).find((btn) => btn.textContent?.includes('Why'));
-      await userEvent.click(whyButton!);
+      const whyButton = screen.getByText('Why?');
+      await userEvent.click(whyButton);
 
-      const quotes = container.querySelectorAll('blockquote');
-      expect(quotes.length).toBe(0);
+      expect(screen.getByText('Submittal S-0042 in review')).toBeInTheDocument();
+      expect(screen.getByText('Sept 28, 2026')).toBeInTheDocument();
+      expect(screen.getByText(/shop drawings submitted/)).toBeInTheDocument();
     });
 
-    it('shows source link when URL is valid', async () => {
-      const { container } = render(
+    it('shows secondary link when URL is valid', async () => {
+      render(
         <ActionCard
           data={rfiEscalationFixture}
           onApprove={mockOnApprove}
@@ -722,22 +750,25 @@ describe('ActionCard', () => {
         />
       );
 
-      const buttons = container.querySelectorAll('button');
-      const whyButton = Array.from(buttons).find((btn) => btn.textContent?.includes('Why'));
-      await userEvent.click(whyButton!);
+      const whyButton = screen.getByText('Why?');
+      await userEvent.click(whyButton);
 
-      const links = container.querySelectorAll('a');
-      const sourceLink = Array.from(links).find((link) => link.textContent?.includes('View source'));
-      expect(sourceLink).toBeDefined();
-      expect(sourceLink?.getAttribute('href')).toBe('https://app.procore.com/projects/12345/rfis/112');
+      const link = screen.getByText(/Open in Outlook/);
+      expect(link).toHaveAttribute('href', 'https://outlook.office.com/mail/id/rfi-112-thread');
     });
 
-    it('shows plain text for data: URL', async () => {
+    it('hides secondary link for invalid URL', async () => {
       const data = {
         ...rfiEscalationFixture,
-        why: { kind: 'record' as const, label: 'Test', sourceUrl: 'data:text/plain,test' },
+        why: {
+          kind: 'record' as const,
+          label: 'Test',
+          description: 'Test description',
+          date: 'Oct 1, 2026',
+          secondaryLink: 'data:text/plain,test',
+        },
       };
-      const { container } = render(
+      render(
         <ActionCard
           data={data}
           onApprove={mockOnApprove}
@@ -746,21 +777,24 @@ describe('ActionCard', () => {
         />
       );
 
-      const buttons = container.querySelectorAll('button');
-      const whyButton = Array.from(buttons).find((btn) => btn.textContent?.includes('Why'));
-      await userEvent.click(whyButton!);
+      const whyButton = screen.getByText('Why?');
+      await userEvent.click(whyButton);
 
-      const links = container.querySelectorAll('a[href]');
-      const hasDataLink = Array.from(links).some((link) => link.getAttribute('href')?.startsWith('data:'));
-      expect(hasDataLink).toBe(false);
+      expect(screen.queryByText(/Open in/)).not.toBeInTheDocument();
     });
 
-    it('shows plain text for http:// URL', async () => {
+    it('hides secondary link for http:// URL', async () => {
       const data = {
         ...rfiEscalationFixture,
-        why: { kind: 'record' as const, label: 'Test', sourceUrl: 'http://evil.com/page' },
+        why: {
+          kind: 'record' as const,
+          label: 'Test',
+          description: 'Test description',
+          date: 'Oct 1, 2026',
+          secondaryLink: 'http://evil.com/page',
+        },
       };
-      const { container } = render(
+      render(
         <ActionCard
           data={data}
           onApprove={mockOnApprove}
@@ -769,20 +803,24 @@ describe('ActionCard', () => {
         />
       );
 
-      const buttons = container.querySelectorAll('button');
-      const whyButton = Array.from(buttons).find((btn) => btn.textContent?.includes('Why'));
-      await userEvent.click(whyButton!);
+      const whyButton = screen.getByText('Why?');
+      await userEvent.click(whyButton);
 
-      const links = container.querySelectorAll('a[href^="http://"]');
-      expect(links.length).toBe(0);
+      expect(screen.queryByText(/Open in/)).not.toBeInTheDocument();
     });
 
-    it('shows plain text for https://evil.com URL', async () => {
+    it('hides secondary link for https://evil.com URL', async () => {
       const data = {
         ...rfiEscalationFixture,
-        why: { kind: 'record' as const, label: 'Test', sourceUrl: 'https://evil.com/page' },
+        why: {
+          kind: 'record' as const,
+          label: 'Test',
+          description: 'Test description',
+          date: 'Oct 1, 2026',
+          secondaryLink: 'https://evil.com/page',
+        },
       };
-      const { container } = render(
+      render(
         <ActionCard
           data={data}
           onApprove={mockOnApprove}
@@ -791,21 +829,24 @@ describe('ActionCard', () => {
         />
       );
 
-      const buttons = container.querySelectorAll('button');
-      const whyButton = Array.from(buttons).find((btn) => btn.textContent?.includes('Why'));
-      await userEvent.click(whyButton!);
+      const whyButton = screen.getByText('Why?');
+      await userEvent.click(whyButton);
 
-      const links = container.querySelectorAll('a');
-      const evilLink = Array.from(links).find((link) => link.getAttribute('href')?.includes('evil.com'));
-      expect(evilLink).toBeUndefined();
+      expect(screen.queryByText(/Open in/)).not.toBeInTheDocument();
     });
 
-    it('shows plain text for //evil.com URL', async () => {
+    it('hides secondary link for //evil.com URL', async () => {
       const data = {
         ...rfiEscalationFixture,
-        why: { kind: 'record' as const, label: 'Test', sourceUrl: '//evil.com/page' },
+        why: {
+          kind: 'record' as const,
+          label: 'Test',
+          description: 'Test description',
+          date: 'Oct 1, 2026',
+          secondaryLink: '//evil.com/page',
+        },
       };
-      const { container } = render(
+      render(
         <ActionCard
           data={data}
           onApprove={mockOnApprove}
@@ -814,13 +855,10 @@ describe('ActionCard', () => {
         />
       );
 
-      const buttons = container.querySelectorAll('button');
-      const whyButton = Array.from(buttons).find((btn) => btn.textContent?.includes('Why'));
-      await userEvent.click(whyButton!);
+      const whyButton = screen.getByText('Why?');
+      await userEvent.click(whyButton);
 
-      const links = container.querySelectorAll('a');
-      const evilLink = Array.from(links).find((link) => link.getAttribute('href')?.includes('evil.com'));
-      expect(evilLink).toBeUndefined();
+      expect(screen.queryByText(/Open in/)).not.toBeInTheDocument();
     });
   });
 
@@ -994,7 +1032,7 @@ describe('ActionCard', () => {
       expect(buttons.length).toBeGreaterThan(0);
     });
 
-    it('has aria-expanded on why button', () => {
+    it('has persistent aria-live element', () => {
       const { container } = render(
         <ActionCard
           data={rfiEscalationFixture}
@@ -1004,11 +1042,11 @@ describe('ActionCard', () => {
         />
       );
 
-      const whyButton = container.querySelector('button[aria-expanded]');
-      expect(whyButton).toHaveAttribute('aria-expanded', 'false');
+      const liveRegion = container.querySelector('[aria-live="polite"]');
+      expect(liveRegion).toBeInTheDocument();
     });
 
-    it('has aria-live on copied message', async () => {
+    it('updates aria-live text on copy', async () => {
       const data = {
         ...submittalChaseFixture,
         handoff: {
@@ -1032,10 +1070,72 @@ describe('ActionCard', () => {
       await userEvent.click(approveButton!);
 
       await waitFor(() => {
-        const copiedMsg = container.querySelector('[aria-live="polite"]');
-        expect(copiedMsg).toBeInTheDocument();
-        expect(copiedMsg?.textContent).toContain('Copied');
+        const liveRegion = container.querySelector('[aria-live="polite"]');
+        expect(liveRegion?.textContent).toContain('Copied');
       });
+    });
+
+    it('shows error on clipboard failure', async () => {
+      Object.assign(navigator, {
+        clipboard: {
+          writeText: vi.fn(() => Promise.reject(new Error('Clipboard denied'))),
+        },
+      });
+
+      const data = {
+        ...submittalChaseFixture,
+        handoff: {
+          href: null,
+          copyText: 'Test content',
+          label: 'Copy & open',
+        },
+      };
+
+      render(
+        <ActionCard
+          data={data}
+          onApprove={mockOnApprove}
+          onEdit={mockOnEdit}
+          onDismiss={mockOnDismiss}
+        />
+      );
+
+      const buttons = screen.getAllByRole('button');
+      const approveButton = buttons.find((btn) => btn.textContent?.includes('Copy'));
+      await userEvent.click(approveButton!);
+
+      await waitFor(() => {
+        expect(screen.getByRole('alert')).toBeInTheDocument();
+        expect(screen.getByText(/Failed to copy/)).toBeInTheDocument();
+      });
+
+      expect(mockOnApprove).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('Email redaction', () => {
+    it('does not render any @ characters in card or why panel', async () => {
+      const { container } = render(
+        <ActionCard
+          data={rfiEscalationFixture}
+          onApprove={mockOnApprove}
+          onEdit={mockOnEdit}
+          onDismiss={mockOnDismiss}
+        />
+      );
+
+      const cardText = container.textContent || '';
+      expect(cardText).not.toContain('@');
+
+      const whyButton = screen.getByRole('button', { name: /Why/ });
+      await userEvent.click(whyButton);
+
+      await waitFor(() => {
+        expect(screen.getByRole('dialog')).toBeInTheDocument();
+      });
+
+      const dialogText = screen.getByRole('dialog').textContent || '';
+      expect(dialogText).not.toContain('@');
     });
   });
 });

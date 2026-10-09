@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync, statSync, existsSync } from 'fs';
-import { join } from 'path';
+import { join, normalize, sep } from 'path';
 
 function getAllFilesRecursive(dir: string, fileList: string[] = []): string[] {
   if (!existsSync(dir)) {
@@ -12,8 +12,20 @@ function getAllFilesRecursive(dir: string, fileList: string[] = []): string[] {
   files.forEach((file) => {
     const filePath = join(dir, file);
     if (statSync(filePath).isDirectory()) {
+      if (file === 'node_modules' || file === '.next' || file === 'tests') {
+        return;
+      }
       getAllFilesRecursive(filePath, fileList);
-    } else if (file.endsWith('.tsx') || file.endsWith('.ts')) {
+    } else if (
+      file.endsWith('.tsx') ||
+      file.endsWith('.ts') ||
+      file.endsWith('.jsx') ||
+      file.endsWith('.js') ||
+      file.endsWith('.mjs') ||
+      file.endsWith('.cjs') ||
+      file.endsWith('.mts') ||
+      file.endsWith('.cts')
+    ) {
       fileList.push(filePath);
     }
   });
@@ -21,49 +33,39 @@ function getAllFilesRecursive(dir: string, fileList: string[] = []): string[] {
   return fileList;
 }
 
+function normalizePathSeparators(path: string): string {
+  return normalize(path).replace(/\/\/+/g, sep).replace(/\/\.\//g, sep);
+}
+
 describe('Fixture import restrictions', () => {
   it('no production code imports from tests/fixtures', () => {
-    const dirs = ['app', 'components', 'lib'];
-    const proxyFile = join(process.cwd(), 'proxy.ts');
+    const rootDir = process.cwd();
+    const allFiles = getAllFilesRecursive(rootDir);
     
-    let allFiles: string[] = [];
-    
-    dirs.forEach((dir) => {
-      const fullDir = join(process.cwd(), dir);
-      allFiles = allFiles.concat(getAllFilesRecursive(fullDir));
+    const productionFiles = allFiles.filter((file) => {
+      const relativePath = normalizePathSeparators(file.replace(rootDir + sep, ''));
+      
+      if (relativePath.includes('__tests__')) {
+        return false;
+      }
+      
+      const isDevFile = /app[/\\]\(dev\)[/\\].*\.dev\.(tsx|ts|jsx|js|mjs|cjs|mts|cts)$/.test(relativePath);
+      return !isDevFile;
     });
     
-    if (existsSync(proxyFile)) {
-      allFiles.push(proxyFile);
-    }
-    
-    const productionFiles = allFiles.filter((file) => !file.includes('/(dev)/') && !file.includes('/__tests__/'));
-    
     const violations: string[] = [];
+    const fixturePattern = /['"`](?:@\/|(?:\.\.?\/)+)tests\/fixtures/;
 
     productionFiles.forEach((file) => {
       const content = readFileSync(file, 'utf-8');
-      const fromPattern = /from\s+['"]@?\/tests\/fixtures/;
-      const relativeFromPattern = /from\s+['"]\.\.?\/.*tests\/fixtures/;
-      const importPattern = /import\(\s*['"]@?\/tests\/fixtures/;
-      const relativeImportPattern = /import\(\s*['"]\.\.?\/.*tests\/fixtures/;
-      const requirePattern = /require\(\s*['"]@?\/tests\/fixtures/;
-      const relativeRequirePattern = /require\(\s*['"]\.\.?\/.*tests\/fixtures/;
       
-      if (
-        fromPattern.test(content) || 
-        relativeFromPattern.test(content) ||
-        importPattern.test(content) ||
-        relativeImportPattern.test(content) ||
-        requirePattern.test(content) ||
-        relativeRequirePattern.test(content)
-      ) {
+      if (fixturePattern.test(content)) {
         violations.push(file);
       }
     });
 
     if (violations.length > 0) {
-      const relativePaths = violations.map((f) => f.replace(process.cwd() + '/', ''));
+      const relativePaths = violations.map((f) => normalizePathSeparators(f.replace(rootDir + sep, '')));
       expect.fail(
         `The following production files import from tests/fixtures:\n${relativePaths.join('\n')}`
       );

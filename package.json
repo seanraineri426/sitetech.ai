@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:build": "next build && vitest run __tests__/no-fixtures-in-build.test.ts",
     "test:db": "pnpm supabase db reset && pnpm supabase test db && pnpm test lib/supabase/__tests__/rls.test.ts",
     "test:db:nodocker": "bash scripts/test-db-nodocker.sh"
   },
