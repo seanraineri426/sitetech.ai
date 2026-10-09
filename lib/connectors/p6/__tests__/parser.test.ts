@@ -107,7 +107,7 @@ describe("P6 XER parser", () => {
 
       // Task with empty code should be skipped
       expect(activities.every((a) => a.activity_code !== null && a.activity_code !== "")).toBe(true);
-      expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining("Skipping task"));
+      expect(consoleWarnSpy).toHaveBeenCalledWith("[P6.Parser.EmptyTaskCode]", expect.objectContaining({ skipped_count: 1 }));
 
       consoleWarnSpy.mockRestore();
     });
@@ -329,9 +329,7 @@ describe("P6 XER parser", () => {
       expect(activities.find((a) => a.activity_code === "")).toBeUndefined();
 
       // Should log warning
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        expect.stringContaining("Skipping task 1001 with empty task_code")
-      );
+      expect(consoleWarnSpy).toHaveBeenCalledWith("[P6.Parser.EmptyTaskCode]", expect.objectContaining({ skipped_count: 1 }));
 
       consoleWarnSpy.mockRestore();
     });

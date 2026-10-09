@@ -118,9 +118,7 @@ export class GraphClient {
     // Validate origin
     const urlObj = new URL(url);
     if (urlObj.origin !== this.apiOrigin) {
-      throw new Error(
-        `Foreign origin not allowed: ${urlObj.origin} (expected ${this.apiOrigin})`
-      );
+      throw new Error("Foreign origin not allowed");
     }
 
     // Validate scope: must be under /users/{mailbox}/ or /sites/{siteId}/
@@ -143,9 +141,7 @@ export class GraphClient {
       pathSegments[3] === this.config.siteId;
 
     if (!isMailboxPath && !isSitePath) {
-      throw new Error(
-        `Path outside allowed scope: ${urlObj.pathname} (must be under /users/${this.config.mailbox}/ or /sites/${this.config.siteId}/)`
-      );
+      throw new Error("Path outside allowed scope");
     }
 
     // Build headers: standard headers LAST to prevent override

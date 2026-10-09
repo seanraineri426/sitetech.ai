@@ -30,6 +30,7 @@ import { createHash } from "crypto";
 import { Readable } from "stream";
 import { createInterface } from "readline";
 import { canonicalStringify } from "../shared/canonical-stringify";
+import { logWarning } from "../shared/log";
 import type { NormalizedScheduleActivity } from "../types";
 
 interface XERTable {
@@ -303,7 +304,7 @@ export async function parseXERToActivities(
 
     // Guard empty task_code: skip + warning, never emit colliding PROJ: IDs
     if (!task.task_code || task.task_code.trim() === "") {
-      console.warn(`[P6 Parser] Skipping task ${task.task_id} with empty task_code in project ${task.proj_id}`);
+      logWarning("P6.Parser.EmptyTaskCode", { skipped_count: 1 });
       continue;
     }
 

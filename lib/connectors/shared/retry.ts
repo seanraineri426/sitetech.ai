@@ -4,6 +4,7 @@
  */
 
 import "server-only";
+import { logEvent, logRetry } from "./log";
 
 export interface RetryOptions {
   maxRetries: number;
@@ -70,12 +71,12 @@ function calculateBackoff(attempt: number, baseDelayMs: number): number {
  */
 function logRateLimitHeaders(headers: RateLimitHeaders, provider: string): void {
   if (headers.limit || headers.remaining || headers.reset) {
-    console.log(`[${provider} Rate Limit]`, {
-      limit: headers.limit,
-      remaining: headers.remaining,
+    logEvent(`${provider}.RateLimit`, {
+      limit: headers.limit || null,
+      remaining: headers.remaining || null,
       reset: headers.reset
         ? new Date(parseInt(headers.reset) * 1000).toISOString()
-        : undefined,
+        : null,
     });
   }
 }
@@ -164,9 +165,7 @@ export async function retryRequest(
       // Ignore cancellation errors
     }
 
-    console.log(
-      `[${provider}] Retrying after ${waitMs}ms (attempt ${attempt + 1}/${maxRetries})`
-    );
+    logRetry(provider, attempt, maxRetries, waitMs);
 
     await sleep(waitMs);
   }

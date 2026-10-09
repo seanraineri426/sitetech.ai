@@ -265,7 +265,7 @@ describe("Shared retry helper", () => {
       await promise;
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("[Procore Rate Limit]"),
+        "[Procore.RateLimit]",
         expect.objectContaining({
           limit: "600",
           remaining: "0",

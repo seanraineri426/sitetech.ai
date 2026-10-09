@@ -73,10 +73,10 @@ export class ProcoreClient {
     ];
 
     if (!allowedApiOrigins.includes(this.apiOrigin)) {
-      throw new Error(`Procore baseUrl not in allowlist: ${this.apiOrigin}`);
+      throw new Error("Procore baseUrl not in allowlist");
     }
     if (!allowedAuthOrigins.includes(this.authOrigin)) {
-      throw new Error(`Procore authUrl not in allowlist: ${this.authOrigin}`);
+      throw new Error("Procore authUrl not in allowlist");
     }
   }
 
@@ -146,9 +146,7 @@ export class ProcoreClient {
     // Validate origin BEFORE attaching Bearer token
     const urlOrigin = new URL(url).origin;
     if (urlOrigin !== this.apiOrigin) {
-      throw new Error(
-        `Foreign origin not allowed: ${urlOrigin} (expected ${this.apiOrigin})`
-      );
+      throw new Error("Foreign origin not allowed");
     }
 
     // Now safe to make the request with token
