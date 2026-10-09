@@ -80,9 +80,12 @@ def join_activity(V, e, f):
     return a, ("name_only" if a else None), "activity name only", None
 
 def _received_later(V, e, f):
+    from .parties import party_for_record
     T = V.T; conv = e.get("conversation_id"); at = e.get("received_at") or ""
     for x in T.emails["emails"]:
         if x["ref"] == e["ref"] or (x.get("received_at") or "") <= at: continue
+        # Only facts from project parties may suppress findings
+        if not party_for_record(T.project, x): continue
         same = (conv and x.get("conversation_id") == conv)
         for g in efacts(T, x["ref"]) or []:
             if g["kind"] != "received_on_site": continue
@@ -96,6 +99,9 @@ def email_slip_rules(V):
     for e in V.emails:
         recv = T.local_date(e["received_at"])
         if recv > V.day or (V.day - recv).days > 7: continue
+        # Only facts from project parties may create or suppress findings
+        party = party_for_record(T.project, e)
+        if not party: continue
         facts = efacts(T, e["ref"])
         if facts is None: continue
         n = 0
@@ -109,7 +115,7 @@ def email_slip_rules(V):
             except Exception: pass
             acts, conf, how, s = join_activity(V, e, f)
             acts = [a for a in acts if not a.get("actual_finish") and a.get("pct_complete", 0) < 100]
-            party = party_for_record(T.project, e); who = e["from"]["name"] if isinstance(e.get("from"), dict) else str(e.get("from")).split(" <")[0]
+            who = e["from"]["name"] if isinstance(e.get("from"), dict) else str(e.get("from")).split(" <")[0]
             key = e["ref"] + (f"|{n}" if n else ""); item = f.get("item") or "item"
             label = "Likely" if (f.get("date_basis") == "vague" or f.get("confidence") == "low" or f["kind"] == "conditional_slip") else "Confirmed"
             if not acts or conf != "high":

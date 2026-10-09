@@ -101,9 +101,9 @@ def _norm(s):
     import re
     return re.sub(r"\s+", " ", (s or "").replace("\u2019", "'").replace("\u2014", "-").replace("\u2013", "-").replace("\u00a0", " ")).strip().lower()
 
-def _verbatim(q, *texts):
+def _verbatim(q, *texts, min_len=4):
     q = _norm(q).strip(" .\"'")
-    return len(q) >= 4 and any(q in _norm(t) for t in texts)
+    return len(q) >= min_len and any(q in _norm(t) for t in texts)
 
 def verify_email_facts(T, rec, facts):
     """Code checks only (no judgment). Returns (kept, dropped)."""
@@ -115,18 +115,24 @@ def verify_email_facts(T, rec, facts):
         if validate(f, EMAIL_FACT): dropped.append({"fact": f, "reason": "schema"}); continue
         if not _verbatim(f.get("quote"), text): dropped.append({"fact": f, "reason": "quote not verbatim"}); continue
         # Verify numeric/ID/spec values appear verbatim in the redacted text
-        for key in ("amount_usd", "ce_no", "spec_section", "submittal_no", "rfi_no"):
+        # For received_on_site facts, submittal_no is used for matching and may not be explicitly stated
+        check_fields = ["amount_usd", "ce_no", "spec_section", "rfi_no"]
+        if f["kind"] != "received_on_site":
+            check_fields.append("submittal_no")
+        for key in check_fields:
             val = f.get(key)
             if val is not None and val != "":
                 # For numbers, check both raw and comma-formatted versions
                 if isinstance(val, (int, float)):
                     # Try raw number and common formatted versions
                     candidates = [str(int(val)), f"{int(val):,}"]
-                    if not any(_verbatim(c, text) for c in candidates):
+                    # Allow shorter matches for numbers (min_len=1)
+                    if not any(_verbatim(c, text, min_len=1) for c in candidates):
                         dropped.append({"fact": f, "reason": f"{key} '{val}' not verbatim"}); break
                 else:
-                    # For strings, check as-is
-                    if not _verbatim(val, text):
+                    # For strings, allow shorter matches for IDs (min_len=1) but keep min_len=4 for spec_section
+                    min_len = 4 if key == "spec_section" else 1
+                    if not _verbatim(val, text, min_len=min_len):
                         dropped.append({"fact": f, "reason": f"{key} '{val}' not verbatim"}); break
         else:
             # All checks passed
