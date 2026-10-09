@@ -1573,6 +1573,48 @@ CO #12 @ $4,500, beam B-3@grid C/4`;
       });
     });
 
+    it("46 pre-cap offsets with glued address run: no leaks", { timeout: 60000 }, () => {
+      const preCapLimit = MAX_BODY_CHARS * 4; // 800K
+      // Test more positions around the pre-cap boundary
+      const positions = Array.from({ length: 46 }, (_, i) => preCapLimit - 200 + i * 10);
+
+      positions.forEach((pos) => {
+        // Create glued address run straddling the position
+        const chunk = "alice@acme.combob@acme.comcarol@acme.com";
+        const repetitions = Math.floor(pos / chunk.length);
+        const before = chunk.repeat(repetitions);
+        const after = chunk.repeat(100) + "@";
+        const body = before + after;
+
+        const normalized = mapGraphMessageToNormalized({
+          id: "msg1",
+          conversationId: "conv1",
+          receivedDateTime: "2024-01-01T00:00:00Z",
+          sentDateTime: "2024-01-01T00:00:00Z",
+          subject: "Test",
+          bodyPreview: "",
+          from: { emailAddress: { name: "Bob", address: "bob@test.com" } },
+          toRecipients: [],
+          ccRecipients: [],
+          body: { contentType: "text", content: body },
+          hasAttachments: false,
+          importance: "normal",
+          isRead: false,
+          categories: [],
+        }, "mb1");
+
+        expect(normalized.body_text).toBeTruthy();
+        
+        // Must not leak local parts
+        expect(normalized.body_text).not.toContain("alice");
+        expect(normalized.body_text).not.toContain("bob");
+        expect(normalized.body_text).not.toContain("carol");
+        
+        // Must not have x@y pattern
+        expect(normalized.body_text).not.toMatch(/\w@\w/);
+      });
+    });
+
     it("50MB no-whitespace HTML maps in bounded time with marker", { timeout: 10000 }, () => {
       // 50MB HTML with no whitespace
       const hugeHtml = "<p>" + "x".repeat(50 * 1024 * 1024 - 7) + "</p>";
@@ -1604,6 +1646,59 @@ CO #12 @ $4,500, beam B-3@grid C/4`;
       // Must have truncation marker
       expect(normalized.body_text).toBeTruthy();
       expect(normalized.body_text!.endsWith(" [truncated]")).toBe(true);
+    });
+
+    it("empty body after redaction but truncated gets marker", () => {
+      // Very large body that becomes empty after redaction (all addresses)
+      const addresses = "alice@example.com ".repeat(1000000);
+
+      const normalized = mapGraphMessageToNormalized({
+        id: "msg1",
+        conversationId: "conv1",
+        receivedDateTime: "2024-01-01T00:00:00Z",
+        sentDateTime: "2024-01-01T00:00:00Z",
+        subject: "Test",
+        bodyPreview: "",
+        from: { emailAddress: { name: "Bob", address: "bob@test.com" } },
+        toRecipients: [],
+        ccRecipients: [],
+        body: { contentType: "text", content: addresses },
+        hasAttachments: false,
+        importance: "normal",
+        isRead: false,
+        categories: [],
+      }, "mb1");
+
+      // Even though body is effectively empty after redaction, marker should be present
+      expect(normalized.body_text).toBeTruthy();
+      expect(normalized.body_text).toContain("[truncated]");
+    });
+
+    it("literal '[email-' with whitespace does not trigger placeholder backoff", () => {
+      // 300K body starting with literal "[email-me later" should not be cut to just marker
+      const body = "[email-me later about the project details " + "x".repeat(MAX_BODY_CHARS + 100000);
+
+      const normalized = mapGraphMessageToNormalized({
+        id: "msg1",
+        conversationId: "conv1",
+        receivedDateTime: "2024-01-01T00:00:00Z",
+        sentDateTime: "2024-01-01T00:00:00Z",
+        subject: "Test",
+        bodyPreview: "",
+        from: { emailAddress: { name: "Bob", address: "bob@test.com" } },
+        toRecipients: [],
+        ccRecipients: [],
+        body: { contentType: "text", content: body },
+        hasAttachments: false,
+        importance: "normal",
+        isRead: false,
+        categories: [],
+      }, "mb1");
+
+      expect(normalized.body_text).toBeTruthy();
+      // Should contain the start of the body, not just " [truncated]"
+      expect(normalized.body_text!.length).toBeGreaterThan(100);
+      expect(normalized.body_text).toContain("[email-me later");
     });
 
     it("400-char domain placeholder straddling 200K cut has no partial placeholder", () => {

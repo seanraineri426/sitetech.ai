@@ -153,11 +153,18 @@ function capText(text: string, maxChars: number): string {
   const lastEmailStart = text.lastIndexOf('[email-', cutPos);
   
   if (lastEmailStart !== -1) {
-    // Found a placeholder start before cut, check if it closes before cutPos
-    const closeIndex = text.indexOf(']', lastEmailStart + 7);
-    if (closeIndex === -1 || closeIndex >= cutPos) {
-      // No close bracket, or it's at/after our cut point - move cut before '['
-      cutPos = lastEmailStart;
+    // Only back off if there's NO whitespace between '[email-' and cut
+    // (real placeholders never contain whitespace; this avoids matching literal "[email-me later")
+    const betweenText = text.substring(lastEmailStart + 7, cutPos);
+    const hasWhitespace = /\s/.test(betweenText);
+    
+    if (!hasWhitespace) {
+      // Found a placeholder start before cut, check if it closes before cutPos
+      const closeIndex = text.indexOf(']', lastEmailStart + 7);
+      if (closeIndex === -1 || closeIndex >= cutPos) {
+        // No close bracket, or it's at/after our cut point - move cut before '['
+        cutPos = lastEmailStart;
+      }
     }
   }
   
@@ -249,7 +256,7 @@ export function mapGraphMessageToNormalized(
   let redactedBodyText = bodyResult ? redactAddresses(bodyResult.text) : null;
   
   // Cap body text AFTER redaction (so placeholder-aware cut works)
-  // If pre-cap already truncated, append marker even if under MAX_BODY_CHARS
+  // If pre-cap already truncated, append marker even if under MAX_BODY_CHARS or empty
   if (redactedBodyText) {
     if (redactedBodyText.length > MAX_BODY_CHARS) {
       redactedBodyText = capText(redactedBodyText, MAX_BODY_CHARS);
@@ -257,6 +264,9 @@ export function mapGraphMessageToNormalized(
       // Pre-cap fired but result is under MAX_BODY_CHARS - still needs marker
       redactedBodyText = redactedBodyText + ' [truncated]';
     }
+  } else if (bodyResult && bodyResult.truncated) {
+    // Pre-cap fired but body came out empty after redaction - still needs marker
+    redactedBodyText = ' [truncated]';
   }
   
   // Fingerprint uses redacted body text
