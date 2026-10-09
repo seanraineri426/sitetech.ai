@@ -2,7 +2,9 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
-import { LoginForm } from "../login-form";
+
+// Hoist mocks for dynamic flag control
+const mocks = vi.hoisted(() => ({ flag: false }));
 
 // Mock dependencies
 vi.mock("next/navigation", () => ({
@@ -22,12 +24,16 @@ vi.mock("@/lib/supabase/client", () => ({
 
 vi.mock("@/lib/env.public", () => ({
   NEXT_PUBLIC_SITE_URL: "http://localhost:3000",
-  NEXT_PUBLIC_AUTH_MICROSOFT_ENABLED: false,
+  get NEXT_PUBLIC_AUTH_MICROSOFT_ENABLED() {
+    return mocks.flag;
+  },
 }));
 
 vi.mock("../actions", () => ({
   signInWithMagicLink: vi.fn(),
 }));
+
+import { LoginForm } from "../login-form";
 
 describe("LoginForm", () => {
   beforeEach(() => {
@@ -39,14 +45,21 @@ describe("LoginForm", () => {
   });
 
   describe("Microsoft sign-in button visibility", () => {
-    it("hides Microsoft button when flag is false (default)", () => {
-      render(<LoginForm />);
+    it("hides Microsoft button when flag is false", () => {
+      mocks.flag = false;
+      const { unmount } = render(<LoginForm />);
       
       expect(screen.queryByRole("button", { name: /microsoft/i })).not.toBeInTheDocument();
+      unmount();
     });
 
-    // Note: Testing flag=true requires dynamic import with mocked env,
-    // which is complex in the current setup. Manual testing recommended.
+    it("shows Microsoft button when flag is true", () => {
+      mocks.flag = true;
+      const { unmount } = render(<LoginForm />);
+      
+      expect(screen.getByRole("button", { name: /microsoft/i })).toBeInTheDocument();
+      unmount();
+    });
   });
 
   describe("magic link no-enumeration", () => {

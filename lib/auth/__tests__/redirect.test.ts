@@ -202,6 +202,20 @@ describe("sanitizeRedirectUrl", () => {
     });
   });
 
+  describe("edge cases with same-origin verification", () => {
+    it("double-encoded tab /%2509/evil.com is same-origin", () => {
+      expect(new URL(sanitizeRedirectUrl("/%2509/evil.com", siteUrl, defaultUrl), siteUrl).origin).toBe(new URL(siteUrl).origin);
+    });
+
+    it("rejects double unicode slash \\uff0f\\uff0fevil.com", () => {
+      expect(sanitizeRedirectUrl("\uff0f\uff0fevil.com", siteUrl, defaultUrl)).toBe(defaultUrl);
+    });
+
+    it("unicode slash /\\uff0f/evil.com is same-origin", () => {
+      expect(new URL(sanitizeRedirectUrl("/\uff0f/evil.com", siteUrl, defaultUrl), siteUrl).origin).toBe(new URL(siteUrl).origin);
+    });
+  });
+
   describe("fuzz testing", () => {
     it("rejects random combinations that might escape", () => {
       const charset = ["/", ".", "%", "2", "e", "E", "F", "3", "f", "2", "3", "\\", "?", "#", "a"];

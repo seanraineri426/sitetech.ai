@@ -5,17 +5,17 @@ import { createClient } from "@/lib/supabase/server";
 import { env } from "@/lib/env";
 import { sanitizeRedirectUrl } from "@/lib/auth/redirect";
 
-const emailSchema = z.string().email().trim();
+const emailSchema = z.string().trim().email();
 
 export async function signInWithMagicLink(email: string, next: string | null) {
-  const supabase = await createClient();
-  
-  // Validate email
+  // Validate email first
   const emailResult = emailSchema.safeParse(email);
   if (!emailResult.success) {
     return { error: "Invalid email address." };
   }
 
+  const supabase = await createClient();
+  
   // Read AUTH_OPEN_SIGNUP server-side
   const isOpenSignup = env.AUTH_OPEN_SIGNUP === "true";
   
