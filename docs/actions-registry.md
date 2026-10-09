@@ -303,8 +303,9 @@
 - Subject: "Acknowledgment: [notice type] notice dated [date]"
 - Body: acknowledgment of receipt, notice type, date received, response deadline (if known), next steps
 - **If owner pass-through required:** separate draft email to owner with notice attached and pass-through deadline
-- Calendar hold (.ics file) on the response deadline
-- **Banned wording:** waived, liable, breach, entitled (especially critical for notices)
+- **If deadline has already passed (deadline < today):** card text must be exactly: "Deadline per project settings was \<date\>; confirm with PX". Must not draw any legal conclusion.
+- Calendar hold (.ics file) on the response deadline (if not passed)
+- **Banned wording:** waived, liable, breach, entitled, defaulted, forfeited (especially critical for notices)
 
 **Approval tier:** PX (PM prepares, PX approves)
 
@@ -325,6 +326,7 @@
 - Negative: email from party not in project parties → no action (not recognized as notice)
 - Edge: deadline falls on weekend/holiday → adjusted to next business day (if business days)
 - Edge: calendar vs. business days calculation
+- Edge: deadline has already passed (deadline < today) → card text exactly: "Deadline per project settings was \<date\>; confirm with PX" (no legal conclusions)
 
 ---
 

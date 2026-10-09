@@ -211,6 +211,7 @@ All computation is deterministic code over the latest schedule snapshot (P6 XER 
 - **Deadline falls on weekend/holiday (calendar days):** deadline is that day (no adjustment)
 - **Notice period not configured:** `noticeDeadline = null`, `deadlineSource = "not_configured"`
 - **Urgent notice (< 3 days):** handled by action routing (A6 escalates to PX same day if deadline is < 2 business days from response requirement)
+- **Deadline has already passed:** Card text must be exactly: "Deadline per project settings was \<date\>; confirm with PX". Must not draw any legal conclusion (no "waived", "defaulted", "forfeited", etc.).
 
 ---
 
@@ -288,6 +289,7 @@ The computation returns a structured result that the model uses to generate a pl
   ],
   "sourceData": {
     "scheduleSnapshot": "P6_XER_2026-10-08_05-12",
+    "scheduleDataDate": "2026-10-08",
     "projectSettings": "project_12345_settings_v3",
     "computedAt": "2026-10-09T17:38:42Z"
   },
@@ -301,12 +303,12 @@ The computation returns a structured result that the model uses to generate a pl
 - `scenario` (object): echoes the input scenario (activityId, activityName, slipDays)
 - `impacts` (object): computation results
   - `primaryActivity` (object): the activity the user asked about
-  - `successors` (array of objects): impacted successor activities (**PROPOSED:** up to 10 shown by default; more available on request. Not yet decided by PM.)
+  - `successors` (array of objects): impacted successor activities (up to 10 shown by default; more available on request). **Ordering:** critical-path activities (remaining float ≤ 0) first, then rest ordered by least float.
   - `projectCompletion` (object): project finish date impact (if any)
 - `dollars` (object): $ impact breakdown
 - `notices` (array of objects): triggered notice requirements (from contract notice periods)
 - `suggestedActions` (array of objects): registered actions that would be triggered by this scenario (for drafting)
-- `sourceData` (object): audit trail (schedule snapshot id, settings version, timestamp)
+- `sourceData` (object): audit trail (schedule snapshot id, **schedule data date**, settings version, timestamp)
 - **`estimateLabel`** (string): Always "estimate, confirm in P6" to remind users this is NOT a full schedule recalculation
 
 ---
@@ -339,7 +341,7 @@ The what-if result is displayed as:
 - Hover: full activity details (id, original dates, new dates, float consumed, $ impact if on critical path)
 - **Result labeled:** All charts and outputs include the label **"estimate, confirm in P6"** to remind users this is NOT a full schedule recalculation
 
-**Successor display (PROPOSED by Agent Engineer, not yet decided):** Show the primary activity + up to 10 immediate successors by default. User can expand to see full critical path if needed. (Full critical path can be 50+ activities; showing all by default risks overwhelming the UI.)
+**Successor display (PM):** Show the primary activity + up to 10 immediate successors by default. User can expand to see full critical path if needed. **Ordering:** critical-path activities (remaining float ≤ 0) first, then rest ordered by least float. (Full critical path can be 50+ activities; showing all by default risks overwhelming the UI.)
 
 ---
 
@@ -376,13 +378,15 @@ The model generates a plain-English explanation of the what-if result, constrain
 ## Citation rules (every number on screen must cite its source)
 
 Every number displayed in the what-if result must include a citation (tap to see source):
-- **Float days consumed:** cites the schedule snapshot + P6's calculated float values (shows original float from P6, slip propagated, remaining float)
-- **$ impact:** cites the daily delay cost (from project settings, line item) + critical path slip days (from schedule impact walk)
+- **Float days consumed:** cites the schedule snapshot + schedule data date + P6's calculated float values (shows original float from P6, slip propagated, remaining float)
+- **$ impact:** cites the daily delay cost (from project settings, line item) + critical path slip days (from schedule impact walk) + schedule data date
 - **Notice deadline:** cites the contract notice period (from project settings, contract section) + event date + business day calculation log
-- **Project completion date:** cites the schedule snapshot + critical path slip propagation
-- **Successor impacts:** cites the successor logic (from schedule: predecessor, lag, relationship type FS/SS/FF) + slip propagation
+- **Project completion date:** cites the schedule snapshot + schedule data date + critical path slip propagation
+- **Successor impacts:** cites the successor logic (from schedule: predecessor, lag, relationship type FS/SS/FF) + slip propagation + schedule data date
 
-**All citations include the reminder:** "estimate, confirm in P6"
+**All citations include:**
+- The schedule snapshot's data date (the "as of" date for all schedule data)
+- The reminder: "estimate, confirm in P6"
 
 **Example citation card (shown on tap):**
 
@@ -390,13 +394,14 @@ Every number displayed in the what-if result must include a citation (tap to see
 >
 > **Source:**  
 > - Critical path slip: 26 days (from schedule impact walk, P6 XER snapshot P6_XER_2026-10-08_05-12)
+> - Schedule data date: Oct 8, 2026
 > - Daily delay cost: $12,000 (from project settings, entered by PX on Oct 1, 2026)
 > - Computation: 26 days × $12,000/day = $312,000
 > - **Note:** This is an estimate. Confirm in P6 (constraints and resource leveling not applied).
 >
 > [View schedule snapshot] [View project settings]
 
-**Citation links (PROPOSED by Agent Engineer, not yet decided):** Link to the schedule snapshot summary for M2. Direct deep-links to Procore activities or P6 web UI rows are desirable for M3 but require deep-link support from those tools.
+**Citation links (PM):** Link to the schedule snapshot summary for M2. Direct deep-links to Procore activities or P6 web UI rows are desirable for M3 but require deep-link support from those tools.
 
 ---
 
@@ -425,8 +430,9 @@ Each test case includes:
 | **TC12: SF logic** | Slip an activity with start-to-finish (SF) successor logic | Treated as FS; result flagged "check in P6" |
 | **TC13: Daily delay cost not set** | Slip a critical path activity by 10 days, but daily delay cost is null in project settings | Project completion slips 10 days; $ impact = null; UI shows "Set delay cost to see $ impact" |
 | **TC14: Notice triggered** | Slip causes project completion to slip by 15 days (> 10 day threshold for delay notice) | `notices` array includes delay_time_extension notice with correct deadline (event date + notice period, accounting for business days + holidays) |
-| **TC15: No successors** | Slip an activity with no successors (end of a path, not on critical path) | Activity finish slips; float consumed; no impact on project completion; $ impact = $0 |
-| **TC16: Accelerate (negative slip)** | Slip an activity by -5 days (acceleration) | Activity finish moves earlier; successors' early start may move earlier if this is the driving predecessor; no float consumed (float increases); $ impact = $0 (savings not computed) |
+| **TC15: Notice deadline passed** | Slip causes project completion to slip, and notice deadline (computed from settings) has already passed (deadline < today) | Card text exactly: "Deadline per project settings was \<date\>; confirm with PX". No legal conclusions (no "waived", "defaulted", etc.). |
+| **TC16: No successors** | Slip an activity with no successors (end of a path, not on critical path) | Activity finish slips; float consumed; no impact on project completion; $ impact = $0 |
+| **TC17: Accelerate (negative slip)** | Slip an activity by -5 days (acceleration) | Activity finish moves earlier; successors' early start may move earlier if this is the driving predecessor; no float consumed (float increases); $ impact = $0 (savings not computed) |
 
 ---
 
@@ -436,7 +442,7 @@ Each test case includes:
 - **Successor depth:** walk up to 100 levels deep (typical max for construction schedules)
 - **UI render time:** < 1s to show the summary card + chart after computation completes
 - **Concurrent requests:** support 10 concurrent what-if scenarios per project (users exploring different options)
-- **Caching (PROPOSED by Agent Engineer, not yet decided):** Not needed for M2; 500ms is fast enough. May revisit for M3 if performance requires it.
+- **Caching (PM):** Not needed for M2; 500ms is fast enough. May revisit for M3 if performance requires it.
 
 ---
 
@@ -447,11 +453,11 @@ Each test case includes:
 1. ✅ **CPM float walk / Relationship types (PM):** Support FS, SS, FF with lags in M2 (from P6 XER). SF (start-to-finish, rare) is treated as FS with "check in P6" flag.
 2. ✅ **Shutdown periods (PM):** Use P6 calendars in the XER (they carry non-work periods) plus project holidays from settings. No separate manual calendar for M2.
 3. ✅ **Activity matching (PM):** Normalize case, spaces, and hyphens ("curtainwall" = "curtain wall"). Confidence enum stays internal; user only sees Confirm chip or picker.
-4. 🔧 **Successor display (PROPOSED by Agent Engineer, not yet decided):** Show primary + up to 10 immediate successors by default; user can expand for full critical path. (All impacted activities can be 50+; showing a limited set by default avoids overwhelming the UI.)
-5. 🔧 **Citation links (PROPOSED by Agent Engineer, not yet decided):** Link to schedule snapshot summary for M2. Direct deep-links to Procore/P6 desirable for M3 but require tool support.
-6. 🔧 **Acceleration savings (PROPOSED by Agent Engineer, not yet decided):** Do not compute $ savings for acceleration (negative slip). Delay impact only. (Savings are less common and harder to justify; delay impact is the primary use case.)
-7. 🔧 **Cache CPM results (PROPOSED by Agent Engineer, not yet decided):** Not needed for M2; 500ms is fast enough. May revisit for M3.
-8. 🔧 **Notice threshold (PROPOSED by Agent Engineer, not yet decided):** Handled by action routing. A6 escalates to PX same day if deadline < 2 business days.
+4. ✅ **Successor display (PM):** Show primary + up to 10 immediate successors by default; user can expand for full critical path. Successors ordered: critical-path activities first, then rest by least float. (All impacted activities can be 50+; showing a limited set by default avoids overwhelming the UI.)
+5. ✅ **Citation links (PM):** Link to schedule snapshot summary for M2. Direct deep-links to Procore/P6 desirable for M3 but require tool support. Every citation shows the schedule snapshot's data date.
+6. ✅ **Acceleration savings (PM):** Do not compute $ savings for acceleration (negative slip). Delay impact only. (Savings are less common and harder to justify; delay impact is the primary use case.)
+7. ✅ **Cache CPM results (PM):** Not needed for M2; 500ms is fast enough. May revisit for M3.
+8. ✅ **Notice threshold (PM):** Handled by action routing. A6 escalates to PX same day if deadline < 2 business days.
 9. ✅ **CTO guardrail applied:** We are NOT building a schedule engine. Float and dates come from P6 file; what-if pushes slips forward using P6 dependencies, lags, and calendars. Constraints and resource leveling stay in P6. Result labeled "estimate, confirm in P6".
 
 **One remaining consideration for M3 (not blocking M2):**
