@@ -903,8 +903,8 @@ insert into auth.users (id, email) values ('99999999-9999-9999-9999-999999999998
 -- Profile created by trigger
 insert into public.projects (id, org_id, name, timezone, created_by) 
   values ('99999999-9999-9999-9999-999999999998', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'User Delete Test 2', 'UTC', '99999999-9999-9999-9999-999999999998');
-insert into public.audit_log (org_id, entity_type, entity_id, action, actor_user_id) 
-  values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'project', '99999999-9999-9999-9999-999999999998', 'create_project', '99999999-9999-9999-9999-999999999998');
+insert into public.audit_log (org_id, actor_type, actor_user_id, action, target_table, target_id) 
+  values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'user', '99999999-9999-9999-9999-999999999998', 'create_project', 'projects', '99999999-9999-9999-9999-999999999998');
 delete from auth.users where id = '99999999-9999-9999-9999-999999999998';
 select is(
   (select created_by from public.projects where id = '99999999-9999-9999-9999-999999999998'),
@@ -912,7 +912,7 @@ select is(
   'Deleting user nulls projects.created_by'
 );
 select is(
-  (select actor_user_id from public.audit_log where entity_id = '99999999-9999-9999-9999-999999999998'),
+  (select actor_user_id from public.audit_log where target_id = '99999999-9999-9999-9999-999999999998'::uuid),
   null,
   'Deleting user nulls audit_log.actor_user_id'
 );
