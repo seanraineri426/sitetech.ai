@@ -67,7 +67,7 @@ describe('CommandCenter', () => {
           secondaryLink: null,
         },
         confirmFlags: [],
-        draft: { kind: 'email' as const, to: 'test@example.com', subject: 'Test', body: 'Test' },
+        draft: { kind: 'email' as const, to: 'test@example.com', toDisplay: 'Test User', subject: 'Test', body: 'Test' },
         handoff: { href: null, copyText: null, label: 'Test' },
       },
     ];

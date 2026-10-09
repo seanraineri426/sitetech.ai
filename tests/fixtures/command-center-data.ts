@@ -119,6 +119,7 @@ export const commandCenterActionsFixture: ActionCardData[] = [
     draft: {
       kind: 'email',
       to: 'sub@example.com',
+      toDisplay: 'Drywall Co · Subcontractor',
       subject: 'RE: Delay notice',
       body: 'Response draft...',
     },
@@ -150,6 +151,7 @@ export const commandCenterActionsFixture: ActionCardData[] = [
     draft: {
       kind: 'email',
       to: 'owner@example.com',
+      toDisplay: 'Owner Representative',
       subject: 'Schedule impact',
       body: 'Draft...',
     },
@@ -181,6 +183,7 @@ export const commandCenterActionsFixture: ActionCardData[] = [
     draft: {
       kind: 'email',
       to: 'architect@example.com',
+      toDisplay: 'ABC Architecture · Project Architect',
       subject: 'RFI 112 overdue',
       body: 'Draft...',
     },

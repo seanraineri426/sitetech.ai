@@ -28,6 +28,7 @@ export const projectActionFixture: ActionCardData = {
   draft: {
     kind: 'email',
     to: 'vendor@example.com',
+    toDisplay: 'Example Builders · Subcontractor',
     subject: 'Switchgear delivery moved',
     body: 'Uses all 4 days of float on A4120 and pushes TCO about 8 working days...',
   },
