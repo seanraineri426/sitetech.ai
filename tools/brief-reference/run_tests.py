@@ -104,29 +104,22 @@ def check_no_holdout_material():
             print(f"  - {path} (matches pattern: {pattern})")
         return False
     
-    # Confirm expected_findings.json etc are only in Linden fixture
-    linden_files = [
-        'expected_findings.json',
-        'reference_ranking.json',
-        'expected_findings.schema.json',
-        'p3_comms_key.py',
-        'brief_linden_yard_2026-10-06.json'
-    ]
+    # Confirm specific dev-fixture files are only in allowed locations
+    allowed_files = {
+        'expected_findings.json': ['tools/brief-reference/evals/fixture/'],
+        'reference_ranking.json': ['tools/brief-reference/evals/fixture/'],
+        'expected_findings.schema.json': ['tools/brief-reference/schemas/'],
+        'p3_comms_key.py': ['tools/brief-reference/evals/fixture/src/'],
+        'brief_linden_yard_2026-10-06.json': ['tools/brief-reference/examples/'],
+    }
     
-    for expected_file in linden_files:
-        matches = [f for f in all_files if expected_file in f]
+    for filename, allowed_dirs in allowed_files.items():
+        matches = [f for f in all_files if filename in f]
         for match in matches:
-            # Allow in fixture, examples, and schemas directories
-            allowed_paths = [
-                'tools/brief-reference/evals/fixture/',
-                'tools/brief-reference/examples/',
-                'tools/brief-reference/schemas/',
-                'brief-reference/evals/fixture/',
-                'brief-reference/examples/',
-                'brief-reference/schemas/'
-            ]
-            if not any(allowed in match for allowed in allowed_paths):
-                print(f"\n❌ ERROR: {expected_file} found outside Linden fixture: {match}")
+            # Check if file is in an allowed directory
+            if not any(match.startswith(allowed_dir) for allowed_dir in allowed_dirs):
+                print(f"\n❌ ERROR: {filename} found outside allowed location: {match}")
+                print(f"  Allowed: {', '.join(allowed_dirs)}")
                 return False
     
     return True

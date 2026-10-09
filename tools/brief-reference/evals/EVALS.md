@@ -166,7 +166,7 @@ A pull request that changes prompts, model routing, rules, or the ranking must p
 
 ## 9. How to run
 ```bash
-cd /workspace/sitetech/intelligence
+cd tools/brief-reference
 python3 evals/fixture/build_fixture.py                 # regenerate + validate fixture
 python3 evals/fixture/src/reference_ranking.py         # regenerate reference_ranking.json
 /tmp/stvenv/bin/python examples/example_brief.py      # build + schema-validate example brief (needs jsonschema)

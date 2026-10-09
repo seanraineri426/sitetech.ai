@@ -13,7 +13,7 @@ The harness takes `--fixture <dir>` so it can run on another project unchanged (
 
 ## Run
 ```bash
-cd /workspace/sitetech/intelligence/evals
+cd tools/brief-reference/evals
 /tmp/stvenv/bin/pip install jsonschema pyyaml            # once (venv: python3 -m venv /tmp/stvenv)
 /tmp/stvenv/bin/python harness/check_spend.py            # GET /api/v1/key: prints usage/limit only, never the key
 /tmp/stvenv/bin/python harness/smoke_routing.py          # 16-token routing/privacy smoke test

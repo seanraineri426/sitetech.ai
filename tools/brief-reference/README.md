@@ -71,7 +71,7 @@ This folder holds the reasoning layer that turns synced project records into a c
 
 ## How to run
 ```bash
-cd /workspace/sitetech/intelligence
+cd tools/brief-reference
 python3 -m venv /tmp/stvenv && /tmp/stvenv/bin/pip install jsonschema   # once
 python3 evals/fixture/build_fixture.py
 python3 evals/fixture/src/reference_ranking.py
