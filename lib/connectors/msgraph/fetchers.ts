@@ -5,12 +5,13 @@
 
 import type { GraphClient } from "./client";
 import type { GraphMessage, GraphDriveItem, GraphMailFolder } from "./types";
-import { MESSAGE_ALLOWLIST, DRIVEITEM_ALLOWLIST } from "./types";
+import { MESSAGE_ALLOWLIST, DRIVEITEM_ALLOWLIST, GraphMessageSchema } from "./types";
 
 export interface MailDeltaPage {
   messages: GraphMessage[];
   removed: string[];
   checkpoint?: string; // nextLink while paging, deltaLink at the end
+  skipped?: number; // Count of messages that failed schema validation
 }
 
 export interface DriveDeltaPage {
@@ -40,6 +41,7 @@ export async function fetchMailFolders(
  * The caller drives the loop page-by-page.
  * 
  * Sends Prefer header to request plain text body content.
+ * Validates each message with GraphMessageSchema; skips invalid messages.
  */
 export async function fetchMailFolderDelta(
   client: GraphClient,
@@ -59,10 +61,24 @@ export async function fetchMailFolderDelta(
     true // preferBodyText
   );
 
+  // Validate and filter messages
+  const validMessages: GraphMessage[] = [];
+  let skipped = 0;
+
+  for (const item of result.items) {
+    const parseResult = GraphMessageSchema.safeParse(item);
+    if (parseResult.success) {
+      validMessages.push(parseResult.data);
+    } else {
+      skipped++;
+    }
+  }
+
   return {
-    messages: result.items,
+    messages: validMessages,
     removed: result.removed,
     checkpoint: result.checkpoint,
+    skipped: skipped > 0 ? skipped : undefined,
   };
 }
 

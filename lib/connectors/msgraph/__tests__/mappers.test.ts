@@ -310,11 +310,13 @@ describe("Microsoft Graph mappers", () => {
       expect(raw.allowlistedPayload.received_at_source).toBe("graph");
     });
 
-    it("includes body_text in allowlisted payload", () => {
+    it("includes body_text_sha256 in allowlisted payload (NOT body_text)", () => {
       const normalized = mapGraphMessageToNormalized(mockMessage, "user@example.com");
       const raw = emailToRawRecord(normalized);
 
-      expect(raw.allowlistedPayload.body_text).toBe("This is the full body text.");
+      expect(raw.allowlistedPayload.body_text_sha256).toBeTruthy();
+      expect(raw.allowlistedPayload.body_text_sha256).toMatch(/^[0-9a-f]{64}$/);
+      expect(raw.allowlistedPayload).not.toHaveProperty("body_text");
     });
 
     it("includes conversation_id in allowlisted payload", () => {
@@ -322,6 +324,137 @@ describe("Microsoft Graph mappers", () => {
       const raw = emailToRawRecord(normalized);
 
       expect(raw.allowlistedPayload.conversation_id).toBe("conv-456");
+    });
+
+    it("stores participant domains NOT raw addresses", () => {
+      const normalized = mapGraphMessageToNormalized(mockMessage, "user@example.com");
+      const raw = emailToRawRecord(normalized);
+
+      // Should have domains
+      expect(raw.allowlistedPayload.from_domain).toBe("example.com");
+      expect(raw.allowlistedPayload.to_domains).toEqual(["example.com"]);
+      expect(raw.allowlistedPayload.cc_domains).toEqual(["example.com"]);
+
+      // Should NOT have raw addresses
+      expect(raw.allowlistedPayload).not.toHaveProperty("from");
+      expect(raw.allowlistedPayload).not.toHaveProperty("to_recipients");
+      expect(raw.allowlistedPayload).not.toHaveProperty("cc_recipients");
+    });
+
+    it("computes body_text_sha256 correctly", () => {
+      const normalized = mapGraphMessageToNormalized(mockMessage, "user@example.com");
+      const raw = emailToRawRecord(normalized);
+
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const expectedHash = require("crypto")
+        .createHash("sha256")
+        .update("This is the full body text.")
+        .digest("hex");
+
+      expect(raw.allowlistedPayload.body_text_sha256).toBe(expectedHash);
+    });
+
+    it("body_text_sha256 is null when body_text is null", () => {
+      const messageWithoutBody: GraphMessage = {
+        ...mockMessage,
+        body: null,
+      };
+      const normalized = mapGraphMessageToNormalized(messageWithoutBody, "user@example.com");
+      const raw = emailToRawRecord(normalized);
+
+      expect(raw.allowlistedPayload.body_text_sha256).toBeNull();
+    });
+  });
+
+  describe("redactAddresses", () => {
+    it("redacts email addresses with domain preserved", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      const text = "Contact alice@example.com or bob@test.org for details.";
+      const redacted = redactAddresses(text);
+      
+      expect(redacted).toBe("Contact [email@example.com] or [email@test.org] for details.");
+    });
+
+    it("handles mixed case emails", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      const text = "Send to Alice.Smith@Example.COM";
+      const redacted = redactAddresses(text);
+      
+      expect(redacted).toBe("Send to [email@Example.COM]");
+    });
+
+    it("handles multiple emails on same line", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      const text = "From: a@x.com To: b@y.com CC: c@z.com";
+      const redacted = redactAddresses(text);
+      
+      expect(redacted).toContain("[email@x.com]");
+      expect(redacted).toContain("[email@y.com]");
+      expect(redacted).toContain("[email@z.com]");
+    });
+
+    it("leaves non-email text unchanged", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      const text = "No emails here, just text.";
+      const redacted = redactAddresses(text);
+      
+      expect(redacted).toBe(text);
+    });
+  });
+
+  describe("size caps and null byte stripping", () => {
+    it("strips null bytes from text body", () => {
+      const messageWithNulls: GraphMessage = {
+        ...mockMessage,
+        body: { contentType: "text", content: "a\u0000b\u0000c" },
+      };
+      const normalized = mapGraphMessageToNormalized(messageWithNulls, "user@example.com");
+      
+      expect(normalized.body_text).toBe("abc");
+      expect(normalized.body_text).not.toContain("\u0000");
+    });
+
+    it("caps text body at 200KB", () => {
+      const messageWithLargeBody: GraphMessage = {
+        ...mockMessage,
+        body: { contentType: "text", content: "x".repeat(500_000) },
+      };
+      const normalized = mapGraphMessageToNormalized(messageWithLargeBody, "user@example.com");
+      
+      expect(normalized.body_text!.length).toBeLessThanOrEqual(200_000 + 20);
+      expect(normalized.body_text).toContain("[truncated]");
+    });
+
+    it("caps HTML body at 800KB before conversion (4x text limit)", () => {
+      const messageWithLargeHtml: GraphMessage = {
+        ...mockMessage,
+        body: { contentType: "html", content: "<p>" + "x".repeat(1_000_000) + "</p>" },
+      };
+      const normalized = mapGraphMessageToNormalized(messageWithLargeHtml, "user@example.com");
+      
+      // HTML should be capped at 800KB before conversion
+      expect(normalized.body_text!.length).toBeLessThanOrEqual(200_000 + 20);
+    });
+
+    it("fingerprints capped text", () => {
+      const message1: GraphMessage = {
+        ...mockMessage,
+        body: { contentType: "text", content: "a".repeat(300_000) },
+      };
+      const message2: GraphMessage = {
+        ...mockMessage,
+        body: { contentType: "text", content: "a".repeat(300_000) + "b" },
+      };
+      
+      const normalized1 = mapGraphMessageToNormalized(message1, "user@example.com");
+      const normalized2 = mapGraphMessageToNormalized(message2, "user@example.com");
+      
+      // Both should be capped at same length, so fingerprints match
+      expect(normalized1.fingerprint).toBe(normalized2.fingerprint);
     });
   });
 

@@ -13,6 +13,7 @@
  * - Store full email body as plain text including quoted reply history
  * - Use body_text (not bodyPreview) in fingerprint
  * - Request plain text via Prefer header; strip HTML if Graph returns HTML anyway
+ * - Size cap: 200KB for body text, sha256 in raw records
  */
 
 import { createHash } from "crypto";
@@ -20,6 +21,12 @@ import { canonicalStringify } from "../shared/canonical-stringify";
 import type { NormalizedEmail, RawRecord } from "../types";
 import type { GraphMessage } from "./types";
 import { htmlToText } from "./html-to-text";
+
+/**
+ * Maximum body text size (200KB).
+ * Raw HTML capped at 4x this before conversion.
+ */
+export const MAX_BODY_CHARS = 200_000;
 
 /**
  * Extract domain from email address for fingerprinting.
@@ -31,20 +38,49 @@ function extractDomain(address: string): string {
 }
 
 /**
+ * Strip null bytes from text.
+ */
+function stripNullBytes(text: string): string {
+  return text.replace(/\u0000/g, '');
+}
+
+/**
+ * Cap text at max length and append truncation marker.
+ */
+function capText(text: string, maxChars: number): string {
+  if (text.length <= maxChars) {
+    return text;
+  }
+  return text.slice(0, maxChars) + ' [truncated]';
+}
+
+/**
  * Extract body text from Graph message body.
  * Converts HTML to text if content type is HTML.
+ * Strips null bytes, caps size at MAX_BODY_CHARS.
  */
 function extractBodyText(body: GraphMessage["body"]): string | null {
   if (!body?.content) {
     return null;
   }
 
+  let text: string;
+
   if (body.contentType === "text") {
-    return body.content;
+    text = body.content;
+  } else {
+    // Cap raw HTML at 4x the text limit before conversion
+    const cappedHtml = capText(body.content, MAX_BODY_CHARS * 4);
+    text = htmlToText(cappedHtml);
   }
 
-  // If Graph returned HTML despite requesting plain text, convert it
-  return htmlToText(body.content);
+  // Strip null bytes
+  text = stripNullBytes(text);
+
+  // Cap output
+  text = capText(text, MAX_BODY_CHARS);
+
+  return text;
 }
 
 /**
@@ -73,6 +109,17 @@ function buildEmailFingerprintPayload(
     toDomains: message.toRecipients.map((r) => extractDomain(r.emailAddress.address)).sort(),
     ccDomains: message.ccRecipients.map((r) => extractDomain(r.emailAddress.address)).sort(),
   };
+}
+
+/**
+ * Redact email addresses from text for model-facing paths.
+ * Replaces user@domain.com with [email@domain.com].
+ */
+export function redactAddresses(text: string): string {
+  return text.replace(
+    /[A-Z0-9._%+-]+@([A-Z0-9.-]+\.[A-Z]{2,})/gi,
+    '[email@$1]'
+  );
 }
 
 /**
@@ -130,18 +177,32 @@ export function mapGraphMessageToNormalized(
 
 /**
  * Convert normalized email to raw record shape for storage layer.
+ * 
+ * CTO 2026-10-09: Store body_text_sha256 (NOT body_text itself).
+ * Store participant domains only (NOT raw addresses) in allowlistedPayload.
  */
 export function emailToRawRecord(email: NormalizedEmail): RawRecord {
+  // Compute body_text_sha256
+  const bodyTextSha256 = email.body_text
+    ? createHash('sha256').update(email.body_text).digest('hex')
+    : null;
+
+  // Extract participant domains
+  const fromDomain = email.from ? extractDomain(email.from.address) : null;
+  const toDomains = email.to_recipients.map(r => extractDomain(r.address)).sort();
+  const ccDomains = email.cc_recipients.map(r => extractDomain(r.address)).sort();
+
   return {
     entityType: "email",
     externalId: email.external_id,
     allowlistedPayload: {
       subject: email.subject,
       body_preview: email.body_preview,
-      body_text: email.body_text,
-      from: email.from,
-      to_recipients: email.to_recipients,
-      cc_recipients: email.cc_recipients,
+      body_text_sha256: bodyTextSha256,
+      // Participant domains only (NOT raw addresses)
+      from_domain: fromDomain,
+      to_domains: toDomains,
+      cc_domains: ccDomains,
       received_at: email.received_at,
       sent_at: email.sent_at,
       received_at_source: email.received_at_source,

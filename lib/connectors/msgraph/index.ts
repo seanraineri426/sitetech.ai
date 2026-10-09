@@ -30,5 +30,7 @@ export type {
 export {
   mapGraphMessageToNormalized,
   emailToRawRecord,
+  redactAddresses,
+  MAX_BODY_CHARS,
 } from "./mappers";
 export { htmlToText } from "./html-to-text";

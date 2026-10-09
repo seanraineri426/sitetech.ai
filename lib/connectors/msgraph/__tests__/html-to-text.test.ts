@@ -25,7 +25,7 @@ describe("htmlToText", () => {
 
   it("decodes HTML entities with &amp; last", () => {
     const html = 'A &amp; B &lt; C &gt; D &quot;E&quot; &#39;F&#39; &nbsp;G';
-    expect(htmlToText(html)).toBe('A & B < C > D "E" \'F\'  G');
+    expect(htmlToText(html)).toBe('A & B < C > D "E" \'F\' \u00A0G');
   });
 
   it("decodes &amp; last so &amp;lt; becomes &lt; not <", () => {
