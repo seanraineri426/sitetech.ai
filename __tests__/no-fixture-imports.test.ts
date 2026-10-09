@@ -21,10 +21,14 @@ function getAllFilesRecursive(dir: string, fileList: string[] = []): string[] {
       file.endsWith('.ts') ||
       file.endsWith('.jsx') ||
       file.endsWith('.js') ||
+<<<<<<< HEAD
       file.endsWith('.mjs') ||
       file.endsWith('.cjs') ||
       file.endsWith('.mts') ||
       file.endsWith('.cts')
+=======
+      file.endsWith('.mjs')
+>>>>>>> 8c5fb55 (wip: implement review feedback (partial))
     ) {
       fileList.push(filePath);
     }
@@ -53,6 +57,17 @@ describe('Fixture import restrictions', () => {
       return !isDevFile;
     });
     
+<<<<<<< HEAD
+=======
+    if (existsSync(proxyFile)) {
+      allFiles.push(proxyFile);
+    }
+    
+    const productionFiles = allFiles.filter(
+      (file) => !file.endsWith('.dev.tsx') && !file.endsWith('.dev.ts') && !file.includes('/__tests__/')
+    );
+    
+>>>>>>> 8c5fb55 (wip: implement review feedback (partial))
     const violations: string[] = [];
     const fixturePattern = /['"`](?:@\/|(?:\.\.?\/)+)tests\/fixtures/;
 

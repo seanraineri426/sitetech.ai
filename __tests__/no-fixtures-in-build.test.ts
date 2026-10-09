@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+<<<<<<< HEAD
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -57,5 +58,27 @@ describe('build output does not contain fixture data', () => {
     }
 
     expect(matches).toHaveLength(0);
+=======
+import { existsSync } from 'fs';
+import { execSync } from 'child_process';
+
+describe('Production build fixture check', () => {
+  it('does not contain test fixtures in build output', () => {
+    if (!existsSync('.next')) {
+      console.warn('Skipping: .next directory not found (run pnpm build first)');
+      return;
+    }
+
+    try {
+      execSync('rg "Linden Yard" .next/static .next/server', { encoding: 'utf-8' });
+      expect.fail('Found test fixture data in production build');
+    } catch (error: any) {
+      if (error.status === 1) {
+        expect(true).toBe(true);
+      } else {
+        throw error;
+      }
+    }
+>>>>>>> 8c5fb55 (wip: implement review feedback (partial))
   });
 });

@@ -113,6 +113,105 @@ function WhyPanel({
   );
 }
 
+function WhyPanel({
+  why,
+  open,
+  onClose,
+}: {
+  why: ActionCardData['why'];
+  open: boolean;
+  onClose: () => void;
+}) {
+  if (!open) return null;
+
+  const secondaryLinkValid = why.secondaryLink ? isAllowedUrl(why.secondaryLink) : false;
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-card rounded-lg p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex justify-between items-start mb-4">
+          <h3 className="text-lg font-semibold">Why this action</h3>
+          <button
+            onClick={onClose}
+            className="text-muted-foreground hover:text-foreground"
+            aria-label="Close"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">Source</p>
+            <p className="text-base">{why.label}</p>
+          </div>
+
+          {why.kind === 'email_quote' && (
+            <>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">From</p>
+                <p className="text-base">
+                  {why.senderCompany} · {why.senderRole}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Date</p>
+                <p className="text-base">{why.date}</p>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Subject</p>
+                <p className="text-base">{why.subject}</p>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Excerpt</p>
+                <blockquote className="text-base border-l-2 border-primary pl-4 italic">
+                  &ldquo;{why.quote}&rdquo;
+                </blockquote>
+              </div>
+            </>
+          )}
+
+          {why.kind === 'record' && (
+            <>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Date</p>
+                <p className="text-base">{why.date}</p>
+              </div>
+
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Details</p>
+                <p className="text-base">{why.description}</p>
+              </div>
+            </>
+          )}
+
+          {secondaryLinkValid && (
+            <div className="pt-4 border-t">
+              <a
+                href={why.secondaryLink!}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline inline-flex items-center gap-2 min-h-[44px]"
+              >
+                {why.kind === 'email_quote' ? 'Open in Outlook' : 'Open in Procore'} →
+              </a>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface ActionCardProps {
   data: ActionCardData;
   onApprove: () => void;
