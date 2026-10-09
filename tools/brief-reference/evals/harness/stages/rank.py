@@ -101,8 +101,8 @@ def delivery_complete_for(T, email_ref):
     for e in emails:
         if e.get("ref") == email_ref: continue
         if (e.get("received_at") or "") <= recv_at: continue
-        # Only project parties may confirm delivery
-        if not party_for_record(T.project, e): continue
+        # Only project parties with valid auth may confirm delivery (suppress findings)
+        if not party_for_record(T.project, e, check_auth=True, allow_suppress=True): continue
         et = _email_text(e)
         if not MATERIAL_RECEIVED_RE.search(et): continue
         same_thread = conv and e.get("conversation_id") == conv

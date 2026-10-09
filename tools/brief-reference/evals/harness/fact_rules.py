@@ -85,8 +85,8 @@ def _received_later(V, e, f):
     T = V.T; conv = e.get("conversation_id"); at = e.get("received_at") or ""
     for x in T.emails["emails"]:
         if x["ref"] == e["ref"] or (x.get("received_at") or "") <= at: continue
-        # Only facts from project parties may suppress findings
-        if not party_for_record(T.project, x): continue
+        # Only facts from project parties with valid auth may suppress findings
+        if not party_for_record(T.project, x, check_auth=True, allow_suppress=True): continue
         same = (conv and x.get("conversation_id") == conv)
         for g in efacts(T, x["ref"]) or []:
             if g["kind"] != "received_on_site": continue
