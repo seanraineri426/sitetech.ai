@@ -9,23 +9,15 @@ Standalone, pure-TypeScript connector modules for Procore, Microsoft Graph (Mail
 **NO customer field values in logs on ANY connector.**
 
 Logs may contain **only**:
-- IDs (strings or numbers)
-- Counts (numbers)
-- Status codes (numbers)
-- Durations (numbers)
-- Endpoint paths with IDs (no query values)
-- Error class names (strings)
-- Enum-like status strings capped at 64 chars matching `/^[A-Za-z0-9_.:\/-]+$/`
+- **Production keys**: `skipped_count`, `limit`, `remaining`, `reset_at`, `provider` (grep call sites)
+- **Numbers**: ONLY on numeric keys (`skipped_count`, `limit`, `remaining`)
+- **Strings**: ONLY from per-key enums (provider: 'Procore'|'Graph'|'P6') or ISO-8601 (reset_at)
+- **Unknown keys**: omitted entirely (never shown, not even as "[dropped]")
+- **Unknown event names**: throw error
 
-**PROHIBITED** in logs:
-- Customer field values (names, emails, subjects, bodies, descriptions, etc.)
-- Response bodies
-- URLs with query strings that carry values
-- Internal task IDs or project IDs that could be used to reconstruct customer data
+All connector logging routes through `lib/connectors/shared/log.ts`, which enforces strict key-based allowlisting. Event names are validated at runtime against a fixed set.
 
-All connector logging routes through `lib/connectors/shared/log.ts`, which enforces the allowlist. Errors that may be logged must not embed payload content.
-
-A CI test (`lib/connectors/__tests__/log-scrub.test.ts`) runs all connectors over fixtures and fails if any fixture values >= 4 chars (excluding allowed IDs) appear in captured output.
+A CI test (`lib/connectors/__tests__/log-scrub.test.ts`) exercises retry paths, real fetchers, and error surfaces with sensitive mock data. `lib/connectors/__tests__/log-probe.test.ts` verifies allowlist enforcement with hostile values (emails, phone numbers, URLs) on real production keys.
 
 ---
 

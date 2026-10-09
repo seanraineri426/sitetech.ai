@@ -111,6 +111,27 @@ describe("P6 XER parser", () => {
 
       consoleWarnSpy.mockRestore();
     });
+
+    it("skips multiple empty task_codes with ONE warning showing total count", async () => {
+      const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+      // Create XER with 2 empty task codes
+      const xerWithTwoEmpty = sampleXER
+        .replace("A1000\tFoundation Work", "\tEmpty Task 1")
+        .replace("A1010\tSteel Erection", "\tEmpty Task 2");
+      const buffer = Buffer.from(xerWithTwoEmpty, "utf-8");
+      const activities = await parseXERToActivities(buffer, "test.xer");
+
+      // Should skip both tasks with empty codes
+      expect(activities.length).toBe(1); // Only A1020 remains
+      expect(activities.every((a) => a.activity_code !== null && a.activity_code !== "")).toBe(true);
+      
+      // Should log exactly ONE warning with skipped_count: 2
+      expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
+      expect(consoleWarnSpy).toHaveBeenCalledWith("[P6.Parser.EmptyTaskCode]", expect.objectContaining({ skipped_count: 2 }));
+
+      consoleWarnSpy.mockRestore();
+    });
   });
 
   describe("Indexed predecessors (O(1) lookup)", () => {

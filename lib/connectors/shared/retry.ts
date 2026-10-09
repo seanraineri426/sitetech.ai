@@ -5,6 +5,7 @@
 
 import "server-only";
 import { logEvent, logRetry } from "./log";
+import { ConnectorError, ERROR_CODES } from "./errors";
 
 export interface RetryOptions {
   maxRetries: number;
@@ -26,12 +27,15 @@ interface RateLimitHeaders {
 /**
  * Thrown when Retry-After exceeds maxWaitMs cap.
  */
-export class RateLimitError extends Error {
+export class RateLimitError extends ConnectorError {
   constructor(
     public retryAfterMs: number,
     public maxWaitMs: number
   ) {
-    super(`Rate limit Retry-After (${retryAfterMs}ms) exceeds max wait cap (${maxWaitMs}ms)`);
+    super(
+      `Rate limit Retry-After (${retryAfterMs}ms) exceeds max wait cap (${maxWaitMs}ms)`,
+      ERROR_CODES.RATE_LIMIT_EXCEEDED
+    );
     this.name = "RateLimitError";
   }
 }
@@ -127,7 +131,7 @@ export async function retryRequest(
       if (response.ok) {
         return response;
       }
-      throw new Error(`${provider}: All retries exhausted`);
+      throw new ConnectorError(`${provider}: All retries exhausted`, ERROR_CODES.RETRIES_EXHAUSTED);
     }
 
     // Calculate wait time
@@ -175,5 +179,5 @@ export async function retryRequest(
     await sleep(waitMs);
   }
 
-  throw new Error(`${provider}: All retries exhausted`);
+  throw new ConnectorError(`${provider}: All retries exhausted`, ERROR_CODES.RETRIES_EXHAUSTED);
 }

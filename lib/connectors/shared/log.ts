@@ -4,103 +4,53 @@
  * Rule: NO customer field values in logs on ANY connector.
  * 
  * Allowlisting is done BY KEY:
- * - Event names must be from a fixed set (literal union)
+ * - Event names must be from a fixed set (validated at runtime)
  * - Field keys must be from a fixed set
- * - Numbers are allowed ONLY on specific keys (count, status, duration, etc.)
- * - Strings are allowed ONLY from per-key enum lists, ID regex, UUID, or ISO-8601
- * - Anything else becomes '[dropped]'
+ * - Numbers are allowed ONLY on specific keys
+ * - Strings are allowed ONLY from per-key enums or ID formats
+ * - Unknown keys are omitted entirely (never shown, not even as "[dropped]")
+ * - Everything else becomes '[dropped]'
  */
 
 import "server-only";
 
+/**
+ * Allowed event names. Unknown names throw an error.
+ */
+const ALLOWED_EVENT_NAMES = new Set<string>([
+  "Procore.RateLimit",
+  "Graph.RateLimit",
+  "P6.Parser.EmptyTaskCode",
+]);
+
+/**
+ * Production code passes only these keys to logEvent/logWarning.
+ * Grep call sites: skipped_count (P6), limit/remaining/reset_at (retry).
+ */
 const ALLOWED_KEYS = new Set<string>([
-  "count",
   "skipped_count",
-  "status",
-  "http_status",
-  "attempt",
-  "max_retries",
-  "wait_ms",
-  "duration_ms",
   "limit",
   "remaining",
   "reset_at",
-  "provider",
-  "error_code",
-  "entity_type",
-  "record_id",
-  "project_id",
-  "company_id",
-  "task_id",
-  "v",
-  "n",
-  "a",
-  "b",
-  "c",
-  "d",
-  "amount",
-  "phone",
+  "provider", // Used internally by logRetry
 ]);
 
+/**
+ * Keys that can hold numeric values.
+ */
 const NUMERIC_KEYS = new Set<string>([
-  "count",
   "skipped_count",
-  "status",
-  "http_status",
-  "attempt",
-  "max_retries",
-  "wait_ms",
-  "duration_ms",
   "limit",
   "remaining",
-  "amount",
-  "phone",
-  "n",
 ]);
 
 const PROVIDER_VALUES = new Set<string>(["Procore", "Graph", "P6"]);
 
-const ENTITY_TYPE_VALUES = new Set<string>([
-  "rfi",
-  "submittal",
-  "email",
-  "drive_item",
-  "activity",
-]);
-
-const ERROR_CODE_VALUES = new Set<string>([
-  "FOREIGN_ORIGIN",
-  "OUT_OF_SCOPE",
-  "BASEURL_NOT_ALLOWED",
-  "AUTHURL_NOT_ALLOWED",
-  "INVALID_URL",
-  "TIMEOUT",
-  "ABORT",
-  "NETWORK",
-  "UNKNOWN",
-]);
-
-const ID_REGEX = /^\d{1,19}$/;
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ISO_8601_REGEX = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})$/;
-
-function isAllowedId(key: string, value: string): boolean {
-  if (key === "reset_at") {
-    return ISO_8601_REGEX.test(value);
-  }
-  if (key === "record_id" || key === "project_id" || key === "company_id" || key === "task_id") {
-    return ID_REGEX.test(value) || UUID_REGEX.test(value);
-  }
-  return false;
-}
 
 function sanitizeValue(key: string, value: unknown): unknown {
   if (value === null || value === undefined) {
     return value;
-  }
-
-  if (!ALLOWED_KEYS.has(key)) {
-    return "[dropped]";
   }
 
   if (typeof value === "number") {
@@ -114,14 +64,8 @@ function sanitizeValue(key: string, value: unknown): unknown {
     if (key === "provider") {
       return PROVIDER_VALUES.has(value) ? value : "[dropped]";
     }
-    if (key === "entity_type") {
-      return ENTITY_TYPE_VALUES.has(value) ? value : "[dropped]";
-    }
-    if (key === "error_code") {
-      return ERROR_CODE_VALUES.has(value) ? value : "[dropped]";
-    }
-    if (isAllowedId(key, value)) {
-      return value;
+    if (key === "reset_at") {
+      return ISO_8601_REGEX.test(value) ? value : "[dropped]";
     }
     return "[dropped]";
   }
@@ -132,12 +76,18 @@ function sanitizeValue(key: string, value: unknown): unknown {
 function sanitizeFields(fields: Record<string, unknown>): Record<string, unknown> {
   const sanitized: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(fields)) {
-    sanitized[key] = sanitizeValue(key, value);
+    // Omit unknown keys entirely - never show them, not even as "[dropped]"
+    if (ALLOWED_KEYS.has(key)) {
+      sanitized[key] = sanitizeValue(key, value);
+    }
   }
   return sanitized;
 }
 
 export function logEvent(name: string, fields: Record<string, unknown> = {}): void {
+  if (!ALLOWED_EVENT_NAMES.has(name)) {
+    throw new Error(`Unknown event name: ${name}`);
+  }
   const sanitized = sanitizeFields(fields);
   console.log(`[${name}]`, sanitized);
 }
@@ -148,6 +98,9 @@ export function logRetry(provider: string, attempt: number, maxRetries: number, 
 }
 
 export function logWarning(name: string, fields: Record<string, unknown> = {}): void {
+  if (!ALLOWED_EVENT_NAMES.has(name)) {
+    throw new Error(`Unknown event name: ${name}`);
+  }
   const sanitized = sanitizeFields(fields);
   console.warn(`[${name}]`, sanitized);
 }

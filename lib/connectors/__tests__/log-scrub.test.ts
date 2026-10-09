@@ -483,4 +483,166 @@ describe("Comprehensive log scrub test", () => {
     expect(all).not.toContain("Budget");
     expect(all).not.toContain("CONFIDENTIAL_TOKEN");
   });
+
+  // Mutation-catching tests
+  it("M4: numbers NOT allowed on any key (only numeric keys)", async () => {
+    vi.useFakeTimers();
+    const resetTimestamp = Math.floor(Date.now() / 1000) + 5;
+    const f = vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ access_token: "t", token_type: "Bearer", expires_in: 3600, created_at: 0 }) })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 429,
+        headers: new Headers({ "Retry-After": "1", "X-Rate-Limit-Limit": "600", "X-Rate-Limit-Remaining": "0", "X-Rate-Limit-Reset": String(resetTimestamp) }),
+        body: { cancel: async () => {} }
+      })
+      .mockResolvedValueOnce({ ok: true, headers: new Headers(), json: async () => [] });
+    vi.stubGlobal("fetch", f);
+    const c = new ProcoreClient({ clientId: "a", clientSecret: "b", companyId: "1" });
+    const p = c.get("/rest/v1.0/projects/1/rfis");
+    
+    await vi.advanceTimersByTimeAsync(999);
+    expect(f).toHaveBeenCalledTimes(2);
+    await vi.advanceTimersByTimeAsync(2);
+    await p;
+    expect(f).toHaveBeenCalledTimes(3);
+    
+    // reset_at is NOT a numeric key, so if M4 allows numbers on all keys, it would leak
+    // Our test: reset_at should be ISO-8601 string, NOT the raw numeric timestamp
+    const all = capturedLogs.join("\n");
+    expect(all).toContain("limit");
+    expect(all).toContain("600"); // limit IS numeric - this should always pass
+    expect(all).toContain("reset_at");
+    // reset_at should be ISO-8601 string, NOT the raw numeric timestamp
+    expect(all).not.toContain(String(resetTimestamp));
+    
+    vi.useRealTimers();
+  });
+
+  it("M11: Procore 4xx error does NOT embed response body", async () => {
+    const f = vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ access_token: "t", token_type: "Bearer", expires_in: 3600, created_at: 0 }) })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        headers: new Headers({ "X-Error-Code": "ERR" }),
+        json: async () => ({ error: "Sensitive Harbor Tower data for jane@contractor.com" })
+      });
+    vi.stubGlobal("fetch", f);
+    const c = new ProcoreClient({ clientId: "a", clientSecret: "b", companyId: "1" });
+    const err = await c.get("/rest/v1.0/projects/1/rfis").catch(e => e);
+    const dump = dumpError(err);
+    expect(dump).not.toContain("Harbor Tower");
+    expect(dump).not.toContain("jane@contractor.com");
+  });
+
+  it("M12: Graph 4xx error does NOT embed URL/mailbox", async () => {
+    const f = vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ access_token: "t", token_type: "Bearer", expires_in: 3600 }) })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        headers: new Headers({ "X-Error-Code": "ERR" }),
+        json: async () => ({})
+      });
+    vi.stubGlobal("fetch", f);
+    const c = new GraphClient({ tenantId: "t", clientId: "a", clientSecret: "b", mailbox: "pm@contractor.com", siteId: "s1" });
+    const err = await c.get("/users/pm%40contractor.com/messages").catch(e => e);
+    const dump = dumpError(err);
+    expect(dump).not.toContain("pm@contractor.com");
+    expect(dump).not.toContain("pm%40contractor.com");
+  });
+
+  it("M17: Graph timeout does NOT embed decoded URL/mailbox", async () => {
+    const f = vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ access_token: "t", token_type: "Bearer", expires_in: 3600 }) })
+      .mockRejectedValue(new Error("Network timeout"));
+    vi.stubGlobal("fetch", f);
+    const c = new GraphClient({ tenantId: "t", clientId: "a", clientSecret: "b", mailbox: "pm@contractor.com", siteId: "s1" });
+    await expect(c.get("/users/pm%40contractor.com/messages")).rejects.toThrow();
+    const all = capturedLogs.join("\n");
+    expect(all).not.toContain("pm@contractor.com");
+    expect(all).not.toContain("pm%40contractor.com");
+  });
+
+  it("M15: fetchRFIs does NOT swallow errors", async () => {
+    const f = vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ access_token: "t", token_type: "Bearer", expires_in: 3600, created_at: 0 }) })
+      .mockRejectedValue(new Error("Network failure with sensitive data"));
+    vi.stubGlobal("fetch", f);
+    const c = new ProcoreClient({ clientId: "a", clientSecret: "b", companyId: "1" });
+    await expect((async () => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      for await (const _batch of fetchRFIs(c, "1")) {
+        // Should throw, not swallow
+      }
+    })()).rejects.toThrow();
+  });
+
+  it("M16: Graph mail fetcher does NOT log deltaLink/checkpoint", async () => {
+    const f = vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ access_token: "t", token_type: "Bearer", expires_in: 3600 }) })
+      .mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers(),
+        json: async () => ({
+          value: [],
+          "@odata.deltaLink": "https://graph.microsoft.com/v1.0/users/pm@contractor.com/messages/delta?$deltatoken=SENSITIVE_TOKEN"
+        })
+      });
+    vi.stubGlobal("fetch", f);
+    const c = new GraphClient({ tenantId: "t", clientId: "a", clientSecret: "b", mailbox: "pm@contractor.com", siteId: "s1" });
+    await fetchMailFolderDelta(c, "pm@contractor.com", "inbox");
+    const all = capturedLogs.join("\n");
+    expect(all).not.toContain("SENSITIVE_TOKEN");
+    expect(all).not.toContain("deltatoken");
+    expect(all).not.toContain("Graph.Delta");
+  });
+
+  it("M10: retry does NOT log X-Debug header", async () => {
+    vi.useFakeTimers();
+    const f = vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ access_token: "t", token_type: "Bearer", expires_in: 3600, created_at: 0 }) })
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 503,
+        headers: new Headers({ 
+          "X-Debug": "Internal debug info about Harbor Tower for jane@contractor.com",
+          "Retry-After": "1" // Make retry time deterministic
+        }),
+        body: { cancel: async () => {} }
+      })
+      .mockResolvedValueOnce({ ok: true, headers: new Headers(), json: async () => [] });
+    vi.stubGlobal("fetch", f);
+    const c = new ProcoreClient({ clientId: "a", clientSecret: "b", companyId: "1" });
+    const p = c.get("/rest/v1.0/projects/1/rfis");
+    
+    // Wait for the retry (1 second as per Retry-After header)
+    await vi.advanceTimersByTimeAsync(999);
+    expect(f).toHaveBeenCalledTimes(2); // Token + first attempt
+    await vi.advanceTimersByTimeAsync(2);
+    await p;
+    expect(f).toHaveBeenCalledTimes(3); // Token + retry + success
+    
+    const all = capturedLogs.join("\n");
+    expect(all).not.toContain("Harbor Tower");
+    expect(all).not.toContain("jane@contractor.com");
+    expect(all).not.toContain("[dbg]");
+    expect(all).not.toContain("X-Debug");
+    
+    vi.useRealTimers();
+  });
+
+  it("M14: Procore does NOT log request URL", async () => {
+    const f = vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ access_token: "t", token_type: "Bearer", expires_in: 3600, created_at: 0 }) })
+      .mockResolvedValueOnce({ ok: true, headers: new Headers(), json: async () => [] });
+    vi.stubGlobal("fetch", f);
+    const c = new ProcoreClient({ clientId: "a", clientSecret: "b", companyId: "1" });
+    await c.get("/rest/v1.0/projects/1/rfis");
+    const all = capturedLogs.join("\n");
+    expect(all).not.toContain("Procore.Req");
+    expect(all).not.toContain("api.procore.com");
+  });
 });
+
