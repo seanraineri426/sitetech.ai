@@ -26,6 +26,9 @@ const envSchema = z.object({
   GRAPH_CLIENT_SECRET: z.string().optional(),
   GRAPH_MAILBOX: z.string().optional(),
   GRAPH_SITE_ID: z.string().optional(),
+  
+  // Auth configuration
+  NEXT_PUBLIC_AUTH_MICROSOFT_ENABLED: z.string().optional(),
 });
 
 export const env = envSchema.parse(process.env);
