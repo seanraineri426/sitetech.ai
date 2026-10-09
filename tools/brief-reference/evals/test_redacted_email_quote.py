@@ -88,18 +88,45 @@ def test_quote_with_placeholder_verifies():
     """Quote spanning the [email-domain] placeholder should verify."""
     T = RedactedEmailFixture()
     ref = "msgraph_outlook:message:msg_REDACT_TEST"
+    _, email_rec = T.index[ref]
     
     # Quote with placeholder
     quote = "Per [email-acmemech.example]: the #5@10 rebar"
     
     result = quote_ok(T, ref, quote)
     assert result, f"Quote with placeholder should verify: {quote}"
+    
+    # Also verify through verify_email_facts
+    test_fact = {
+        "kind": "pricing_or_change_request",
+        "item": "Rebar spacing revision",
+        "quote": quote,
+        "spec_section": None,
+        "submittal_no": None,
+        "rfi_no": None,
+        "ce_no": None,
+        "old_date": None,
+        "new_date": None,
+        "new_date_high": None,
+        "delay_days": None,
+        "delay_days_high": None,
+        "date_phrase": None,
+        "date_basis": "none",
+        "amount_usd": None,
+        "notice_types": [],
+        "sender_party": "ACME Mechanical (sub)",
+        "confidence": "high"
+    }
+    kept, dropped = verify_email_facts(T, email_rec, [test_fact])
+    assert len(kept) == 1, f"verify_email_facts should keep fact with valid quote. Dropped: {dropped}"
+    
     print("✓ Quote with placeholder verifies")
 
 def test_quote_with_raw_address_fails():
     """Quote with raw email address should NOT verify (body has placeholder)."""
     T = RedactedEmailFixture()
     ref = "msgraph_outlook:message:msg_REDACT_TEST"
+    _, email_rec = T.index[ref]
     
     # Quote with raw address (the bug: quote_ok matches from.email in JSON)
     quote = "Per john@acmemech.example: the #5@10 rebar"
@@ -107,6 +134,33 @@ def test_quote_with_raw_address_fails():
     result = quote_ok(T, ref, quote)
     # This will fail until quote_ok is fixed to only check subject + body_text
     assert not result, f"Quote with raw address should NOT verify (bug: matches from.email in JSON): {quote}"
+    
+    # Also verify through verify_email_facts
+    test_fact = {
+        "kind": "pricing_or_change_request",
+        "item": "Rebar spacing revision",
+        "quote": quote,
+        "spec_section": None,
+        "submittal_no": None,
+        "rfi_no": None,
+        "ce_no": None,
+        "old_date": None,
+        "new_date": None,
+        "new_date_high": None,
+        "delay_days": None,
+        "delay_days_high": None,
+        "date_phrase": None,
+        "date_basis": "none",
+        "amount_usd": None,
+        "notice_types": [],
+        "sender_party": "ACME Mechanical (sub)",
+        "confidence": "high"
+    }
+    kept, dropped = verify_email_facts(T, email_rec, [test_fact])
+    assert len(kept) == 0, f"verify_email_facts should drop fact with invalid quote"
+    assert len(dropped) == 1, f"Should have 1 dropped fact"
+    assert dropped[0]["reason"] == "quote not verbatim", f"Drop reason should be 'quote not verbatim'"
+    
     print("✓ Quote with raw address does NOT verify")
 
 def test_numbers_extracted_unchanged():
@@ -128,15 +182,15 @@ def test_numbers_extracted_unchanged():
         "item": "Rebar spacing revision per CO-012",
         "quote": "add $48,200 per CO-012 (spec 03 30 00)",
         "spec_section": "03 30 00",
-        "submittal_no": "",
-        "rfi_no": "",
+        "submittal_no": None,
+        "rfi_no": None,
         "ce_no": "CO-012",
         "old_date": None,
         "new_date": None,
         "new_date_high": None,
         "delay_days": None,
         "delay_days_high": None,
-        "date_phrase": "",
+        "date_phrase": None,
         "date_basis": "none",
         "amount_usd": 48200,
         "notice_types": [],
@@ -193,7 +247,7 @@ def test_unknown_domain_resolves_to_unknown_party():
     assert party is None, f"party_for_record should return None for unknown domain, got {party}"
     
     # Use party_label
-    label = party_label(party)
+    label = party_label(party) if party else "unknown party"
     assert label == "unknown party", f"Party label should be 'unknown party', got {label}"
     
     # Verify domain is not in project_parties
@@ -201,6 +255,95 @@ def test_unknown_domain_resolves_to_unknown_party():
     assert party_via_domain is None, "party_for_domain should return None for unknown domain"
     
     print("✓ Unknown domain resolves to 'unknown party'")
+
+def test_mismatched_values_dropped():
+    """Facts with numeric/ID/spec values not in body_text should be dropped."""
+    T = RedactedEmailFixture()
+    ref = "msgraph_outlook:message:msg_REDACT_TEST"
+    _, email_rec = T.index[ref]
+    
+    # Body has: $48,200, CO-012, 03 30 00
+    # Test with values that don't match
+    bad_amount_fact = {
+        "kind": "pricing_or_change_request",
+        "item": "Test item",
+        "quote": "add $48,200 per CO-012",
+        "spec_section": None,
+        "submittal_no": None,
+        "rfi_no": None,
+        "ce_no": None,
+        "old_date": None,
+        "new_date": None,
+        "new_date_high": None,
+        "delay_days": None,
+        "delay_days_high": None,
+        "date_phrase": None,
+        "date_basis": "none",
+        "amount_usd": 48300,  # Wrong: body has 48,200 not 48,300
+        "notice_types": [],
+        "sender_party": "ACME Mechanical (sub)",
+        "confidence": "high"
+    }
+    
+    bad_ce_fact = {
+        "kind": "pricing_or_change_request",
+        "item": "Test item",
+        "quote": "add $48,200 per CO-012",
+        "spec_section": None,
+        "submittal_no": None,
+        "rfi_no": None,
+        "ce_no": "CO-013",  # Wrong: body has CO-012 not CO-013
+        "old_date": None,
+        "new_date": None,
+        "new_date_high": None,
+        "delay_days": None,
+        "delay_days_high": None,
+        "date_phrase": None,
+        "date_basis": "none",
+        "amount_usd": None,
+        "notice_types": [],
+        "sender_party": "ACME Mechanical (sub)",
+        "confidence": "high"
+    }
+    
+    bad_spec_fact = {
+        "kind": "pricing_or_change_request",
+        "item": "Test item",
+        "quote": "spec 03 30 00",
+        "spec_section": "03 30 01",  # Wrong: body has 03 30 00 not 03 30 01
+        "submittal_no": None,
+        "rfi_no": None,
+        "ce_no": None,
+        "old_date": None,
+        "new_date": None,
+        "new_date_high": None,
+        "delay_days": None,
+        "delay_days_high": None,
+        "date_phrase": None,
+        "date_basis": "none",
+        "amount_usd": None,
+        "notice_types": [],
+        "sender_party": "ACME Mechanical (sub)",
+        "confidence": "high"
+    }
+    
+    # Test each bad fact
+    kept, dropped = verify_email_facts(T, email_rec, [bad_amount_fact])
+    assert len(kept) == 0, f"Should drop fact with wrong amount_usd. Kept: {kept}"
+    assert len(dropped) == 1, f"Should have 1 dropped fact"
+    assert "amount_usd" in dropped[0]["reason"], f"Drop reason should mention amount_usd"
+    
+    kept, dropped = verify_email_facts(T, email_rec, [bad_ce_fact])
+    assert len(kept) == 0, f"Should drop fact with wrong ce_no. Kept: {kept}"
+    assert len(dropped) == 1, f"Should have 1 dropped fact"
+    assert "ce_no" in dropped[0]["reason"], f"Drop reason should mention ce_no"
+    
+    kept, dropped = verify_email_facts(T, email_rec, [bad_spec_fact])
+    assert len(kept) == 0, f"Should drop fact with wrong spec_section. Kept: {kept}"
+    assert len(dropped) == 1, f"Should have 1 dropped fact"
+    assert "spec_section" in dropped[0]["reason"], f"Drop reason should mention spec_section"
+    
+    print("✓ Facts with non-verbatim values are dropped (48300→drop, CO-013→drop, 03 30 01→drop)")
 
 def main():
     """Run all redacted email quote tests."""
@@ -213,6 +356,7 @@ def main():
         ("Quote with placeholder verifies", test_quote_with_placeholder_verifies),
         ("Quote with raw address fails", test_quote_with_raw_address_fails),
         ("Numbers extracted unchanged", test_numbers_extracted_unchanged),
+        ("Mismatched values dropped", test_mismatched_values_dropped),
         ("Sender party via real API", test_sender_party_via_real_api),
         ("Unknown domain → unknown party", test_unknown_domain_resolves_to_unknown_party),
     ]

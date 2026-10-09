@@ -114,9 +114,25 @@ def verify_email_facts(T, rec, facts):
         f = dict(f)
         if validate(f, EMAIL_FACT): dropped.append({"fact": f, "reason": "schema"}); continue
         if not _verbatim(f.get("quote"), text): dropped.append({"fact": f, "reason": "quote not verbatim"}); continue
-        if f.get("sender_party") != lab: f["sender_party_model"] = f.get("sender_party"); f["sender_party"] = lab
-        f["email_ref"] = rec["ref"]
-        kept.append(f)
+        # Verify numeric/ID/spec values appear verbatim in the redacted text
+        for key in ("amount_usd", "ce_no", "spec_section", "submittal_no", "rfi_no"):
+            val = f.get(key)
+            if val is not None and val != "":
+                # For numbers, check both raw and comma-formatted versions
+                if isinstance(val, (int, float)):
+                    # Try raw number and common formatted versions
+                    candidates = [str(int(val)), f"{int(val):,}"]
+                    if not any(_verbatim(c, text) for c in candidates):
+                        dropped.append({"fact": f, "reason": f"{key} '{val}' not verbatim"}); break
+                else:
+                    # For strings, check as-is
+                    if not _verbatim(val, text):
+                        dropped.append({"fact": f, "reason": f"{key} '{val}' not verbatim"}); break
+        else:
+            # All checks passed
+            if f.get("sender_party") != lab: f["sender_party_model"] = f.get("sender_party"); f["sender_party"] = lab
+            f["email_ref"] = rec["ref"]
+            kept.append(f)
     return kept, dropped
 
 def verify_rfi_facts(T, rec, f):
