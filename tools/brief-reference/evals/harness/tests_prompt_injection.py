@@ -45,8 +45,30 @@ class MockRunner:
         self.spec = "mock"
         self.model = "mock:test"
         self.guard = type('obj', (object,), {'spent': 0, 'cap': 0})()
+    
     def cost(self):
         return 0.0
+    
+    def llm_contract(self, stage, system, user_obj, stage_cfg, schema):
+        """Stub llm_contract that returns minimal valid responses.
+        
+        Comms, clusters, and writer stages use this; they're marked as STUBBED
+        in output since we're testing code-only pipeline stages (read, rules, verify).
+        """
+        # Return minimal valid response based on schema
+        if "emails" in schema.get("properties", {}):
+            # comms stage
+            return ({"emails": [], "gaps": ["stubbed: no LLM in mock runner"]}, 
+                   {"stage": stage, "stubbed": True})
+        elif "clusters" in schema.get("properties", {}):
+            # cluster stage
+            return ({"clusters": []}, {"stage": stage, "stubbed": True})
+        elif "items" in schema.get("properties", {}):
+            # writer stage
+            return ({"items": [], "status_line": ""}, {"stage": stage, "stubbed": True})
+        else:
+            # generic fallback
+            return ({}, {"stage": stage, "stubbed": True})
 
 R = MockRunner()
 cfg = {
@@ -99,48 +121,14 @@ for section_items in baseline_brief.get("sections", {}).values():
 
 print()
 print("=" * 70)
-print("PIPELINE TEST 2: Hostile facts through fact_rules → impact")
+print("PIPELINE TEST 2: Run pipeline with hostile emails present")
+print("=" * 70)
+print("NOTE: Hostile emails are in hostile_emails.json but don't affect")
+print("      code-only pipeline stages (read, rules, verify). Testing that")
+print("      fixture data produces consistent results.")
 print("=" * 70)
 
-# Build hostile facts from emails
-hostile_facts_by_email = {}
-for email in emails:
-    email_id = email["id"]
-    subject = email.get("subject", "")
-    body = email.get("body", "")
-    from_addr = email.get("from", "")
-    
-    # Extract domain
-    if "<" in from_addr and ">" in from_addr:
-        addr = from_addr.split("<")[1].split(">")[0]
-    else:
-        addr = from_addr
-    domain = addr.split("@")[-1] if "@" in addr else ""
-    
-    # Check if domain is known
-    party_label = None
-    for p in T.project.get("parties", []):
-        if p.get("domain", "").lower() == domain.lower():
-            party_label = p.get("role", "unknown")
-            break
-    
-    # Build extraction facts (what model would extract)
-    facts = []
-    if party_label:  # Only create facts for known parties
-        # Look for cost/schedule/notice language
-        if any(kw in (subject + body).lower() for kw in ["delay", "cost", "$", "notice"]):
-            facts.append({
-                "kind": "conditional_risk",
-                "item": subject[:80],
-                "sender_party": party_label,
-                "quote": body[:150],
-                "confidence": "high"
-            })
-    
-    if facts:
-        hostile_facts_by_email[email_id] = facts
-
-# Run fact_rules on hostile facts (it reads from fixture, hostile facts don't affect it)
+# Run rules on fixture (hostile emails don't affect code-only stages)
 hostile_rules_out, _ = rules.run(T)
 
 check("fact_rules produces findings",
@@ -169,14 +157,17 @@ print("=" * 70)
 hostile_verify_out, _ = verify.run(T, read_out, hostile_rules_out, hostile_rank_out)
 
 check("verify produces verified insights",
-      "verified_insights" in hostile_verify_out)
-check("verify drops claims without fixture evidence",
-      hostile_verify_out["summary"]["dropped"] >= 0)
+      "verified_insights" in hostile_verify_out and len(hostile_verify_out["verified_insights"]) > 0,
+      f"Got {len(hostile_verify_out.get('verified_insights', []))} insights")
+check("verify summary reports dropped count",
+      "dropped" in hostile_verify_out.get("summary", {}),
+      f"Summary: {hostile_verify_out.get('summary', {})}")
 check("All verified refs exist in fixture",
       all(ref in T.index 
           for insight in hostile_verify_out["verified_insights"]
           for claim in insight.get("claims", [])
-          for ref in claim.get("refs", [])))
+          for ref in claim.get("refs", [])),
+      "Some refs not in fixture index")
 
 print()
 print("=" * 70)
@@ -211,11 +202,13 @@ check("No fabricated refs in hostile brief",
 
 print()
 print("=" * 70)
-print("DOMAIN PARTY RESOLUTION TESTS")
+print("HOSTILE EMAIL DOMAIN TESTS")
 print("=" * 70)
 
-# Test unknown domain handling
-unknown_domains = []
+# Check that hostile email domains (spoofed or unknown) are not in project parties
+hostile_domains = set()
+project_domains = {p.get("domain", "").lower() for p in T.project.get("parties", []) if p.get("domain")}
+
 for email in emails:
     from_addr = email.get("from", "")
     if "<" in from_addr:
@@ -223,18 +216,19 @@ for email in emails:
     else:
         addr = from_addr
     domain = addr.split("@")[-1] if "@" in addr else ""
-    
-    known = any(p.get("domain", "").lower() == domain.lower() 
-                for p in T.project.get("parties", []))
-    if not known:
-        unknown_domains.append((email["id"], domain))
+    if domain:
+        hostile_domains.add(domain.lower())
 
-check("Unknown domains identified",
-      len(unknown_domains) > 0)
-check("Unknown domains not in project parties",
-      all(not any(p.get("domain", "").lower() == domain.lower() 
-                  for p in T.project.get("parties", []))
-          for _, domain in unknown_domains))
+# Count how many hostile domains are actually unknown to the project
+unknown_hostile = hostile_domains - project_domains
+spoofed_hostile = hostile_domains & project_domains
+
+check("Hostile emails include unknown/external domains",
+      len(unknown_hostile) > 0,
+      f"Unknown domains: {unknown_hostile}")
+check("No hostile domain spoofs project party domains",
+      len(spoofed_hostile) == 0,
+      f"Spoofed domains found: {spoofed_hostile}")
 
 print()
 print("=" * 70)
@@ -276,6 +270,14 @@ check("CE statuses from fixture only",
 print()
 print("=" * 70)
 print(f"SUMMARY: {passed} checks passed, {failed} checks failed")
+print("=" * 70)
+print()
+print("NOTES:")
+print("- Comms, clusters, and writer stages are STUBBED (MockRunner.llm_contract)")
+print("  since this test validates code-only pipeline logic (read, rules, verify).")
+print("- Hostile emails in fixture are not injected into pipeline; test verifies")
+print("  that code-only stages produce consistent fixture-based results.")
+print(f"- Tested {len(emails)} hostile email cases from hostile_emails.json")
 print("=" * 70)
 
 if failed > 0:
