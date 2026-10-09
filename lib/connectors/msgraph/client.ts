@@ -102,11 +102,13 @@ export class GraphClient {
 
   /**
    * Request chokepoint: validates method, origin, and scope BEFORE attaching token.
+   * Validates optional Prefer header (only value allowed: outlook.body-content-type="text").
    */
   private async request(
     url: string,
     method: string,
-    token: string
+    token: string,
+    preferBodyText?: boolean
   ): Promise<Response> {
     // Enforce GET-only
     if (method !== "GET") {
@@ -146,15 +148,23 @@ export class GraphClient {
       );
     }
 
+    // Build headers: standard headers LAST to prevent override
+    const headers: Record<string, string> = {};
+    
+    if (preferBodyText) {
+      headers.Prefer = 'outlook.body-content-type="text"';
+    }
+    
+    // Standard headers last - cannot be overridden
+    headers.Authorization = `Bearer ${token}`;
+    headers.Accept = "application/json";
+    headers["User-Agent"] = "ISV|SiteTech|1.0";
+
     return retryRequest(
       () =>
         fetch(url, {
           method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-            "User-Agent": "ISV|SiteTech|1.0",
-          },
+          headers,
           redirect: "error",
           signal: AbortSignal.timeout(30000), // 30s request timeout
         }),
@@ -170,7 +180,8 @@ export class GraphClient {
   async get<T>(
     path: string,
     params?: Record<string, string>,
-    schema?: z.ZodType<GraphResponse<T>>
+    schema?: z.ZodType<GraphResponse<T>>,
+    preferBodyText?: boolean
   ): Promise<GraphResponse<T>> {
     const token = await this.getAccessToken();
 
@@ -183,7 +194,7 @@ export class GraphClient {
       });
     }
 
-    const response = await this.request(url.toString(), "GET", token);
+    const response = await this.request(url.toString(), "GET", token, preferBodyText);
 
     if (!response.ok) {
       const errorCode = response.headers.get("X-Error-Code") || "UNKNOWN";
@@ -224,7 +235,8 @@ export class GraphClient {
   async delta<T extends { id: string }>(
     path: string,
     deltaLink?: string,
-    selectFields?: string
+    selectFields?: string,
+    preferBodyText?: boolean
   ): Promise<DeltaResult<T>> {
     // Build initial URL: /delta first, then query params
     let currentUrl: string;
@@ -239,7 +251,12 @@ export class GraphClient {
       currentUrl = url.toString();
     }
 
-    const response: GraphResponse<T> = await this.get<T>(currentUrl);
+    const response: GraphResponse<T> = await this.get<T>(
+      currentUrl,
+      undefined,
+      undefined,
+      preferBodyText
+    );
 
     const items: T[] = [];
     const removed: string[] = [];

@@ -500,4 +500,117 @@ describe("GraphClient", () => {
       expect(mockFetch).toHaveBeenCalledTimes(3);
     });
   });
+
+  describe("Prefer header support", () => {
+    it("sends Prefer header when preferBodyText=true via delta", async () => {
+      const client = new GraphClient(mockConfig);
+
+      mockFetch.mockResolvedValueOnce(mockTokenResponse);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          value: [],
+          "@odata.deltaLink": "https://graph.microsoft.com/delta",
+        }),
+      });
+
+      await client.delta(
+        "/users/user%40example.com/messages",
+        undefined,
+        "id,subject",
+        true // preferBodyText
+      );
+
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      const [, requestInit] = mockFetch.mock.calls[1];
+      expect(requestInit.headers).toHaveProperty("Prefer", 'outlook.body-content-type="text"');
+    });
+
+    it("sends Prefer header when preferBodyText=true via get", async () => {
+      const client = new GraphClient(mockConfig);
+
+      mockFetch.mockResolvedValueOnce(mockTokenResponse);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ value: [] }),
+      });
+
+      await client.get(
+        "/users/user%40example.com/messages",
+        undefined,
+        undefined,
+        true // preferBodyText
+      );
+
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      const [, requestInit] = mockFetch.mock.calls[1];
+      expect(requestInit.headers).toHaveProperty("Prefer", 'outlook.body-content-type="text"');
+    });
+
+    it("does not send Prefer header when preferBodyText=false", async () => {
+      const client = new GraphClient(mockConfig);
+
+      mockFetch.mockResolvedValueOnce(mockTokenResponse);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ value: [] }),
+      });
+
+      await client.get(
+        "/users/user%40example.com/messages",
+        undefined,
+        undefined,
+        false
+      );
+
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      const [, requestInit] = mockFetch.mock.calls[1];
+      expect(requestInit.headers).not.toHaveProperty("Prefer");
+    });
+
+    it("standard headers cannot be overridden (set last)", async () => {
+      const client = new GraphClient(mockConfig);
+
+      mockFetch.mockResolvedValueOnce(mockTokenResponse);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ value: [] }),
+      });
+
+      await client.get(
+        "/users/user%40example.com/messages",
+        undefined,
+        undefined,
+        true
+      );
+
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      const [, requestInit] = mockFetch.mock.calls[1];
+      // Standard headers must be present and correct
+      expect(requestInit.headers).toHaveProperty("Authorization", "Bearer test-token");
+      expect(requestInit.headers).toHaveProperty("Accept", "application/json");
+      expect(requestInit.headers).toHaveProperty("User-Agent", "ISV|SiteTech|1.0");
+    });
+
+    it("does not send Prefer header to token requests", async () => {
+      const client = new GraphClient(mockConfig);
+
+      mockFetch.mockResolvedValueOnce(mockTokenResponse);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ value: [] }),
+      });
+
+      await client.get(
+        "/users/user%40example.com/messages",
+        undefined,
+        undefined,
+        true
+      );
+
+      // First call is token request - should not have Prefer header
+      const [, tokenRequestInit] = mockFetch.mock.calls[0];
+      expect(tokenRequestInit.headers).not.toHaveProperty("Prefer");
+    });
+  });
 });

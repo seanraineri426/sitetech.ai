@@ -297,6 +297,46 @@ describe("Microsoft Graph fetchers", () => {
     });
   });
 
+  describe("fetchMailFolderDelta", () => {
+    it("sends Prefer header to request plain text body content", async () => {
+      mockFetch.mockResolvedValueOnce(mockTokenResponse);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          value: [{ id: "msg1", conversationId: "conv1", subject: "Test", bodyPreview: "Preview", body: { contentType: "text", content: "Body" }, from: { emailAddress: { name: "Sender", address: "sender@example.com" } }, toRecipients: [], ccRecipients: [], receivedDateTime: "2026-10-09T12:00:00Z", sentDateTime: "2026-10-09T12:00:00Z", hasAttachments: false, importance: "normal", isRead: false, categories: [] }],
+          "@odata.deltaLink": "https://graph.microsoft.com/delta",
+        }),
+      });
+
+      await fetchMailFolderDelta(client, "user@example.com", "inbox");
+
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      const [, requestInit] = mockFetch.mock.calls[1];
+      expect(requestInit.headers).toHaveProperty("Prefer", 'outlook.body-content-type="text"');
+    });
+
+    it("resume from $skiptoken nextLink sends Prefer + Authorization", async () => {
+      const checkpoint = "https://graph.microsoft.com/v1.0/users/user%40example.com/mailFolders/inbox/messages/delta?$skiptoken=abc123xyz";
+      mockFetch.mockResolvedValueOnce(mockTokenResponse);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          value: [],
+          "@odata.deltaLink": "https://graph.microsoft.com/v1.0/users/user%40example.com/mailFolders/inbox/messages/delta?$deltatoken=final",
+        }),
+      });
+
+      await fetchMailFolderDelta(client, "user@example.com", "inbox", checkpoint);
+
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      const [url, requestInit] = mockFetch.mock.calls[1];
+      expect(String(url)).toBe(checkpoint);
+      expect(requestInit.method).toBe("GET");
+      expect(requestInit.headers).toHaveProperty("Prefer", 'outlook.body-content-type="text"');
+      expect(requestInit.headers).toHaveProperty("Authorization", "Bearer token-123");
+    });
+  });
+
   describe("shouldResync (410 detection)", () => {
     it("detects 410 by status property, not message text", async () => {
       const { shouldResync } = await import("../fetchers");

@@ -16,6 +16,10 @@ describe("Microsoft Graph mappers", () => {
     conversationId: "conv-456",
     subject: "Test Email",
     bodyPreview: "This is a test email preview",
+    body: {
+      contentType: "text",
+      content: "This is the full body text.",
+    },
     from: {
       emailAddress: {
         name: "John Sender",
@@ -54,7 +58,62 @@ describe("Microsoft Graph mappers", () => {
       expect(normalized.external_id).toBe("msg-123");
       expect(normalized.source_mailbox).toBe("user@example.com");
       expect(normalized.subject).toBe("Test Email");
+      expect(normalized.body_text).toBe("This is the full body text.");
       expect(normalized.fingerprint).toBeTruthy();
+    });
+
+    it("extracts plain text body_text from text content", () => {
+      const normalized = mapGraphMessageToNormalized(mockMessage, "user@example.com");
+
+      expect(normalized.body_text).toBe("This is the full body text.");
+    });
+
+    it("preserves quoted reply history in body_text", () => {
+      const messageWithHistory: GraphMessage = {
+        ...mockMessage,
+        body: {
+          contentType: "text",
+          content: "My reply.\n\nOn Oct 8, 2026, Bob wrote:\n> Original message.",
+        },
+      };
+
+      const normalized = mapGraphMessageToNormalized(messageWithHistory, "user@example.com");
+      expect(normalized.body_text).toContain("My reply");
+      expect(normalized.body_text).toContain("On Oct 8, 2026, Bob wrote:");
+      expect(normalized.body_text).toContain("> Original message");
+    });
+
+    it("converts HTML body to plain text", () => {
+      const messageWithHtml: GraphMessage = {
+        ...mockMessage,
+        body: {
+          contentType: "html",
+          content: "<p>Hello <strong>world</strong></p>",
+        },
+      };
+
+      const normalized = mapGraphMessageToNormalized(messageWithHtml, "user@example.com");
+      expect(normalized.body_text).toBe("Hello world");
+    });
+
+    it("handles null body", () => {
+      const messageWithoutBody: GraphMessage = {
+        ...mockMessage,
+        body: null,
+      };
+
+      const normalized = mapGraphMessageToNormalized(messageWithoutBody, "user@example.com");
+      expect(normalized.body_text).toBeNull();
+    });
+
+    it("handles undefined body", () => {
+      const messageWithoutBody: GraphMessage = {
+        ...mockMessage,
+        body: undefined,
+      };
+
+      const normalized = mapGraphMessageToNormalized(messageWithoutBody, "user@example.com");
+      expect(normalized.body_text).toBeNull();
     });
 
     it("preserves receivedDateTime as ISO UTC string in received_at", () => {
@@ -193,6 +252,42 @@ describe("Microsoft Graph mappers", () => {
       expect(normalized.to_recipients[0].address).toBe("jane@example.com");
       expect(normalized.cc_recipients[0].address).toBe("bob@example.com");
     });
+
+    it("DOES change fingerprint when body_text changes", () => {
+      const message1: GraphMessage = {
+        ...mockMessage,
+        body: { contentType: "text", content: "Original body" },
+      };
+      const message2: GraphMessage = {
+        ...mockMessage,
+        body: { contentType: "text", content: "Modified body" },
+      };
+
+      const normalized1 = mapGraphMessageToNormalized(message1, "user@example.com");
+      const normalized2 = mapGraphMessageToNormalized(message2, "user@example.com");
+
+      // Body content is fingerprinted
+      expect(normalized1.fingerprint).not.toBe(normalized2.fingerprint);
+    });
+
+    it("does NOT change fingerprint when only bodyPreview changes (body_text stays same)", () => {
+      const message1: GraphMessage = {
+        ...mockMessage,
+        body: { contentType: "text", content: "Full body text" },
+        bodyPreview: "Preview 1",
+      };
+      const message2: GraphMessage = {
+        ...mockMessage,
+        body: { contentType: "text", content: "Full body text" },
+        bodyPreview: "Preview 2",
+      };
+
+      const normalized1 = mapGraphMessageToNormalized(message1, "user@example.com");
+      const normalized2 = mapGraphMessageToNormalized(message2, "user@example.com");
+
+      // Fingerprint uses body_text not bodyPreview per CTO 2026-10-09
+      expect(normalized1.fingerprint).toBe(normalized2.fingerprint);
+    });
   });
 
   describe("emailToRawRecord", () => {
@@ -213,6 +308,225 @@ describe("Microsoft Graph mappers", () => {
       const raw = emailToRawRecord(normalized);
 
       expect(raw.allowlistedPayload.received_at_source).toBe("graph");
+    });
+
+    it("includes body_text_sha256 in allowlisted payload (NOT body_text)", () => {
+      const normalized = mapGraphMessageToNormalized(mockMessage, "user@example.com");
+      const raw = emailToRawRecord(normalized);
+
+      expect(raw.allowlistedPayload.body_text_sha256).toBeTruthy();
+      expect(raw.allowlistedPayload.body_text_sha256).toMatch(/^[0-9a-f]{64}$/);
+      expect(raw.allowlistedPayload).not.toHaveProperty("body_text");
+    });
+
+    it("includes conversation_id in allowlisted payload", () => {
+      const normalized = mapGraphMessageToNormalized(mockMessage, "user@example.com");
+      const raw = emailToRawRecord(normalized);
+
+      expect(raw.allowlistedPayload.conversation_id).toBe("conv-456");
+    });
+
+    it("stores participant domains NOT raw addresses", () => {
+      const normalized = mapGraphMessageToNormalized(mockMessage, "user@example.com");
+      const raw = emailToRawRecord(normalized);
+
+      // Should have domains
+      expect(raw.allowlistedPayload.from_domain).toBe("example.com");
+      expect(raw.allowlistedPayload.to_domains).toEqual(["example.com"]);
+      expect(raw.allowlistedPayload.cc_domains).toEqual(["example.com"]);
+
+      // Should NOT have raw addresses
+      expect(raw.allowlistedPayload).not.toHaveProperty("from");
+      expect(raw.allowlistedPayload).not.toHaveProperty("to_recipients");
+      expect(raw.allowlistedPayload).not.toHaveProperty("cc_recipients");
+    });
+
+    it("computes body_text_sha256 correctly", () => {
+      const normalized = mapGraphMessageToNormalized(mockMessage, "user@example.com");
+      const raw = emailToRawRecord(normalized);
+
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const expectedHash = require("crypto")
+        .createHash("sha256")
+        .update("This is the full body text.")
+        .digest("hex");
+
+      expect(raw.allowlistedPayload.body_text_sha256).toBe(expectedHash);
+    });
+
+    it("body_text_sha256 is null when body_text is null", () => {
+      const messageWithoutBody: GraphMessage = {
+        ...mockMessage,
+        body: null,
+      };
+      const normalized = mapGraphMessageToNormalized(messageWithoutBody, "user@example.com");
+      const raw = emailToRawRecord(normalized);
+
+      expect(raw.allowlistedPayload.body_text_sha256).toBeNull();
+    });
+  });
+
+  describe("redactAddresses", () => {
+    it("redacts email addresses with domain preserved", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      const text = "Contact alice@example.com or bob@test.org for details.";
+      const redacted = redactAddresses(text);
+      
+      expect(redacted).toBe("Contact [email-example.com] or [email-test.org] for details.");
+    });
+
+    it("handles mixed case emails", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      const text = "Send to Alice.Smith@Example.COM";
+      const redacted = redactAddresses(text);
+      
+      expect(redacted).toBe("Send to [email-Example.COM]");
+    });
+
+    it("handles multiple emails on same line", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      const text = "From: a@x.com To: b@y.com CC: c@z.com";
+      const redacted = redactAddresses(text);
+      
+      expect(redacted).toContain("[email-x.com]");
+      expect(redacted).toContain("[email-y.com]");
+      expect(redacted).toContain("[email-z.com]");
+    });
+
+    it("leaves non-email text unchanged", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      const text = "No emails here, just text.";
+      const redacted = redactAddresses(text);
+      
+      expect(redacted).toBe(text);
+    });
+
+    it("redacts adjacent addresses separated by /", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      const text = "Contact bob@x.com/carol@x.com.";
+      const redacted = redactAddresses(text);
+      
+      expect(redacted).not.toContain("@");
+      expect(redacted).toContain("[email-x.com]");
+    });
+
+    it("redacts adjacent addresses separated by comma", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      const text = "bob@x.com,carol@y.com.";
+      const redacted = redactAddresses(text);
+      
+      expect(redacted).not.toContain("@");
+      expect(redacted).toContain("[email-x.com]");
+      expect(redacted).toContain("[email-y.com]");
+    });
+
+    it("redacts adjacent addresses separated by semicolon", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      const text = "To: bob@x.com;carol@gc.c";
+      const redacted = redactAddresses(text);
+      
+      expect(redacted).not.toContain("@");
+      expect(redacted).toContain("[email-x.com]");
+      expect(redacted).toContain("[email-gc.c]");
+    });
+
+    it("allows sentence-ending period after address", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      const text = "Contact bob@x.com.";
+      const redacted = redactAddresses(text);
+      
+      expect(redacted).toBe("Contact [email-x.com].");
+    });
+
+    it("preserves bare @ in phrases", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      expect(redactAddresses("price @ $5")).toBe("price @ $5");
+      expect(redactAddresses("RFI @ Level 3")).toBe("RFI @ Level 3");
+      expect(redactAddresses("@channel")).toBe("@channel");
+    });
+
+    it("linear performance: 200KB text + bare @", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      const text = "a".repeat(200_000) + " @";
+      const t0 = performance.now();
+      redactAddresses(text);
+      const elapsed = performance.now() - t0;
+      
+      expect(elapsed).toBeLessThan(50);
+    });
+
+    it("linear performance: 100K 'a.' pairs + address", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      const text = "a.".repeat(100_000) + " x@y";
+      const t0 = performance.now();
+      const result = redactAddresses(text);
+      const elapsed = performance.now() - t0;
+      
+      expect(elapsed).toBeLessThan(50);
+      expect(result).toContain("[email-y]");
+    });
+  });
+
+  describe("size caps and null byte stripping", () => {
+    it("strips null bytes from text body", () => {
+      const messageWithNulls: GraphMessage = {
+        ...mockMessage,
+        body: { contentType: "text", content: "a\u0000b\u0000c" },
+      };
+      const normalized = mapGraphMessageToNormalized(messageWithNulls, "user@example.com");
+      
+      expect(normalized.body_text).toBe("abc");
+      expect(normalized.body_text).not.toContain("\u0000");
+    });
+
+    it("caps text body at 200KB", () => {
+      const messageWithLargeBody: GraphMessage = {
+        ...mockMessage,
+        body: { contentType: "text", content: "x".repeat(500_000) },
+      };
+      const normalized = mapGraphMessageToNormalized(messageWithLargeBody, "user@example.com");
+      
+      expect(normalized.body_text!.length).toBeLessThanOrEqual(200_000 + 20);
+      expect(normalized.body_text).toContain("[truncated]");
+    });
+
+    it("caps HTML body at 800KB before conversion (4x text limit)", () => {
+      const messageWithLargeHtml: GraphMessage = {
+        ...mockMessage,
+        body: { contentType: "html", content: "<p>" + "x".repeat(1_000_000) + "</p>" },
+      };
+      const normalized = mapGraphMessageToNormalized(messageWithLargeHtml, "user@example.com");
+      
+      // HTML should be capped at 800KB before conversion
+      expect(normalized.body_text!.length).toBeLessThanOrEqual(200_000 + 20);
+    });
+
+    it("fingerprints capped text", () => {
+      const message1: GraphMessage = {
+        ...mockMessage,
+        body: { contentType: "text", content: "a".repeat(300_000) },
+      };
+      const message2: GraphMessage = {
+        ...mockMessage,
+        body: { contentType: "text", content: "a".repeat(300_000) + "b" },
+      };
+      
+      const normalized1 = mapGraphMessageToNormalized(message1, "user@example.com");
+      const normalized2 = mapGraphMessageToNormalized(message2, "user@example.com");
+      
+      // Both should be capped at same length, so fingerprints match
+      expect(normalized1.fingerprint).toBe(normalized2.fingerprint);
     });
   });
 

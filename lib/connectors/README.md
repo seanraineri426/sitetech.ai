@@ -6,16 +6,7 @@ Standalone, pure-TypeScript connector modules for Procore, Microsoft Graph (Mail
 
 ## Test Status
 
-✅ **186/186 tests passing** (9 test files)
-- Procore client: 27 tests
-- Procore mappers: 48 tests  
-- Procore fetchers: 8 tests
-- Graph client: 30 tests
-- Graph mappers: 29 tests
-- Graph fetchers: 16 tests
-- P6 parser: 30 tests
-- Shared retry: 15 tests
-- Canonical stringify: 7 tests
+✅ **All tests passing**
 
 ---
 
@@ -34,10 +25,11 @@ lib/connectors/
 │   ├── fetchers.ts         # RFI/Submittal/Project fetchers
 │   └── __tests__/
 ├── msgraph/
-│   ├── client.ts           # GET-only client with delta sync
-│   ├── types.ts            # Zod schemas  
-│   ├── mappers.ts          # Email mapper with domain fingerprinting
-│   ├── fetchers.ts         # Page-by-page delta fetchers
+│   ├── client.ts           # GET-only client with delta sync + Prefer header support
+│   ├── types.ts            # Zod schemas with body field
+│   ├── mappers.ts          # Email mapper with body_text + domain fingerprinting
+│   ├── fetchers.ts         # Page-by-page delta fetchers (sends Prefer header)
+│   ├── html-to-text.ts     # HTML-to-text converter (fallback)
 │   └── __tests__/
 └── p6/
     ├── parser.ts           # Streaming XER parser
@@ -99,6 +91,7 @@ lib/connectors/
 - ✅ Returns ONE page with checkpoint (nextLink or deltaLink)
 - ✅ Fetcher drives the loop page-by-page for mid-run resumability
 - ✅ Handles `@removed` and `deleted` facet for deletions
+- ✅ Sends `Prefer: outlook.body-content-type="text"` header for plain text bodies
 
 ### P6 XER Parser
 
@@ -161,6 +154,7 @@ lib/connectors/
 ```typescript
 [
   "id", "conversationId", "subject", "bodyPreview",
+  "body",  // CTO 2026-10-09: Full body as plain text with quoted history
   "from", "toRecipients", "ccRecipients", // Stored (approved for email records)
   "receivedDateTime", "sentDateTime",
   "hasAttachments", "importance", "categories"
@@ -168,7 +162,11 @@ lib/connectors/
 ]
 ```
 
-**Fingerprint:** id + received_at + subject + body + **domains** (not full addresses) + categories
+**CTO 2026-10-09:** Full email body stored as plain text including quoted reply history, under RLS + 30-day purge. Attachments excluded.
+
+**Plain Text:** Connector sends `Prefer: outlook.body-content-type="text"` header. If Graph returns HTML anyway, strips tags to text with dependency-free converter.
+
+**Fingerprint:** id + received_at + subject + **body_text** (full body, not bodyPreview) + **domains** (not full addresses) + categories
 
 **NOT fingerprinted:** isRead (read status), raw email addresses (only domains)
 
@@ -195,9 +193,10 @@ lib/connectors/
 - Internal P6 task_id NOT in fingerprint
 
 **Graph Mail:**
-- Fingerprint: id + received_at + subject + body + **participant domains** + categories
+- Fingerprint: id + received_at + subject + **body_text** (full body including quoted history, NOT bodyPreview) + **participant domains** + categories
 - Raw addresses stored but NOT fingerprinted as content (RLS + 30-day purge)
 - Model layer maps addresses → company+role
+- Body stored as plain text; HTML stripped if Graph ignores Prefer header
 
 ---
 
@@ -254,7 +253,7 @@ Fixtures: `fixtures/procore/docs/` (header notes docs-derived)
 ## Contributing
 
 - Strict TypeScript mode
-- 186/186 tests must pass
+- All tests must pass
 - Update allowlists only with CTO approval
 - Never store attachments or file content
 - Keep dependencies minimal
