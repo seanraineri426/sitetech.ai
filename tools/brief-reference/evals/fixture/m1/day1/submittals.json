@@ -1,0 +1,945 @@
+[
+  {
+    "id": "08df140a-45ae-5586-a4b8-c01a76cd294f",
+    "org_id": "1befe790-aca8-5579-92e3-e97c76435686",
+    "project_id": "f9fdf464-52c4-5d02-a931-c76a025e916c",
+    "source": "procore",
+    "entity_type": "submittal",
+    "external_id": "6102",
+    "source_url": "https://app.procore.com/8800123/project/submittal_logs/6102",
+    "number": "003",
+    "formatted_number": "05 12 00-003",
+    "revision": "0",
+    "current_revision": false,
+    "title": "Structural Steel Shop Drawings - Podium Transfer & Embeds",
+    "private": false,
+    "status": {
+      "id": 62,
+      "name": "Closed"
+    },
+    "type": {
+      "id": 70,
+      "name": "Shop Drawings"
+    },
+    "specification_section": {
+      "id": 31001,
+      "number": "05 12 00",
+      "description": "Structural Steel Framing"
+    },
+    "location_id": 41001,
+    "cost_code_id": 51002,
+    "responsible_contractor": {
+      "id": 7005,
+      "name": "Bayline Steel Fabricators (FICTIONAL)"
+    },
+    "received_from": {
+      "id": 5009,
+      "login": "gmoreno@baylinesteel.example",
+      "name": "Gus Moreno"
+    },
+    "submittal_manager": {
+      "id": 5005,
+      "login": "kosei@ironbridgebuild.example",
+      "name": "Kevin Osei"
+    },
+    "ball_in_court": [],
+    "approvers": [
+      {
+        "id": 61021,
+        "user": {
+          "id": 5008,
+          "login": "rmehta@tandemse.example",
+          "name": "Raj Mehta"
+        },
+        "workflow_group_number": 1,
+        "sent_date": "2026-08-27",
+        "due_date": "2026-09-10",
+        "returned_date": "2026-09-10",
+        "response": {
+          "id": 83,
+          "name": "Revise and Resubmit"
+        }
+      }
+    ],
+    "submit_by": "2026-08-27",
+    "issue_date": "2026-08-27",
+    "received_date": "2026-08-27",
+    "distributed_at": "2026-08-27T11:00:00-04:00",
+    "due_date": "2026-09-10",
+    "closed_at": "2026-09-10T16:00:00-04:00",
+    "required_on_site_date": "2026-11-09",
+    "lead_time": 28,
+    "design_team_review_time": 14,
+    "internal_review_time": 0,
+    "buffer_time": 3,
+    "is_rejected": true,
+    "actual_delivery_date": null,
+    "confirmed_delivery_date": null,
+    "scheduled_task": {
+      "id": 1230,
+      "name": "A1230 Erect Podium Transfer Steel - Wing B",
+      "key": "p6|A1230"
+    },
+    "created_at": "2026-08-27T08:00:00-04:00"
+  },
+  {
+    "id": "ed91e3b8-4afb-5c67-913e-3862f9a3a7f7",
+    "org_id": "1befe790-aca8-5579-92e3-e97c76435686",
+    "project_id": "f9fdf464-52c4-5d02-a931-c76a025e916c",
+    "source": "procore",
+    "entity_type": "submittal",
+    "external_id": "6103",
+    "source_url": "https://app.procore.com/8800123/project/submittal_logs/6103",
+    "number": "003",
+    "formatted_number": "05 12 00-003",
+    "revision": "1",
+    "current_revision": true,
+    "title": "Structural Steel Shop Drawings - Podium Transfer & Embeds",
+    "private": false,
+    "status": {
+      "id": 61,
+      "name": "Open"
+    },
+    "type": {
+      "id": 70,
+      "name": "Shop Drawings"
+    },
+    "specification_section": {
+      "id": 31001,
+      "number": "05 12 00",
+      "description": "Structural Steel Framing"
+    },
+    "location_id": 41001,
+    "cost_code_id": 51002,
+    "responsible_contractor": {
+      "id": 7005,
+      "name": "Bayline Steel Fabricators (FICTIONAL)"
+    },
+    "received_from": {
+      "id": 5009,
+      "login": "gmoreno@baylinesteel.example",
+      "name": "Gus Moreno"
+    },
+    "submittal_manager": {
+      "id": 5005,
+      "login": "kosei@ironbridgebuild.example",
+      "name": "Kevin Osei"
+    },
+    "ball_in_court": [
+      {
+        "id": 5008,
+        "login": "rmehta@tandemse.example",
+        "name": "Raj Mehta",
+        "vendor": {
+          "id": 7004,
+          "name": "Tandem Structural Engineers (FICTIONAL)"
+        }
+      }
+    ],
+    "approvers": [
+      {
+        "id": 61031,
+        "user": {
+          "id": 5008,
+          "login": "rmehta@tandemse.example",
+          "name": "Raj Mehta"
+        },
+        "workflow_group_number": 1,
+        "sent_date": "2026-09-17",
+        "due_date": "2026-10-01",
+        "returned_date": null,
+        "response": {
+          "id": 80,
+          "name": "Pending"
+        }
+      }
+    ],
+    "submit_by": "2026-09-17",
+    "issue_date": "2026-09-17",
+    "received_date": "2026-09-17",
+    "distributed_at": "2026-09-17T11:00:00-04:00",
+    "due_date": "2026-10-01",
+    "closed_at": null,
+    "required_on_site_date": "2026-11-09",
+    "lead_time": 28,
+    "design_team_review_time": 14,
+    "internal_review_time": 0,
+    "buffer_time": 3,
+    "is_rejected": false,
+    "actual_delivery_date": null,
+    "confirmed_delivery_date": null,
+    "scheduled_task": {
+      "id": 1230,
+      "name": "A1230 Erect Podium Transfer Steel - Wing B",
+      "key": "p6|A1230"
+    },
+    "created_at": "2026-09-17T08:00:00-04:00"
+  },
+  {
+    "id": "4b348f23-0eb8-5e7d-9f22-4554cc1870b2",
+    "org_id": "1befe790-aca8-5579-92e3-e97c76435686",
+    "project_id": "f9fdf464-52c4-5d02-a931-c76a025e916c",
+    "source": "procore",
+    "entity_type": "submittal",
+    "external_id": "6200",
+    "source_url": "https://app.procore.com/8800123/project/submittal_logs/6200",
+    "number": "001",
+    "formatted_number": "08 53 13-001",
+    "revision": "0",
+    "current_revision": false,
+    "title": "Vinyl Windows - Product Data, Shop Drawings, Anchorage Calcs",
+    "private": false,
+    "status": {
+      "id": 62,
+      "name": "Closed"
+    },
+    "type": {
+      "id": 70,
+      "name": "Shop Drawings"
+    },
+    "specification_section": {
+      "id": 31002,
+      "number": "08 53 13",
+      "description": "Vinyl Windows"
+    },
+    "location_id": null,
+    "cost_code_id": 51004,
+    "responsible_contractor": {
+      "id": 7006,
+      "name": "ClearSpan Windows (FICTIONAL)"
+    },
+    "received_from": {
+      "id": 5010,
+      "login": "enovak@clearspan.example",
+      "name": "Eli Novak"
+    },
+    "submittal_manager": {
+      "id": 5005,
+      "login": "kosei@ironbridgebuild.example",
+      "name": "Kevin Osei"
+    },
+    "ball_in_court": [],
+    "approvers": [
+      {
+        "id": 62001,
+        "user": {
+          "id": 5007,
+          "login": "hcole@arcwell.example",
+          "name": "Hannah Cole"
+        },
+        "workflow_group_number": 1,
+        "sent_date": "2026-07-21",
+        "due_date": "2026-08-04",
+        "returned_date": "2026-08-04",
+        "response": {
+          "id": 83,
+          "name": "Revise and Resubmit"
+        }
+      }
+    ],
+    "submit_by": "2026-07-17",
+    "issue_date": "2026-07-21",
+    "received_date": "2026-07-20",
+    "distributed_at": "2026-07-21T11:00:00-04:00",
+    "due_date": "2026-08-04",
+    "closed_at": "2026-08-04T15:00:00-04:00",
+    "required_on_site_date": "2027-02-15",
+    "lead_time": 112,
+    "design_team_review_time": 14,
+    "internal_review_time": 0,
+    "buffer_time": 5,
+    "is_rejected": true,
+    "actual_delivery_date": null,
+    "confirmed_delivery_date": null,
+    "scheduled_task": {
+      "id": 2400,
+      "name": "A2400 Install Windows L2-L6",
+      "key": "p6|A2400"
+    },
+    "created_at": "2026-07-20T08:00:00-04:00"
+  },
+  {
+    "id": "4a0375cb-9400-5fcb-b673-b90edcb866c2",
+    "org_id": "1befe790-aca8-5579-92e3-e97c76435686",
+    "project_id": "f9fdf464-52c4-5d02-a931-c76a025e916c",
+    "source": "procore",
+    "entity_type": "submittal",
+    "external_id": "6201",
+    "source_url": "https://app.procore.com/8800123/project/submittal_logs/6201",
+    "number": "001",
+    "formatted_number": "08 53 13-001",
+    "revision": "1",
+    "current_revision": false,
+    "title": "Vinyl Windows - Product Data, Shop Drawings, Anchorage Calcs",
+    "private": false,
+    "status": {
+      "id": 62,
+      "name": "Closed"
+    },
+    "type": {
+      "id": 70,
+      "name": "Shop Drawings"
+    },
+    "specification_section": {
+      "id": 31002,
+      "number": "08 53 13",
+      "description": "Vinyl Windows"
+    },
+    "location_id": null,
+    "cost_code_id": 51004,
+    "responsible_contractor": {
+      "id": 7006,
+      "name": "ClearSpan Windows (FICTIONAL)"
+    },
+    "received_from": {
+      "id": 5010,
+      "login": "enovak@clearspan.example",
+      "name": "Eli Novak"
+    },
+    "submittal_manager": {
+      "id": 5005,
+      "login": "kosei@ironbridgebuild.example",
+      "name": "Kevin Osei"
+    },
+    "ball_in_court": [],
+    "approvers": [
+      {
+        "id": 62011,
+        "user": {
+          "id": 5007,
+          "login": "hcole@arcwell.example",
+          "name": "Hannah Cole"
+        },
+        "workflow_group_number": 1,
+        "sent_date": "2026-08-19",
+        "due_date": "2026-09-02",
+        "returned_date": "2026-09-02",
+        "response": {
+          "id": 83,
+          "name": "Revise and Resubmit"
+        }
+      }
+    ],
+    "submit_by": "2026-08-18",
+    "issue_date": "2026-08-19",
+    "received_date": "2026-08-18",
+    "distributed_at": "2026-08-19T11:00:00-04:00",
+    "due_date": "2026-09-02",
+    "closed_at": "2026-09-02T15:00:00-04:00",
+    "required_on_site_date": "2027-02-15",
+    "lead_time": 112,
+    "design_team_review_time": 14,
+    "internal_review_time": 0,
+    "buffer_time": 5,
+    "is_rejected": true,
+    "actual_delivery_date": null,
+    "confirmed_delivery_date": null,
+    "scheduled_task": {
+      "id": 2400,
+      "name": "A2400 Install Windows L2-L6",
+      "key": "p6|A2400"
+    },
+    "created_at": "2026-08-18T08:00:00-04:00"
+  },
+  {
+    "id": "4f05aa89-e18a-59f5-b42e-ce2f00ecd18d",
+    "org_id": "1befe790-aca8-5579-92e3-e97c76435686",
+    "project_id": "f9fdf464-52c4-5d02-a931-c76a025e916c",
+    "source": "procore",
+    "entity_type": "submittal",
+    "external_id": "6202",
+    "source_url": "https://app.procore.com/8800123/project/submittal_logs/6202",
+    "number": "001",
+    "formatted_number": "08 53 13-001",
+    "revision": "2",
+    "current_revision": true,
+    "title": "Vinyl Windows - Product Data, Shop Drawings, Anchorage Calcs",
+    "private": false,
+    "status": {
+      "id": 61,
+      "name": "Open"
+    },
+    "type": {
+      "id": 70,
+      "name": "Shop Drawings"
+    },
+    "specification_section": {
+      "id": 31002,
+      "number": "08 53 13",
+      "description": "Vinyl Windows"
+    },
+    "location_id": null,
+    "cost_code_id": 51004,
+    "responsible_contractor": {
+      "id": 7006,
+      "name": "ClearSpan Windows (FICTIONAL)"
+    },
+    "received_from": {
+      "id": 5010,
+      "login": "enovak@clearspan.example",
+      "name": "Eli Novak"
+    },
+    "submittal_manager": {
+      "id": 5005,
+      "login": "kosei@ironbridgebuild.example",
+      "name": "Kevin Osei"
+    },
+    "ball_in_court": [
+      {
+        "id": 5007,
+        "login": "hcole@arcwell.example",
+        "name": "Hannah Cole",
+        "vendor": {
+          "id": 7003,
+          "name": "Arcwell Design Studio (FICTIONAL)"
+        }
+      }
+    ],
+    "approvers": [
+      {
+        "id": 62021,
+        "user": {
+          "id": 5007,
+          "login": "hcole@arcwell.example",
+          "name": "Hannah Cole"
+        },
+        "workflow_group_number": 1,
+        "sent_date": "2026-09-22",
+        "due_date": "2026-10-06",
+        "returned_date": null,
+        "response": {
+          "id": 80,
+          "name": "Pending"
+        }
+      }
+    ],
+    "submit_by": "2026-09-21",
+    "issue_date": "2026-09-22",
+    "received_date": "2026-09-21",
+    "distributed_at": "2026-09-22T11:00:00-04:00",
+    "due_date": "2026-10-06",
+    "closed_at": null,
+    "required_on_site_date": "2027-02-15",
+    "lead_time": 112,
+    "design_team_review_time": 14,
+    "internal_review_time": 0,
+    "buffer_time": 5,
+    "is_rejected": false,
+    "actual_delivery_date": null,
+    "confirmed_delivery_date": null,
+    "scheduled_task": {
+      "id": 2400,
+      "name": "A2400 Install Windows L2-L6",
+      "key": "p6|A2400"
+    },
+    "created_at": "2026-09-21T08:00:00-04:00"
+  },
+  {
+    "id": "d33713c1-8994-5a0e-ab4f-dbfd811eb079",
+    "org_id": "1befe790-aca8-5579-92e3-e97c76435686",
+    "project_id": "f9fdf464-52c4-5d02-a931-c76a025e916c",
+    "source": "procore",
+    "entity_type": "submittal",
+    "external_id": "6301",
+    "source_url": "https://app.procore.com/8800123/project/submittal_logs/6301",
+    "number": "001",
+    "formatted_number": "26 24 13-001",
+    "revision": "0",
+    "current_revision": true,
+    "title": "Switchboards and Main Switchgear",
+    "private": false,
+    "status": {
+      "id": 62,
+      "name": "Closed"
+    },
+    "type": {
+      "id": 70,
+      "name": "Shop Drawings"
+    },
+    "specification_section": {
+      "id": 31003,
+      "number": "26 24 13",
+      "description": "Switchboards"
+    },
+    "location_id": null,
+    "cost_code_id": 51006,
+    "responsible_contractor": {
+      "id": 7009,
+      "name": "Current Electric (FICTIONAL)"
+    },
+    "received_from": {
+      "id": 5014,
+      "login": "mdunn@currentelectric.example",
+      "name": "Mike Dunn"
+    },
+    "submittal_manager": {
+      "id": 5005,
+      "login": "kosei@ironbridgebuild.example",
+      "name": "Kevin Osei"
+    },
+    "ball_in_court": [],
+    "approvers": [
+      {
+        "id": 63011,
+        "user": {
+          "id": 5007,
+          "login": "hcole@arcwell.example",
+          "name": "Hannah Cole"
+        },
+        "workflow_group_number": 1,
+        "sent_date": "2026-09-03",
+        "due_date": "2026-09-17",
+        "returned_date": "2026-09-18",
+        "response": {
+          "id": 82,
+          "name": "Approved as Noted"
+        }
+      }
+    ],
+    "submit_by": "2026-09-01",
+    "issue_date": "2026-09-03",
+    "received_date": "2026-09-02",
+    "distributed_at": "2026-09-03T11:00:00-04:00",
+    "due_date": "2026-09-17",
+    "closed_at": "2026-09-18T12:00:00-04:00",
+    "required_on_site_date": "2027-05-03",
+    "lead_time": 210,
+    "design_team_review_time": 14,
+    "internal_review_time": 0,
+    "buffer_time": 10,
+    "is_rejected": false,
+    "actual_delivery_date": null,
+    "confirmed_delivery_date": null,
+    "scheduled_task": {
+      "id": 3050,
+      "name": "A3050 Procure Switchgear (PO to delivery)",
+      "key": "p6|A3050"
+    },
+    "created_at": "2026-09-02T08:00:00-04:00"
+  },
+  {
+    "id": "520b9a6a-328f-5ec6-aadd-82dedf05cc80",
+    "org_id": "1befe790-aca8-5579-92e3-e97c76435686",
+    "project_id": "f9fdf464-52c4-5d02-a931-c76a025e916c",
+    "source": "procore",
+    "entity_type": "submittal",
+    "external_id": "6401",
+    "source_url": "https://app.procore.com/8800123/project/submittal_logs/6401",
+    "number": "002",
+    "formatted_number": "23 31 13-002",
+    "revision": "0",
+    "current_revision": true,
+    "title": "HVAC Ductwork Shop Drawings L2-L6",
+    "private": false,
+    "status": {
+      "id": 62,
+      "name": "Closed"
+    },
+    "type": {
+      "id": 70,
+      "name": "Shop Drawings"
+    },
+    "specification_section": {
+      "id": 31004,
+      "number": "23 31 13",
+      "description": "Metal Ducts"
+    },
+    "location_id": 41005,
+    "cost_code_id": 51005,
+    "responsible_contractor": {
+      "id": 7008,
+      "name": "Polar Mechanical (FICTIONAL)"
+    },
+    "received_from": {
+      "id": 5013,
+      "login": "skim@polarmech.example",
+      "name": "Sandra Kim"
+    },
+    "submittal_manager": {
+      "id": 5005,
+      "login": "kosei@ironbridgebuild.example",
+      "name": "Kevin Osei"
+    },
+    "ball_in_court": [],
+    "approvers": [
+      {
+        "id": 64011,
+        "user": {
+          "id": 5007,
+          "login": "hcole@arcwell.example",
+          "name": "Hannah Cole"
+        },
+        "workflow_group_number": 1,
+        "sent_date": "2026-09-01",
+        "due_date": "2026-09-15",
+        "returned_date": "2026-09-15",
+        "response": {
+          "id": 81,
+          "name": "Approved"
+        }
+      }
+    ],
+    "submit_by": "2026-09-01",
+    "issue_date": "2026-09-01",
+    "received_date": "2026-09-01",
+    "distributed_at": "2026-09-01T11:00:00-04:00",
+    "due_date": "2026-09-15",
+    "closed_at": "2026-09-15T13:00:00-04:00",
+    "required_on_site_date": "2026-10-01",
+    "lead_time": 21,
+    "design_team_review_time": 14,
+    "internal_review_time": 0,
+    "buffer_time": 0,
+    "is_rejected": false,
+    "actual_delivery_date": null,
+    "confirmed_delivery_date": null,
+    "scheduled_task": null,
+    "created_at": "2026-09-01T08:00:00-04:00"
+  },
+  {
+    "id": "b7070086-02c0-587f-8871-418363cddd5d",
+    "org_id": "1befe790-aca8-5579-92e3-e97c76435686",
+    "project_id": "f9fdf464-52c4-5d02-a931-c76a025e916c",
+    "source": "procore",
+    "entity_type": "submittal",
+    "external_id": "6501",
+    "source_url": "https://app.procore.com/8800123/project/submittal_logs/6501",
+    "number": "001",
+    "formatted_number": "32 14 00-001",
+    "revision": "0",
+    "current_revision": true,
+    "title": "Amenity Deck Pavers and Pedestals",
+    "private": false,
+    "status": {
+      "id": 63,
+      "name": "Draft"
+    },
+    "type": {
+      "id": 70,
+      "name": "Shop Drawings"
+    },
+    "specification_section": {
+      "id": 31006,
+      "number": "32 14 00",
+      "description": "Unit Paving"
+    },
+    "location_id": 41007,
+    "cost_code_id": 51007,
+    "responsible_contractor": {
+      "id": 7002,
+      "name": "Ironbridge Builders (FICTIONAL)"
+    },
+    "received_from": {
+      "id": 5005,
+      "login": "kosei@ironbridgebuild.example",
+      "name": "Kevin Osei"
+    },
+    "submittal_manager": {
+      "id": 5005,
+      "login": "kosei@ironbridgebuild.example",
+      "name": "Kevin Osei"
+    },
+    "ball_in_court": [
+      {
+        "id": 5005,
+        "login": "kosei@ironbridgebuild.example",
+        "name": "Kevin Osei",
+        "vendor": {
+          "id": 7002,
+          "name": "Ironbridge Builders (FICTIONAL)"
+        }
+      }
+    ],
+    "approvers": [
+      {
+        "id": 65011,
+        "user": {
+          "id": 5007,
+          "login": "hcole@arcwell.example",
+          "name": "Hannah Cole"
+        },
+        "workflow_group_number": 1,
+        "sent_date": null,
+        "due_date": null,
+        "returned_date": null,
+        "response": {
+          "id": 80,
+          "name": "Pending"
+        }
+      }
+    ],
+    "submit_by": "2026-10-03",
+    "issue_date": null,
+    "received_date": null,
+    "distributed_at": null,
+    "due_date": null,
+    "closed_at": null,
+    "required_on_site_date": "2026-12-14",
+    "lead_time": 56,
+    "design_team_review_time": 10,
+    "internal_review_time": 0,
+    "buffer_time": 3,
+    "is_rejected": false,
+    "actual_delivery_date": null,
+    "confirmed_delivery_date": null,
+    "scheduled_task": null,
+    "created_at": "2026-10-03T08:00:00-04:00"
+  },
+  {
+    "id": "26fa5974-4853-50c5-bb64-8e189a39523e",
+    "org_id": "1befe790-aca8-5579-92e3-e97c76435686",
+    "project_id": "f9fdf464-52c4-5d02-a931-c76a025e916c",
+    "source": "procore",
+    "entity_type": "submittal",
+    "external_id": "6601",
+    "source_url": "https://app.procore.com/8800123/project/submittal_logs/6601",
+    "number": "001",
+    "formatted_number": "10 28 13-001",
+    "revision": "0",
+    "current_revision": true,
+    "title": "Toilet Accessories",
+    "private": false,
+    "status": {
+      "id": 61,
+      "name": "Open"
+    },
+    "type": {
+      "id": 70,
+      "name": "Shop Drawings"
+    },
+    "specification_section": {
+      "id": 31005,
+      "number": "10 28 13",
+      "description": "Toilet Accessories"
+    },
+    "location_id": null,
+    "cost_code_id": 51010,
+    "responsible_contractor": {
+      "id": 7002,
+      "name": "Ironbridge Builders (FICTIONAL)"
+    },
+    "received_from": {
+      "id": 5005,
+      "login": "kosei@ironbridgebuild.example",
+      "name": "Kevin Osei"
+    },
+    "submittal_manager": {
+      "id": 5005,
+      "login": "kosei@ironbridgebuild.example",
+      "name": "Kevin Osei"
+    },
+    "ball_in_court": [
+      {
+        "id": 5007,
+        "login": "hcole@arcwell.example",
+        "name": "Hannah Cole",
+        "vendor": {
+          "id": 7003,
+          "name": "Arcwell Design Studio (FICTIONAL)"
+        }
+      }
+    ],
+    "approvers": [
+      {
+        "id": 66011,
+        "user": {
+          "id": 5007,
+          "login": "hcole@arcwell.example",
+          "name": "Hannah Cole"
+        },
+        "workflow_group_number": 1,
+        "sent_date": "2026-09-18",
+        "due_date": "2026-10-02",
+        "returned_date": null,
+        "response": {
+          "id": 80,
+          "name": "Pending"
+        }
+      }
+    ],
+    "submit_by": "2026-09-18",
+    "issue_date": "2026-09-18",
+    "received_date": "2026-09-18",
+    "distributed_at": "2026-09-18T11:00:00-04:00",
+    "due_date": "2026-10-02",
+    "closed_at": null,
+    "required_on_site_date": "2027-06-14",
+    "lead_time": 42,
+    "design_team_review_time": 14,
+    "internal_review_time": 0,
+    "buffer_time": 5,
+    "is_rejected": false,
+    "actual_delivery_date": null,
+    "confirmed_delivery_date": null,
+    "scheduled_task": null,
+    "created_at": "2026-09-18T08:00:00-04:00"
+  },
+  {
+    "id": "a7886fa3-6733-519b-92bf-31ff6f3825a3",
+    "org_id": "1befe790-aca8-5579-92e3-e97c76435686",
+    "project_id": "f9fdf464-52c4-5d02-a931-c76a025e916c",
+    "source": "procore",
+    "entity_type": "submittal",
+    "external_id": "6701",
+    "source_url": "https://app.procore.com/8800123/project/submittal_logs/6701",
+    "number": "001",
+    "formatted_number": "14 21 00-001",
+    "revision": "0",
+    "current_revision": true,
+    "title": "Elevator Equipment and Cab",
+    "private": false,
+    "status": {
+      "id": 62,
+      "name": "Closed"
+    },
+    "type": {
+      "id": 70,
+      "name": "Shop Drawings"
+    },
+    "specification_section": {
+      "id": 31007,
+      "number": "14 21 00",
+      "description": "Electric Traction Elevators"
+    },
+    "location_id": null,
+    "cost_code_id": null,
+    "responsible_contractor": {
+      "id": 7015,
+      "name": "Ascend Elevator Co. (FICTIONAL)"
+    },
+    "received_from": {
+      "id": 5005,
+      "login": "kosei@ironbridgebuild.example",
+      "name": "Kevin Osei"
+    },
+    "submittal_manager": {
+      "id": 5005,
+      "login": "kosei@ironbridgebuild.example",
+      "name": "Kevin Osei"
+    },
+    "ball_in_court": [],
+    "approvers": [
+      {
+        "id": 67011,
+        "user": {
+          "id": 5007,
+          "login": "hcole@arcwell.example",
+          "name": "Hannah Cole"
+        },
+        "workflow_group_number": 1,
+        "sent_date": "2026-08-11",
+        "due_date": "2026-08-25",
+        "returned_date": "2026-08-28",
+        "response": {
+          "id": 81,
+          "name": "Approved"
+        }
+      }
+    ],
+    "submit_by": "2026-08-10",
+    "issue_date": "2026-08-11",
+    "received_date": "2026-08-10",
+    "distributed_at": "2026-08-11T11:00:00-04:00",
+    "due_date": "2026-08-25",
+    "closed_at": "2026-08-28T10:00:00-04:00",
+    "required_on_site_date": "2027-03-01",
+    "lead_time": 140,
+    "design_team_review_time": 14,
+    "internal_review_time": 0,
+    "buffer_time": 5,
+    "is_rejected": false,
+    "actual_delivery_date": null,
+    "confirmed_delivery_date": null,
+    "scheduled_task": null,
+    "created_at": "2026-08-10T08:00:00-04:00"
+  },
+  {
+    "id": "f7603c9a-bb5c-5026-abd0-062b4579d042",
+    "org_id": "1befe790-aca8-5579-92e3-e97c76435686",
+    "project_id": "f9fdf464-52c4-5d02-a931-c76a025e916c",
+    "source": "procore",
+    "entity_type": "submittal",
+    "external_id": "6801",
+    "source_url": "https://app.procore.com/8800123/project/submittal_logs/6801",
+    "number": "001",
+    "formatted_number": "08 41 13-001",
+    "revision": "0",
+    "current_revision": true,
+    "title": "Storefront System - Retail",
+    "private": false,
+    "status": {
+      "id": 61,
+      "name": "Open"
+    },
+    "type": {
+      "id": 70,
+      "name": "Shop Drawings"
+    },
+    "specification_section": {
+      "id": 31012,
+      "number": "08 41 13",
+      "description": "Aluminum-Framed Entrances and Storefronts"
+    },
+    "location_id": null,
+    "cost_code_id": null,
+    "responsible_contractor": {
+      "id": 7002,
+      "name": "Ironbridge Builders (FICTIONAL)"
+    },
+    "received_from": {
+      "id": 5005,
+      "login": "kosei@ironbridgebuild.example",
+      "name": "Kevin Osei"
+    },
+    "submittal_manager": {
+      "id": 5005,
+      "login": "kosei@ironbridgebuild.example",
+      "name": "Kevin Osei"
+    },
+    "ball_in_court": [
+      {
+        "id": 5007,
+        "login": "hcole@arcwell.example",
+        "name": "Hannah Cole",
+        "vendor": {
+          "id": 7003,
+          "name": "Arcwell Design Studio (FICTIONAL)"
+        }
+      }
+    ],
+    "approvers": [
+      {
+        "id": 68011,
+        "user": {
+          "id": 5007,
+          "login": "hcole@arcwell.example",
+          "name": "Hannah Cole"
+        },
+        "workflow_group_number": 1,
+        "sent_date": "2026-09-28",
+        "due_date": "2026-10-12",
+        "returned_date": null,
+        "response": {
+          "id": 80,
+          "name": "Pending"
+        }
+      }
+    ],
+    "submit_by": "2026-09-28",
+    "issue_date": "2026-09-28",
+    "received_date": "2026-09-28",
+    "distributed_at": "2026-09-28T11:00:00-04:00",
+    "due_date": "2026-10-12",
+    "closed_at": null,
+    "required_on_site_date": "2027-03-15",
+    "lead_time": 84,
+    "design_team_review_time": 14,
+    "internal_review_time": 0,
+    "buffer_time": 5,
+    "is_rejected": false,
+    "actual_delivery_date": null,
+    "confirmed_delivery_date": null,
+    "scheduled_task": null,
+    "created_at": "2026-09-28T08:00:00-04:00"
+  }
+]

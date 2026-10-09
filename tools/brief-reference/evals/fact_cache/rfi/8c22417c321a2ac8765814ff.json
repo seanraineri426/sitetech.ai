@@ -1,0 +1,36 @@
+{
+ "kind": "rfi",
+ "ref": "procore:rfi:9406",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "procore:rfi:9406",
+  "label": "RFI #406",
+  "subject": "Unsuitable soils, over-ex required beyond spec limits.",
+  "status": "open",
+  "question": "Unsuitable soils, over-ex required beyond spec limits.",
+  "answers": [],
+  "cost_impact": null,
+  "cost_impact_value": null,
+  "schedule_impact": null,
+  "schedule_impact_value": null,
+  "referenced_instruments": []
+ },
+ "output": {
+  "ref": "procore:rfi:9406",
+  "scope_change": "unclear",
+  "scope_quote": "",
+  "differing_site_condition": true,
+  "condition": "unsuitable soils requiring over-excavation",
+  "condition_quote": "Unsuitable soils, over-ex required beyond spec limits.",
+  "amount_usd": null,
+  "schedule_days": null,
+  "confidence": "high"
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:20:05"
+}

@@ -1,0 +1,44 @@
+{
+ "kind": "email",
+ "ref": "msgraph_outlook:message:msg_E112",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "msgraph_outlook:message:msg_E112",
+  "sent_local_date": "2026-10-05 (Monday)",
+  "from_party": "Ampere Supply Co. (FICTIONAL) (sub)",
+  "subject": "Delivery delayed - Sales Order SO-44108",
+  "body": "This is an automated notice. Sales Order SO-44108 (Linden Yard - conduit and cable tray accessories) delivery status: DELAYED. Revised ship date: 10/10/2026. Please do not reply."
+ },
+ "output": {
+  "ref": "msgraph_outlook:message:msg_E112",
+  "facts": [
+   {
+    "kind": "schedule_date_change",
+    "item": "conduit and cable tray accessories (SO-44108)",
+    "spec_section": null,
+    "submittal_no": null,
+    "rfi_no": null,
+    "ce_no": null,
+    "old_date": null,
+    "new_date": "2026-10-10",
+    "new_date_high": null,
+    "delay_days": null,
+    "delay_days_high": null,
+    "date_phrase": "Revised ship date: 10/10/2026",
+    "date_basis": "explicit",
+    "amount_usd": null,
+    "notice_types": [],
+    "sender_party": "Ampere Supply Co. (FICTIONAL) (sub)",
+    "quote": "delivery status: DELAYED. Revised ship date: 10/10/2026.",
+    "confidence": "high"
+   }
+  ]
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:20:44"
+}

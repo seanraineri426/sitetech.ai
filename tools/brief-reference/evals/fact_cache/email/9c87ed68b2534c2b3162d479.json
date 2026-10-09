@@ -1,0 +1,47 @@
+{
+ "kind": "email",
+ "ref": "msgraph_outlook:message:msg_P6_08",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "msgraph_outlook:message:msg_P6_08",
+  "sent_local_date": "2026-10-08 (Thursday)",
+  "from_party": "Voltline Electric (FICTIONAL) (sub)",
+  "subject": "RE: Level 3 coordination",
+  "body": "Notice of delay and associated costs"
+ },
+ "output": {
+  "ref": "msgraph_outlook:message:msg_P6_08",
+  "facts": [
+   {
+    "kind": "formal_notice",
+    "item": "delay and associated costs",
+    "spec_section": null,
+    "submittal_no": null,
+    "rfi_no": null,
+    "ce_no": null,
+    "old_date": null,
+    "new_date": null,
+    "new_date_high": null,
+    "delay_days": null,
+    "delay_days_high": null,
+    "date_phrase": null,
+    "date_basis": "none",
+    "amount_usd": null,
+    "notice_types": [
+     "delay_time_extension",
+     "cost_change_claim"
+    ],
+    "sender_party": "Voltline Electric (FICTIONAL) (sub)",
+    "quote": "Notice of delay and associated costs",
+    "confidence": "high"
+   }
+  ]
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:19:44"
+}

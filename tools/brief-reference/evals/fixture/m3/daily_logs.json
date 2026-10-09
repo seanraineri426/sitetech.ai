@@ -1,0 +1,202 @@
+{
+  "_FICTIONAL": "ALL DATA IN THIS FIXTURE IS FICTIONAL. Not a real project, company, or person.",
+  "logs": [
+    {
+      "id": 80101,
+      "type": "manpower_log",
+      "ref": "procore:manpower_log:80101",
+      "log_date": "2026-09-30",
+      "vendor": "Timberline Framing (FICTIONAL)",
+      "num_workers": 15,
+      "num_hours": 8.0,
+      "location": "Wing A > Level 4",
+      "activity_id_hint": "A1500",
+      "notes": null
+    },
+    {
+      "id": 80102,
+      "type": "manpower_log",
+      "ref": "procore:manpower_log:80102",
+      "log_date": "2026-10-01",
+      "vendor": "Timberline Framing (FICTIONAL)",
+      "num_workers": 15,
+      "num_hours": 8.0,
+      "location": "Wing A > Level 4",
+      "activity_id_hint": "A1500",
+      "notes": null
+    },
+    {
+      "id": 80103,
+      "type": "manpower_log",
+      "ref": "procore:manpower_log:80103",
+      "log_date": "2026-10-02",
+      "vendor": "Timberline Framing (FICTIONAL)",
+      "num_workers": 13,
+      "num_hours": 8.0,
+      "location": "Wing A > Level 4",
+      "activity_id_hint": "A1500",
+      "notes": null
+    },
+    {
+      "id": 80104,
+      "type": "manpower_log",
+      "ref": "procore:manpower_log:80104",
+      "log_date": "2026-10-05",
+      "vendor": "Timberline Framing (FICTIONAL)",
+      "num_workers": 14,
+      "num_hours": 8.0,
+      "location": "Wing A > Level 4",
+      "activity_id_hint": "A1500",
+      "notes": null
+    },
+    {
+      "id": 80105,
+      "type": "manpower_log",
+      "ref": "procore:manpower_log:80105",
+      "log_date": "2026-10-06",
+      "vendor": "Timberline Framing (FICTIONAL)",
+      "num_workers": 6,
+      "num_hours": 8.0,
+      "location": "Wing A > Level 4",
+      "activity_id_hint": "A1500",
+      "notes": "Timberline foreman: 8 framers reassigned to another project today; expect back 'later this week'"
+    },
+    {
+      "id": 80106,
+      "type": "manpower_log",
+      "ref": "procore:manpower_log:80106",
+      "log_date": "2026-10-05",
+      "vendor": "Polar Mechanical (FICTIONAL)",
+      "num_workers": 4,
+      "num_hours": 8.0,
+      "location": "Wing A > Unit Stack 07 (L2-L6)",
+      "activity_id_hint": "A1700",
+      "notes": null
+    },
+    {
+      "id": 80107,
+      "type": "manpower_log",
+      "ref": "procore:manpower_log:80107",
+      "log_date": "2026-10-05",
+      "vendor": "Brightwater Plumbing (FICTIONAL)",
+      "num_workers": 5,
+      "num_hours": 8.0,
+      "location": "Wing A > Level 2",
+      "activity_id_hint": "A1620",
+      "notes": null
+    },
+    {
+      "id": 80108,
+      "type": "manpower_log",
+      "ref": "procore:manpower_log:80108",
+      "log_date": "2026-10-05",
+      "vendor": "Granite Line Concrete (FICTIONAL)",
+      "num_workers": 6,
+      "num_hours": 8.0,
+      "location": "Wing B > Elevator Pit",
+      "activity_id_hint": "A1210",
+      "notes": null
+    },
+    {
+      "id": 80109,
+      "type": "manpower_log",
+      "ref": "procore:manpower_log:80109",
+      "log_date": "2026-10-06",
+      "vendor": "Polar Mechanical (FICTIONAL)",
+      "num_workers": 4,
+      "num_hours": 8.0,
+      "location": "Wing A > Unit Stack 07 (L2-L6)",
+      "activity_id_hint": "A1700",
+      "notes": "Holding duct install at Stack 07 pending RFI 43 / ASI-07 shaft size"
+    },
+    {
+      "id": 80110,
+      "type": "manpower_log",
+      "ref": "procore:manpower_log:80110",
+      "log_date": "2026-10-06",
+      "vendor": "Brightwater Plumbing (FICTIONAL)",
+      "num_workers": 5,
+      "num_hours": 8.0,
+      "location": "Wing A > Level 2",
+      "activity_id_hint": "A1620",
+      "notes": null
+    },
+    {
+      "id": 80111,
+      "type": "manpower_log",
+      "ref": "procore:manpower_log:80111",
+      "log_date": "2026-10-06",
+      "vendor": "Granite Line Concrete (FICTIONAL)",
+      "num_workers": 6,
+      "num_hours": 8.0,
+      "location": "Wing B > Elevator Pit",
+      "activity_id_hint": "A1210",
+      "notes": "East half idle (rock)"
+    },
+    {
+      "id": 80201,
+      "type": "weather_log",
+      "ref": "procore:weather_log:80201",
+      "log_date": "2026-10-05",
+      "conditions": "Clear",
+      "temp_high_f": 64,
+      "temp_low_f": 47,
+      "precipitation_in": 0.0,
+      "weather_delay": false
+    },
+    {
+      "id": 80202,
+      "type": "weather_log",
+      "ref": "procore:weather_log:80202",
+      "log_date": "2026-10-06",
+      "conditions": "Clear",
+      "temp_high_f": 61,
+      "temp_low_f": 44,
+      "precipitation_in": 0.0,
+      "weather_delay": false
+    },
+    {
+      "id": 80301,
+      "type": "inspection_log",
+      "ref": "procore:inspection_log:80301",
+      "log_date": "2026-10-06",
+      "inspection_type": "Plumbing rough-in (AHJ)",
+      "location": "Wing A > Level 2",
+      "inspector": "City of Riverton Building Dept. (fictional)",
+      "result": "Failed",
+      "items": [
+        "Missing nail plates at 6 locations",
+        "Vent clearance at chase C2-07",
+        "Test did not hold at riser P-3"
+      ],
+      "reinspection_requested_for": "2026-10-09",
+      "activity_id_hint": "A1620"
+    },
+    {
+      "id": 80401,
+      "type": "notes_log",
+      "ref": "procore:notes_log:80401",
+      "log_date": "2026-10-05",
+      "location": "Wing B > Elevator Pit",
+      "comment": "Granite Line hit rock at approx El. 92.5 in Wing B elevator pit. Excavation stopped on east half. See RFI 41."
+    },
+    {
+      "id": 80402,
+      "type": "notes_log",
+      "ref": "procore:notes_log:80402",
+      "log_date": "2026-10-06",
+      "location": "Wing A > Level 4",
+      "comment": "Framing crew short on L4. Super called Jake Rourke; no commitment on return date."
+    },
+    {
+      "id": 80501,
+      "type": "delay_log",
+      "ref": "procore:delay_log:80501",
+      "log_date": "2026-10-05",
+      "delay_type": "Unforeseen condition",
+      "vendor": "Granite Line Concrete (FICTIONAL)",
+      "duration_hours": 4,
+      "description": "Rock in elevator pit east half; awaiting EOR direction (RFI 41)."
+    }
+  ]
+}

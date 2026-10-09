@@ -1,0 +1,36 @@
+{
+ "kind": "rfi",
+ "ref": "procore:rfi:9408",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "procore:rfi:9408",
+  "label": "RFI #408",
+  "subject": "Asbestos-wrapped pipe found in chase during demo.",
+  "status": "open",
+  "question": "Asbestos-wrapped pipe found in chase during demo.",
+  "answers": [],
+  "cost_impact": null,
+  "cost_impact_value": null,
+  "schedule_impact": null,
+  "schedule_impact_value": null,
+  "referenced_instruments": []
+ },
+ "output": {
+  "ref": "procore:rfi:9408",
+  "scope_change": "unclear",
+  "scope_quote": "",
+  "differing_site_condition": true,
+  "condition": "asbestos-wrapped pipe in chase",
+  "condition_quote": "Asbestos-wrapped pipe found in chase during demo.",
+  "amount_usd": null,
+  "schedule_days": null,
+  "confidence": "high"
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:20:05"
+}

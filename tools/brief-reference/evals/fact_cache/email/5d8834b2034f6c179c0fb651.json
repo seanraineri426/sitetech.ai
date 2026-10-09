@@ -1,0 +1,23 @@
+{
+ "kind": "email",
+ "ref": "msgraph_outlook:message:msg_P5_N2",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "msgraph_outlook:message:msg_P5_N2",
+  "sent_local_date": "2026-10-08 (Thursday)",
+  "from_party": "Voltline Electric (FICTIONAL) (sub)",
+  "subject": "RE: Level 3 coordination",
+  "body": "We need to discuss timing."
+ },
+ "output": {
+  "ref": "msgraph_outlook:message:msg_P5_N2",
+  "facts": []
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:19:36"
+}

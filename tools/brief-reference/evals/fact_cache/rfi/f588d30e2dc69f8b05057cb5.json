@@ -1,0 +1,36 @@
+{
+ "kind": "rfi",
+ "ref": "procore:rfi:9443",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "procore:rfi:9443",
+  "label": "RFI #443",
+  "subject": "Encountered rock at footing F-12 below 6'.",
+  "status": "open",
+  "question": "Encountered rock at footing F-12 below 6'.",
+  "answers": [],
+  "cost_impact": null,
+  "cost_impact_value": null,
+  "schedule_impact": null,
+  "schedule_impact_value": null,
+  "referenced_instruments": []
+ },
+ "output": {
+  "ref": "procore:rfi:9443",
+  "scope_change": "unclear",
+  "scope_quote": "",
+  "differing_site_condition": true,
+  "condition": "rock at footing F-12 below 6'",
+  "condition_quote": "Encountered rock at footing F-12 below 6'.",
+  "amount_usd": null,
+  "schedule_days": null,
+  "confidence": "medium"
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:20:07"
+}

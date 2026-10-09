@@ -1,0 +1,202 @@
+{
+  "_FICTIONAL": "ALL DATA IN THIS FIXTURE IS FICTIONAL. Not a real project, company, or person.",
+  "snapshots": [
+    {
+      "snapshot_date": "2026-10-05",
+      "ref": "procore:budget_snapshot:20261005",
+      "budget_view": "Owner Budget (configured view, fictional)",
+      "percent_complete_cost": 0.46,
+      "owner_contingency": {
+        "owner_contingency_original_usd": 1250000,
+        "approved_change_orders_usd": 612000,
+        "pending_pcos_usd": 398000,
+        "unpriced_change_events": [
+          "CE-030"
+        ],
+        "remaining_after_pending_usd": 240000,
+        "pct_used_incl_pending": 0.808
+      },
+      "lines": [
+        {
+          "cost_code": "01-5000",
+          "description": "General Conditions",
+          "original_budget_usd": 3920000,
+          "approved_changes_usd": 0,
+          "revised_budget_usd": 3920000,
+          "committed_costs_usd": 3920000,
+          "pending_changes_usd": 0,
+          "projected_cost_usd": 3920000
+        },
+        {
+          "cost_code": "05-1200",
+          "description": "Structural Steel",
+          "original_budget_usd": 1940000,
+          "approved_changes_usd": 0,
+          "revised_budget_usd": 1940000,
+          "committed_costs_usd": 1940000,
+          "pending_changes_usd": 0,
+          "projected_cost_usd": 1940000
+        },
+        {
+          "cost_code": "06-1100",
+          "description": "Wood Framing",
+          "original_budget_usd": 4180000,
+          "approved_changes_usd": 0,
+          "revised_budget_usd": 4180000,
+          "committed_costs_usd": 4180000,
+          "pending_changes_usd": 0,
+          "projected_cost_usd": 4180000
+        },
+        {
+          "cost_code": "08-5313",
+          "description": "Vinyl Windows",
+          "original_budget_usd": 1280000,
+          "approved_changes_usd": 0,
+          "revised_budget_usd": 1280000,
+          "committed_costs_usd": 1280000,
+          "pending_changes_usd": 0,
+          "projected_cost_usd": 1280000
+        },
+        {
+          "cost_code": "23-3113",
+          "description": "HVAC",
+          "original_budget_usd": 3620000,
+          "approved_changes_usd": 0,
+          "revised_budget_usd": 3620000,
+          "committed_costs_usd": 3620000,
+          "pending_changes_usd": 0,
+          "projected_cost_usd": 3620000
+        },
+        {
+          "cost_code": "26-2413",
+          "description": "Switchgear (GC-direct)",
+          "original_budget_usd": 486500,
+          "approved_changes_usd": 0,
+          "revised_budget_usd": 486500,
+          "committed_costs_usd": 0,
+          "pending_changes_usd": 0,
+          "projected_cost_usd": 486500
+        },
+        {
+          "cost_code": "32-1400",
+          "description": "Unit Paving / Amenity Deck",
+          "original_budget_usd": 210000,
+          "approved_changes_usd": 0,
+          "revised_budget_usd": 210000,
+          "committed_costs_usd": 0,
+          "pending_changes_usd": 0,
+          "projected_cost_usd": 210000
+        },
+        {
+          "cost_code": "31-2316",
+          "description": "Excavation",
+          "original_budget_usd": 1460000,
+          "approved_changes_usd": 0,
+          "revised_budget_usd": 1460000,
+          "committed_costs_usd": 1460000,
+          "pending_changes_usd": 0,
+          "projected_cost_usd": 1460000
+        }
+      ]
+    },
+    {
+      "snapshot_date": "2026-10-06",
+      "ref": "procore:budget_snapshot:20261006",
+      "budget_view": "Owner Budget (configured view, fictional)",
+      "percent_complete_cost": 0.46,
+      "owner_contingency": {
+        "owner_contingency_original_usd": 1250000,
+        "approved_change_orders_usd": 612000,
+        "pending_pcos_usd": 543000,
+        "unpriced_change_events": [
+          "CE-030",
+          "CE-031 (GC ROM only)"
+        ],
+        "remaining_after_pending_usd": 95000,
+        "pct_used_incl_pending": 0.924
+      },
+      "lines": [
+        {
+          "cost_code": "01-5000",
+          "description": "General Conditions",
+          "original_budget_usd": 3920000,
+          "approved_changes_usd": 0,
+          "revised_budget_usd": 3920000,
+          "committed_costs_usd": 3920000,
+          "pending_changes_usd": 0,
+          "projected_cost_usd": 3920000
+        },
+        {
+          "cost_code": "05-1200",
+          "description": "Structural Steel",
+          "original_budget_usd": 1940000,
+          "approved_changes_usd": 0,
+          "revised_budget_usd": 1940000,
+          "committed_costs_usd": 1940000,
+          "pending_changes_usd": 0,
+          "projected_cost_usd": 1940000
+        },
+        {
+          "cost_code": "06-1100",
+          "description": "Wood Framing",
+          "original_budget_usd": 4180000,
+          "approved_changes_usd": 0,
+          "revised_budget_usd": 4180000,
+          "committed_costs_usd": 4180000,
+          "pending_changes_usd": 0,
+          "projected_cost_usd": 4180000
+        },
+        {
+          "cost_code": "08-5313",
+          "description": "Vinyl Windows",
+          "original_budget_usd": 1280000,
+          "approved_changes_usd": 0,
+          "revised_budget_usd": 1280000,
+          "committed_costs_usd": 1280000,
+          "pending_changes_usd": 0,
+          "projected_cost_usd": 1280000
+        },
+        {
+          "cost_code": "23-3113",
+          "description": "HVAC",
+          "original_budget_usd": 3620000,
+          "approved_changes_usd": 0,
+          "revised_budget_usd": 3620000,
+          "committed_costs_usd": 3620000,
+          "pending_changes_usd": 0,
+          "projected_cost_usd": 3620000
+        },
+        {
+          "cost_code": "26-2413",
+          "description": "Switchgear (GC-direct)",
+          "original_budget_usd": 486500,
+          "approved_changes_usd": 0,
+          "revised_budget_usd": 486500,
+          "committed_costs_usd": 0,
+          "pending_changes_usd": 0,
+          "projected_cost_usd": 486500
+        },
+        {
+          "cost_code": "32-1400",
+          "description": "Unit Paving / Amenity Deck",
+          "original_budget_usd": 210000,
+          "approved_changes_usd": 0,
+          "revised_budget_usd": 210000,
+          "committed_costs_usd": 0,
+          "pending_changes_usd": 0,
+          "projected_cost_usd": 210000
+        },
+        {
+          "cost_code": "31-2316",
+          "description": "Excavation",
+          "original_budget_usd": 1460000,
+          "approved_changes_usd": 0,
+          "revised_budget_usd": 1460000,
+          "committed_costs_usd": 1460000,
+          "pending_changes_usd": 145000,
+          "projected_cost_usd": 1605000
+        }
+      ]
+    }
+  ]
+}

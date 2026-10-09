@@ -1,0 +1,64 @@
+{
+ "kind": "email",
+ "ref": "msgraph_outlook:message:msg_E101",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "msgraph_outlook:message:msg_E101",
+  "sent_local_date": "2026-10-05 (Monday)",
+  "from_party": "Ampere Supply Co. (FICTIONAL) (sub)",
+  "subject": "Linden Yard - Main Switchgear Quote Q-55120 - pricing expiry",
+  "body": "Lauren, reminder that quote Q-55120 for the main switchgear and switchboards ($486,500) is held through Friday 10/9. Current factory lead time is 30 weeks from released PO with approved drawings. After 10/9 we have to re-quote: expect about +4% and a 32-week lead time based on the latest factory allocation. Approved submittal is on file. Please send the PO when ready. - Nina"
+ },
+ "output": {
+  "ref": "msgraph_outlook:message:msg_E101",
+  "facts": [
+   {
+    "kind": "conditional_slip",
+    "item": "main switchgear and switchboards",
+    "spec_section": null,
+    "submittal_no": null,
+    "rfi_no": null,
+    "ce_no": null,
+    "old_date": null,
+    "new_date": null,
+    "new_date_high": null,
+    "delay_days": 14,
+    "delay_days_high": null,
+    "date_phrase": "+4% and a 32-week lead time",
+    "date_basis": "relative_to_original",
+    "amount_usd": 486500,
+    "notice_types": [],
+    "sender_party": "Ampere Supply Co. (FICTIONAL) (sub)",
+    "quote": "After 10/9 we have to re-quote: expect about +4% and a 32-week lead time based on the latest factory allocation.",
+    "confidence": "medium"
+   },
+   {
+    "kind": "need_by_date",
+    "item": "PO for main switchgear",
+    "spec_section": null,
+    "submittal_no": null,
+    "rfi_no": null,
+    "ce_no": null,
+    "old_date": null,
+    "new_date": "2026-10-09",
+    "new_date_high": null,
+    "delay_days": null,
+    "delay_days_high": null,
+    "date_phrase": "held through Friday 10/9",
+    "date_basis": "explicit",
+    "amount_usd": null,
+    "notice_types": [],
+    "sender_party": "Ampere Supply Co. (FICTIONAL) (sub)",
+    "quote": "quote Q-55120 for the main switchgear and switchboards ($486,500) is held through Friday 10/9",
+    "confidence": "medium"
+   }
+  ]
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:20:40"
+}

@@ -1,0 +1,41 @@
+{
+ "kind": "rfi",
+ "ref": "procore:rfi:9404",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "procore:rfi:9404",
+  "label": "RFI #404",
+  "subject": "Groundwater at 6' vs 14' in boring logs.",
+  "status": "closed",
+  "question": "Groundwater at 6' vs 14' in boring logs.",
+  "answers": [
+   {
+    "official": true,
+    "text": "Proceed per geotech recommendation."
+   }
+  ],
+  "cost_impact": null,
+  "cost_impact_value": null,
+  "schedule_impact": null,
+  "schedule_impact_value": null,
+  "referenced_instruments": []
+ },
+ "output": {
+  "ref": "procore:rfi:9404",
+  "scope_change": "none",
+  "scope_quote": "Proceed per geotech recommendation.",
+  "differing_site_condition": true,
+  "condition": "groundwater higher than boring logs",
+  "condition_quote": "Groundwater at 6' vs 14' in boring logs.",
+  "amount_usd": null,
+  "schedule_days": null,
+  "confidence": "medium"
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:20:05"
+}

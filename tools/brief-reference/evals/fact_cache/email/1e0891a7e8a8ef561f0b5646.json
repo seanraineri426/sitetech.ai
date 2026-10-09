@@ -1,0 +1,44 @@
+{
+ "kind": "email",
+ "ref": "msgraph_outlook:message:msg_P1_03",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "msgraph_outlook:message:msg_P1_03",
+  "sent_local_date": "2026-10-08 (Thursday)",
+  "from_party": "Apex Switchgear Supply (FICTIONAL) (sub)",
+  "subject": "RE: Main switchgear 26 24 13-001 - release and delivery",
+  "body": "Lead time on the gear is now 4 weeks longer than quoted."
+ },
+ "output": {
+  "ref": "msgraph_outlook:message:msg_P1_03",
+  "facts": [
+   {
+    "kind": "schedule_date_change",
+    "item": "main switchgear",
+    "spec_section": "26 24 13",
+    "submittal_no": "26 24 13-001",
+    "rfi_no": null,
+    "ce_no": null,
+    "old_date": null,
+    "new_date": null,
+    "new_date_high": null,
+    "delay_days": 28,
+    "delay_days_high": null,
+    "date_phrase": "4 weeks longer than quoted",
+    "date_basis": "relative_to_original",
+    "amount_usd": null,
+    "notice_types": [],
+    "sender_party": "Apex Switchgear Supply (FICTIONAL) (sub)",
+    "quote": "Lead time on the gear is now 4 weeks longer than quoted.",
+    "confidence": "high"
+   }
+  ]
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:18:48"
+}

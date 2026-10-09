@@ -1,0 +1,230 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sitetech.example/schemas/daily-project-brief/1.0",
+  "title": "SiteTech Daily Project Brief v1.0",
+  "description": "Output of the brief pipeline (ARCHITECTURE.md S9). Persisted in briefs.brief_json; rendered to markdown/HTML by deterministic code. Every displayed fact must trace to citations; see DAILY_BRIEF_SPEC.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "brief_id", "run_id", "version", "org_id", "project_id", "project_name", "as_of", "coverage", "generated_at",
+               "compare_to", "freshness", "status", "top_items", "sections", "closed_since_last", "gaps", "metrics"],
+  "properties": {
+    "_FICTIONAL": {"type": "string", "description": "Present only in fixtures/examples."},
+    "schema_version": {"const": "1.0"},
+    "brief_id": {"type": "string"},
+    "run_id": {"type": "string"},
+    "version": {"type": "integer", "minimum": 1, "description": "Increments on regenerate for the same as_of."},
+    "org_id": {"type": "string"},
+    "project_id": {"type": "string"},
+    "project_name": {"type": "string"},
+    "as_of": {"type": "string", "format": "date", "description": "Project-local business day the brief covers; all day counts are computed against this date."},
+    "coverage": {
+      "type": "object", "additionalProperties": false, "required": ["window_start", "window_end", "cutoff_at"],
+      "properties": {
+        "window_start": {"type": "string", "format": "date-time"},
+        "window_end": {"type": "string", "format": "date-time"},
+        "cutoff_at": {"type": "string", "format": "date-time", "description": "When source data was frozen (sync completion or hard deadline)."}
+      }
+    },
+    "generated_at": {"type": "string", "format": "date-time"},
+    "compare_to": {
+      "type": "object", "additionalProperties": false, "required": ["as_of", "basis"],
+      "properties": {
+        "as_of": {"type": ["string", "null"], "format": "date"},
+        "brief_id": {"type": ["string", "null"]},
+        "basis": {"enum": ["prior_business_day_snapshot", "first_run_no_prior", "prior_snapshot_missing"]}
+      }
+    },
+    "freshness": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/freshness"}},
+    "status": {"$ref": "#/$defs/status"},
+    "top_items": {"type": "array", "maxItems": 7, "items": {"$ref": "#/$defs/item"}},
+    "sections": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schedule_risks", "cost_risks", "overdue_rfis", "overdue_submittals", "procurement_issues",
+                   "new_decisions", "unresolved_decisions", "significant_emails", "action_items"],
+      "properties": {
+        "schedule_risks": {"type": "array", "items": {"$ref": "#/$defs/section_entry"}},
+        "cost_risks": {"type": "array", "items": {"$ref": "#/$defs/section_entry"}},
+        "overdue_rfis": {"type": "array", "items": {"$ref": "#/$defs/record_row"}},
+        "overdue_submittals": {"type": "array", "items": {"$ref": "#/$defs/record_row"}},
+        "procurement_issues": {"type": "array", "items": {"$ref": "#/$defs/section_entry"}},
+        "new_decisions": {"type": "array", "items": {"$ref": "#/$defs/decision"}},
+        "unresolved_decisions": {"type": "array", "items": {"$ref": "#/$defs/decision"}},
+        "significant_emails": {"type": "array", "items": {"$ref": "#/$defs/email_item"}},
+        "action_items": {"type": "array", "items": {"$ref": "#/$defs/action"}}
+      }
+    },
+    "watching": {"type": "array", "items": {"$ref": "#/$defs/section_entry"}},
+    "closed_since_last": {
+      "type": "array",
+      "items": {"type": "object", "additionalProperties": false, "required": ["label", "ref", "how"],
+                "properties": {"label": {"type": "string"}, "ref": {"$ref": "#/$defs/ref"}, "closed_on": {"type": "string", "format": "date"},
+                               "how": {"type": "string"}, "finding_id": {"type": "string"}}}
+    },
+    "gaps": {
+      "type": "array",
+      "items": {"type": "object", "additionalProperties": false, "required": ["source", "reason", "effect"],
+                "properties": {"source": {"type": "string"}, "reason": {"type": "string"}, "effect": {"type": "string"}}}
+    },
+    "metrics": {
+      "type": "object", "additionalProperties": false, "required": ["word_count_main", "items_flagged_total", "verifier"],
+      "properties": {
+        "word_count_main": {"type": "integer", "maximum": 700},
+        "items_flagged_total": {"type": "integer"},
+        "llm_cost_usd": {"type": ["number", "null"]},
+        "verifier": {"type": "object", "additionalProperties": false, "required": ["claims_total", "passed", "downgraded", "dropped"],
+                     "properties": {"claims_total": {"type": "integer"}, "passed": {"type": "integer"}, "downgraded": {"type": "integer"},
+                                    "dropped": {"type": "integer"}, "independent_provider": {"type": "boolean"}}}
+      }
+    }
+  },
+  "$defs": {
+    "ref": {"type": "string", "pattern": "^(procore|msgraph_outlook|msgraph_sharepoint|p6|procore_schedule|sitetech):[a-z_]+:[A-Za-z0-9_.\\-]+$",
+            "description": "source:entity_type:external_id, same triple as the normalized-table uniqueness key."},
+    "citation": {
+      "type": "object", "additionalProperties": false, "required": ["ref", "label"],
+      "properties": {
+        "ref": {"$ref": "#/$defs/ref"},
+        "label": {"type": "string", "description": "Human label, e.g. 'RFI #42' or 'Email: Bayline Steel 10/6 8:12 AM'."},
+        "fields": {"type": "array", "items": {"type": "string"}},
+        "as_of": {"type": "string"},
+        "url": {"type": "string", "description": "Deep link to the source system (source_url from the normalized row)."},
+        "quote": {"type": "string", "maxLength": 300}
+      }
+    },
+    "confidence": {"enum": ["Confirmed", "Likely", "Signal"]},
+    "tag": {"enum": ["NEW", "WORSE", "UNCHANGED", "BETTER", "DECISION"]},
+    "person": {"type": "object", "additionalProperties": false, "required": ["name", "role"],
+               "properties": {"name": {"type": "string"}, "role": {"type": "string"}, "company": {"type": "string"}, "person_ref": {"type": "string"}}},
+    "freshness": {
+      "type": "object", "additionalProperties": false, "required": ["source", "band", "as_of_label"],
+      "properties": {
+        "source": {"enum": ["procore", "msgraph_outlook", "msgraph_sharepoint", "schedule"]},
+        "system": {"type": "string", "description": "For schedule: p6_xer | procore_schedule."},
+        "band": {"enum": ["fresh", "aging", "stale", "missing"]},
+        "as_of_label": {"type": "string", "description": "Printed in section headers, e.g. 'Schedule as of XER data date Sep 28 (uploaded Oct 2)'."},
+        "last_successful_sync": {"type": ["string", "null"], "format": "date-time"},
+        "data_date": {"type": ["string", "null"], "format": "date"},
+        "uploaded_at": {"type": ["string", "null"], "format": "date-time"},
+        "schedule_update_id": {"type": ["string", "null"]},
+        "scope_note": {"type": "string"},
+        "effect": {"type": "string"}
+      }
+    },
+    "status": {
+      "type": "object", "additionalProperties": false, "required": ["health", "health_rule", "lines", "decisions_needed_this_week", "items_flagged", "items_shown"],
+      "properties": {
+        "health": {"enum": ["on_track", "at_risk", "slipping", "unknown"]},
+        "health_rule": {"type": "string"},
+        "milestone": {"type": "object", "additionalProperties": false, "required": ["name", "baseline", "forecast"],
+                      "properties": {"name": {"type": "string"}, "activity_ref": {"$ref": "#/$defs/ref"}, "baseline": {"type": "string", "format": "date"},
+                                     "forecast": {"type": "string", "format": "date"}, "delta_cd": {"type": "integer"}, "basis": {"type": "string"},
+                                     "exposure_note": {"type": "string"}}},
+        "net_new_cost_exposure": {"type": "object", "additionalProperties": false,
+                                  "properties": {"recognized_usd": {"type": "number"}, "at_risk_usd": {"type": "number"}, "text": {"type": "string"}}},
+        "decisions_needed_this_week": {"type": "integer"},
+        "items_flagged": {"type": "integer"},
+        "items_shown": {"type": "integer"},
+        "lines": {"type": "array", "minItems": 1, "maxItems": 3, "items": {"type": "string"}}
+      }
+    },
+    "impact": {
+      "type": "object", "additionalProperties": false, "required": ["method"],
+      "properties": {
+        "schedule": {"type": "object", "additionalProperties": false,
+                     "properties": {"milestone_wd": {"type": "integer"}, "milestone_cd": {"type": "integer"}, "float_consumed_wd": {"type": "integer"},
+                                    "activity_refs": {"type": "array", "items": {"$ref": "#/$defs/ref"}}, "condition": {"type": "string"},
+                                    "label": {"$ref": "#/$defs/confidence"}}},
+        "cost": {"type": "object", "additionalProperties": false,
+                 "properties": {"usd_low": {"type": "number"}, "usd_high": {"type": "number"},
+                                "kind": {"enum": ["recognized", "at_risk", "payment_risk", "unpriced", "escalation"]},
+                                "label": {"$ref": "#/$defs/confidence"}}},
+        "delay_usd": {"type": "number", "description": "milestone_cd x configured daily delay cost."},
+        "method": {"type": "string", "description": "Plain-language method string produced by S7 code."}
+      }
+    },
+    "item": {
+      "type": "object", "additionalProperties": false,
+      "required": ["item_id", "rank", "tag", "section", "headline", "body", "confidence", "impact", "owner", "action", "citations", "score"],
+      "properties": {
+        "item_id": {"type": "string"},
+        "rank": {"type": "integer", "minimum": 1, "maximum": 7},
+        "insight_id": {"type": "string"},
+        "playbook_rule_ids": {"type": "array", "items": {"type": "string", "pattern": "^PB-\\d{2}$"}},
+        "finding_ids": {"type": "array", "items": {"type": "string"}},
+        "tag": {"$ref": "#/$defs/tag"},
+        "delta_text": {"type": "string", "description": "Required when tag=WORSE: what got worse and by how much."},
+        "section": {"enum": ["schedule_risks", "cost_risks", "overdue_rfis", "overdue_submittals", "procurement_issues",
+                             "new_decisions", "unresolved_decisions", "significant_emails"]},
+        "headline": {"type": "string", "maxLength": 160},
+        "body": {"type": "string", "maxLength": 700},
+        "confidence": {"$ref": "#/$defs/confidence"},
+        "confidence_note": {"type": "string"},
+        "impact": {"$ref": "#/$defs/impact"},
+        "decision_deadline": {"type": "object", "additionalProperties": false, "required": ["date", "kind"],
+                              "properties": {"date": {"type": "string", "format": "date"}, "kind": {"type": "string"}}},
+        "score": {"type": "object", "additionalProperties": false, "required": ["value"],
+                  "properties": {"value": {"type": "number"}, "p": {"type": "number"}, "urgency": {"type": "number"},
+                                 "floor": {"enum": [null, "critical_path", "notice_window", "owner_escalation"]}}},
+        "owner": {"$ref": "#/$defs/person"},
+        "co_owners": {"type": "array", "items": {"$ref": "#/$defs/person"}},
+        "action": {"type": "object", "additionalProperties": false, "required": ["text", "due"],
+                   "properties": {"text": {"type": "string"}, "due": {"type": "string", "format": "date"}, "definition_of_done": {"type": "string"},
+                                  "draft_ref": {"type": "string"}}},
+        "claim_ids": {"type": "array", "items": {"type": "string"}},
+        "citations": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/citation"}},
+        "freshness_sources": {"type": "array", "items": {"type": "string"}}
+      },
+      "allOf": [{"if": {"properties": {"tag": {"const": "WORSE"}}}, "then": {"required": ["delta_text"]}}]
+    },
+    "section_entry": {
+      "type": "object", "additionalProperties": false, "required": ["headline", "citations"],
+      "properties": {
+        "item_id": {"type": "string", "description": "If the entry is a top item, reference it instead of repeating it."},
+        "headline": {"type": "string"},
+        "tag": {"$ref": "#/$defs/tag"},
+        "confidence": {"$ref": "#/$defs/confidence"},
+        "owner": {"$ref": "#/$defs/person"},
+        "action": {"type": "string"},
+        "citations": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/citation"}}
+      }
+    },
+    "record_row": {
+      "type": "object", "additionalProperties": false, "required": ["ref", "label", "days_overdue", "governing_date", "severity"],
+      "properties": {
+        "ref": {"$ref": "#/$defs/ref"}, "label": {"type": "string"}, "title": {"type": "string"},
+        "days_overdue": {"type": "integer", "minimum": 0}, "governing_date": {"type": "string", "format": "date"},
+        "governing_date_kind": {"type": "string"}, "ball_in_court": {"type": ["string", "null"]},
+        "severity": {"enum": ["low", "medium", "high", "critical"]}, "tag": {"$ref": "#/$defs/tag"},
+        "linked_item_id": {"type": "string"}, "priority_note": {"type": "string"}, "finding_id": {"type": "string"}
+      }
+    },
+    "decision": {
+      "type": "object", "additionalProperties": false, "required": ["summary", "kind", "citations"],
+      "properties": {
+        "decision_ref": {"type": "string"}, "summary": {"type": "string"}, "kind": {"enum": ["made", "pending"]},
+        "owner": {"$ref": "#/$defs/person"}, "needed_by": {"type": "string", "format": "date"}, "days_late": {"type": "integer"},
+        "carried_count": {"type": "integer"}, "options": {"type": "array", "items": {"type": "string"}},
+        "cost_of_waiting": {"type": "string"}, "follow_through": {"type": "string"}, "tag": {"$ref": "#/$defs/tag"},
+        "linked_item_id": {"type": "string"},
+        "citations": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/citation"}}
+      }
+    },
+    "email_item": {
+      "type": "object", "additionalProperties": false, "required": ["ref", "from", "received_at", "subject", "why_significant", "category"],
+      "properties": {
+        "ref": {"$ref": "#/$defs/ref"}, "from": {"type": "string"}, "received_at": {"type": "string", "format": "date-time"},
+        "subject": {"type": "string"}, "why_significant": {"type": "string"},
+        "category": {"enum": ["contractual_notice", "schedule_slip", "cost_scope", "decision", "payment", "lender_owner", "design_response", "other"]},
+        "linked_item_id": {"type": "string"}
+      }
+    },
+    "action": {
+      "type": "object", "additionalProperties": false, "required": ["action_id", "text", "owner", "due", "unblocks"],
+      "properties": {
+        "action_id": {"type": "string"}, "text": {"type": "string"}, "owner": {"$ref": "#/$defs/person"},
+        "due": {"type": "string", "format": "date"}, "unblocks": {"type": "array", "items": {"type": "string"}},
+        "definition_of_done": {"type": "string"}, "draft_ref": {"type": "string"}
+      }
+    }
+  }
+}

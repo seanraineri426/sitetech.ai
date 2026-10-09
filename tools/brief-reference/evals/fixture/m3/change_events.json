@@ -1,0 +1,325 @@
+{
+  "_FICTIONAL": "ALL DATA IN THIS FIXTURE IS FICTIONAL. Not a real project, company, or person.",
+  "snapshots": [
+    {
+      "snapshot_date": "2026-10-05",
+      "change_events": [
+        {
+          "id": 3500,
+          "ref": "procore:change_event:3500",
+          "number": "CE-020",
+          "title": "Unsuitable soils over-excavation",
+          "status": "approved",
+          "co_number": "CO-001",
+          "pco_number": null,
+          "rom_usd": 140000,
+          "priced": true,
+          "funding": "owner_contingency",
+          "created_date": "2026-04-15"
+        },
+        {
+          "id": 3501,
+          "ref": "procore:change_event:3501",
+          "number": "CE-021",
+          "title": "Owner-requested lobby finish upgrade",
+          "status": "approved",
+          "co_number": "CO-002",
+          "pco_number": null,
+          "rom_usd": 96500,
+          "priced": true,
+          "funding": "owner_contingency",
+          "created_date": "2026-05-15"
+        },
+        {
+          "id": 3502,
+          "ref": "procore:change_event:3502",
+          "number": "CE-022",
+          "title": "Utility transformer pad relocation",
+          "status": "approved",
+          "co_number": "CO-003",
+          "pco_number": null,
+          "rom_usd": 88000,
+          "priced": true,
+          "funding": "owner_contingency",
+          "created_date": "2026-06-15"
+        },
+        {
+          "id": 3503,
+          "ref": "procore:change_event:3503",
+          "number": "CE-023",
+          "title": "ASI-02 podium waterproofing revision",
+          "status": "approved",
+          "co_number": "CO-004",
+          "pco_number": null,
+          "rom_usd": 121000,
+          "priced": true,
+          "funding": "owner_contingency",
+          "created_date": "2026-07-15"
+        },
+        {
+          "id": 3504,
+          "ref": "procore:change_event:3504",
+          "number": "CE-024",
+          "title": "Added fire alarm devices per AHJ",
+          "status": "approved",
+          "co_number": "CO-005",
+          "pco_number": null,
+          "rom_usd": 74500,
+          "priced": true,
+          "funding": "owner_contingency",
+          "created_date": "2026-08-15"
+        },
+        {
+          "id": 3505,
+          "ref": "procore:change_event:3505",
+          "number": "CE-025",
+          "title": "Retail grease interceptor upsizing",
+          "status": "approved",
+          "co_number": "CO-006",
+          "pco_number": null,
+          "rom_usd": 92000,
+          "priced": true,
+          "funding": "owner_contingency",
+          "created_date": "2026-09-15"
+        },
+        {
+          "id": 3510,
+          "ref": "procore:change_event:3510",
+          "number": "CE-026",
+          "title": "Off-site utility relocation (water main)",
+          "status": "pending",
+          "pco_number": "PCO-017",
+          "rom_usd": 184000,
+          "priced": true,
+          "funding": "owner_contingency",
+          "created_date": "2026-08-20"
+        },
+        {
+          "id": 3511,
+          "ref": "procore:change_event:3511",
+          "number": "CE-027",
+          "title": "Bike room relocation (VOID - superseded)",
+          "status": "void",
+          "pco_number": null,
+          "rom_usd": 0,
+          "priced": false,
+          "funding": null,
+          "created_date": "2026-08-25"
+        },
+        {
+          "id": 3512,
+          "ref": "procore:change_event:3512",
+          "number": "CE-028",
+          "title": "Owner-requested retail storefront upgrade",
+          "status": "pending",
+          "pco_number": "PCO-014",
+          "rom_usd": 118000,
+          "priced": true,
+          "funding": "owner_contingency",
+          "created_date": "2026-08-02"
+        },
+        {
+          "id": 3513,
+          "ref": "procore:change_event:3513",
+          "number": "CE-029",
+          "title": "ASI-05 unit layout revisions (Units 2C/3C)",
+          "status": "pending",
+          "pco_number": "PCO-016",
+          "rom_usd": 96000,
+          "priced": true,
+          "funding": "owner_contingency",
+          "created_date": "2026-09-05"
+        },
+        {
+          "id": 3514,
+          "ref": "procore:change_event:3514",
+          "number": "CE-030",
+          "title": "ASI-07 duct shaft revisions, Unit Stack 07",
+          "status": "open",
+          "pco_number": null,
+          "rom_usd": null,
+          "priced": false,
+          "funding": "TBD",
+          "created_date": "2026-09-25",
+          "linked_rfis": [
+            "procore:rfi:9043"
+          ],
+          "linked_drawings": [
+            "procore:drawing_revision:7741"
+          ],
+          "note": "Awaiting Polar Mechanical and Timberline pricing"
+        }
+      ]
+    },
+    {
+      "snapshot_date": "2026-10-06",
+      "change_events": [
+        {
+          "id": 3500,
+          "ref": "procore:change_event:3500",
+          "number": "CE-020",
+          "title": "Unsuitable soils over-excavation",
+          "status": "approved",
+          "co_number": "CO-001",
+          "pco_number": null,
+          "rom_usd": 140000,
+          "priced": true,
+          "funding": "owner_contingency",
+          "created_date": "2026-04-15"
+        },
+        {
+          "id": 3501,
+          "ref": "procore:change_event:3501",
+          "number": "CE-021",
+          "title": "Owner-requested lobby finish upgrade",
+          "status": "approved",
+          "co_number": "CO-002",
+          "pco_number": null,
+          "rom_usd": 96500,
+          "priced": true,
+          "funding": "owner_contingency",
+          "created_date": "2026-05-15"
+        },
+        {
+          "id": 3502,
+          "ref": "procore:change_event:3502",
+          "number": "CE-022",
+          "title": "Utility transformer pad relocation",
+          "status": "approved",
+          "co_number": "CO-003",
+          "pco_number": null,
+          "rom_usd": 88000,
+          "priced": true,
+          "funding": "owner_contingency",
+          "created_date": "2026-06-15"
+        },
+        {
+          "id": 3503,
+          "ref": "procore:change_event:3503",
+          "number": "CE-023",
+          "title": "ASI-02 podium waterproofing revision",
+          "status": "approved",
+          "co_number": "CO-004",
+          "pco_number": null,
+          "rom_usd": 121000,
+          "priced": true,
+          "funding": "owner_contingency",
+          "created_date": "2026-07-15"
+        },
+        {
+          "id": 3504,
+          "ref": "procore:change_event:3504",
+          "number": "CE-024",
+          "title": "Added fire alarm devices per AHJ",
+          "status": "approved",
+          "co_number": "CO-005",
+          "pco_number": null,
+          "rom_usd": 74500,
+          "priced": true,
+          "funding": "owner_contingency",
+          "created_date": "2026-08-15"
+        },
+        {
+          "id": 3505,
+          "ref": "procore:change_event:3505",
+          "number": "CE-025",
+          "title": "Retail grease interceptor upsizing",
+          "status": "approved",
+          "co_number": "CO-006",
+          "pco_number": null,
+          "rom_usd": 92000,
+          "priced": true,
+          "funding": "owner_contingency",
+          "created_date": "2026-09-15"
+        },
+        {
+          "id": 3510,
+          "ref": "procore:change_event:3510",
+          "number": "CE-026",
+          "title": "Off-site utility relocation (water main)",
+          "status": "pending",
+          "pco_number": "PCO-017",
+          "rom_usd": 184000,
+          "priced": true,
+          "funding": "owner_contingency",
+          "created_date": "2026-08-20"
+        },
+        {
+          "id": 3511,
+          "ref": "procore:change_event:3511",
+          "number": "CE-027",
+          "title": "Bike room relocation (VOID - superseded)",
+          "status": "void",
+          "pco_number": null,
+          "rom_usd": 0,
+          "priced": false,
+          "funding": null,
+          "created_date": "2026-08-25"
+        },
+        {
+          "id": 3512,
+          "ref": "procore:change_event:3512",
+          "number": "CE-028",
+          "title": "Owner-requested retail storefront upgrade",
+          "status": "pending",
+          "pco_number": "PCO-014",
+          "rom_usd": 118000,
+          "priced": true,
+          "funding": "owner_contingency",
+          "created_date": "2026-08-02"
+        },
+        {
+          "id": 3513,
+          "ref": "procore:change_event:3513",
+          "number": "CE-029",
+          "title": "ASI-05 unit layout revisions (Units 2C/3C)",
+          "status": "pending",
+          "pco_number": "PCO-016",
+          "rom_usd": 96000,
+          "priced": true,
+          "funding": "owner_contingency",
+          "created_date": "2026-09-05"
+        },
+        {
+          "id": 3514,
+          "ref": "procore:change_event:3514",
+          "number": "CE-030",
+          "title": "ASI-07 duct shaft revisions, Unit Stack 07",
+          "status": "open",
+          "pco_number": null,
+          "rom_usd": null,
+          "priced": false,
+          "funding": "TBD",
+          "created_date": "2026-09-25",
+          "linked_rfis": [
+            "procore:rfi:9043"
+          ],
+          "linked_drawings": [
+            "procore:drawing_revision:7741"
+          ],
+          "note": "Awaiting Polar Mechanical and Timberline pricing"
+        },
+        {
+          "id": 3515,
+          "ref": "procore:change_event:3515",
+          "number": "CE-031",
+          "title": "Rock removal - Wing B elevator pit",
+          "status": "open",
+          "pco_number": null,
+          "rom_usd": 145000,
+          "priced": false,
+          "funding": "owner_contingency (proposed)",
+          "created_date": "2026-10-06",
+          "linked_rfis": [
+            "procore:rfi:9041"
+          ],
+          "linked_daily_logs": [
+            "procore:notes_log:80401",
+            "procore:delay_log:80501"
+          ],
+          "note": "GC ROM; sub pricing to follow (see email msg_E110)"
+        }
+      ]
+    }
+  ]
+}

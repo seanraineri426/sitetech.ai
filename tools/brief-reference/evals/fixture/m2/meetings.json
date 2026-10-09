@@ -1,0 +1,73 @@
+{
+  "_FICTIONAL": "ALL DATA IN THIS FIXTURE IS FICTIONAL. Not a real project, company, or person.",
+  "meetings": [
+    {
+      "id": 9914,
+      "ref": "procore:meeting:9914",
+      "title": "OAC Meeting #14",
+      "date": "2026-09-29",
+      "attendees": [
+        "Dana Whitfield",
+        "Marcus Bell",
+        "Priya Nair",
+        "Tom Alvarez",
+        "Hannah Cole",
+        "Raj Mehta"
+      ],
+      "items": [
+        {
+          "id": 991401,
+          "ref": "procore:meeting_item:991401",
+          "number": "14.03",
+          "type": "decision_pending",
+          "text": "Owner to confirm amenity deck paver selection (base vs Alt 2, +$22k ROM) so GC can submit and buy out pavers.",
+          "assignee": "Dana Whitfield",
+          "due_date": "2026-10-03",
+          "status": "open",
+          "carried_from": [
+            "12.09",
+            "13.07"
+          ]
+        },
+        {
+          "id": 991402,
+          "ref": "procore:meeting_item:991402",
+          "number": "14.05",
+          "type": "action",
+          "text": "Architect/SEOR to answer RFI 42 (embed layout Grid C/4-7) and return steel shop drawings rev 1.",
+          "assignee": "Raj Mehta",
+          "due_date": "2026-10-02",
+          "status": "open"
+        },
+        {
+          "id": 991403,
+          "ref": "procore:meeting_item:991403",
+          "number": "14.06",
+          "type": "action",
+          "text": "GC to issue switchgear PO now that submittal is approved.",
+          "assignee": "Lauren Pike",
+          "due_date": "2026-09-30",
+          "status": "open"
+        },
+        {
+          "id": 991404,
+          "ref": "procore:meeting_item:991404",
+          "number": "14.08",
+          "type": "decision_made",
+          "text": "Owner accepts VE: corridor LVT in lieu of carpet. Credit of $38,000 to be issued as a deductive CO.",
+          "assignee": "Priya Nair",
+          "due_date": "2026-10-13",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "id": 9915,
+      "ref": "procore:meeting:9915",
+      "title": "OAC Meeting #15",
+      "date": "2026-10-13",
+      "status": "scheduled",
+      "items": []
+    }
+  ]
+}

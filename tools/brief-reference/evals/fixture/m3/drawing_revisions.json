@@ -1,0 +1,47 @@
+{
+  "_FICTIONAL": "ALL DATA IN THIS FIXTURE IS FICTIONAL. Not a real project, company, or person.",
+  "drawing_revisions": [
+    {
+      "id": 7731,
+      "ref": "procore:drawing_revision:7731",
+      "number": "S-301",
+      "title": "Podium Framing Plan - Transfer Zone",
+      "revision": "2",
+      "issued_date": "2026-09-10",
+      "issued_via": "Bulletin 3",
+      "discipline": "Structural"
+    },
+    {
+      "id": 7741,
+      "ref": "procore:drawing_revision:7741",
+      "number": "M-401",
+      "title": "Enlarged Mechanical Shaft Plans",
+      "revision": "3",
+      "issued_date": "2026-09-24",
+      "issued_via": "ASI-07",
+      "discipline": "Mechanical",
+      "description": "Shaft at Unit Stack 07 enlarged from 18x24 to 24x30, L2-L6"
+    },
+    {
+      "id": 7742,
+      "ref": "procore:drawing_revision:7742",
+      "number": "M-402",
+      "title": "Mechanical Riser Diagrams",
+      "revision": "3",
+      "issued_date": "2026-09-24",
+      "issued_via": "ASI-07",
+      "discipline": "Mechanical"
+    },
+    {
+      "id": 7751,
+      "ref": "procore:drawing_revision:7751",
+      "number": "A-501",
+      "title": "Window Head/Sill/Jamb Details",
+      "revision": "4",
+      "issued_date": "2026-10-06",
+      "issued_via": "ASI-08",
+      "discipline": "Architectural",
+      "description": "Revised window sill flashing and head receptor details"
+    }
+  ]
+}

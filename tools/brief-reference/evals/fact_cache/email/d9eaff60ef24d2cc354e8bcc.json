@@ -1,0 +1,23 @@
+{
+ "kind": "email",
+ "ref": "msgraph_outlook:message:msg_E102",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "msgraph_outlook:message:msg_E102",
+  "sent_local_date": "2026-10-05 (Monday)",
+  "from_party": "Arcwell Design Studio (FICTIONAL) (architect_engineer)",
+  "subject": "RE: Linden Yard - Window submittal rev 2 status",
+  "body": "Kevin, window rev 2 review is underway. Comments will be out tomorrow. Heads up that anchorage calcs still look unstamped. - Hannah"
+ },
+ "output": {
+  "ref": "msgraph_outlook:message:msg_E102",
+  "facts": []
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:20:40"
+}

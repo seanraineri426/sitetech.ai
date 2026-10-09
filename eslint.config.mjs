@@ -12,7 +12,24 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    "tools/brief-reference/**",
   ]),
+  {
+    files: ["app/**/*", "lib/**/*"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["**/tools/brief-reference/**", "tools/brief-reference/**"],
+              message: "Production code in app/ and lib/ must not import from tools/brief-reference/. This is a reference implementation only."
+            }
+          ]
+        }
+      ]
+    }
+  }
 ]);
 
 export default eslintConfig;

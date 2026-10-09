@@ -1,0 +1,27 @@
+# Prevent held-out evaluation material from being committed
+evals/holdout/
+**/hx[0-9]/
+**/quarantine/
+**/heldout/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# Config files that should not be committed
+config.yaml
+.env
+*.key
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/

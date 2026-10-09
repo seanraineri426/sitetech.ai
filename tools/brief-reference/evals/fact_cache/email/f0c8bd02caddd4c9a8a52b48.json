@@ -1,0 +1,23 @@
+{
+ "kind": "email",
+ "ref": "msgraph_outlook:message:msg_E103",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "msgraph_outlook:message:msg_E103",
+  "sent_local_date": "2026-10-05 (Monday)",
+  "from_party": "Ironbridge Builders (FICTIONAL) (gc)",
+  "subject": "Lunch & learn delayed to 1pm Thursday",
+  "body": "Team - the Thursday lunch & learn on the new punch app is delayed to 1pm. Food arrives at 12:45. No action needed."
+ },
+ "output": {
+  "ref": "msgraph_outlook:message:msg_E103",
+  "facts": []
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:20:40"
+}

@@ -1,0 +1,23 @@
+{
+ "kind": "email",
+ "ref": "msgraph_outlook:message:msg_P5_N3",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "msgraph_outlook:message:msg_P5_N3",
+  "sent_local_date": "2026-10-08 (Thursday)",
+  "from_party": "Voltline Electric (FICTIONAL) (sub)",
+  "subject": "RE: Level 3 coordination",
+  "body": "Reminder that notice periods are 7 days per the contract."
+ },
+ "output": {
+  "ref": "msgraph_outlook:message:msg_P5_N3",
+  "facts": []
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:18:48"
+}

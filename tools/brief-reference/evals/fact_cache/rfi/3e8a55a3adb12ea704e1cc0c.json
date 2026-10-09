@@ -1,0 +1,36 @@
+{
+ "kind": "rfi",
+ "ref": "procore:rfi:9041",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "procore:rfi:9041",
+  "label": "RFI #41",
+  "subject": "Elevator pit depth vs. encountered rock elevation (Wing B)",
+  "status": "open",
+  "question": "Rock encountered at El. 92.5 vs. geotech El. 88. Confirm whether pit may be raised 6 in. or rock removal is required.",
+  "answers": [],
+  "cost_impact": "yes_unknown",
+  "cost_impact_value": null,
+  "schedule_impact": "yes_unknown",
+  "schedule_impact_value": null,
+  "referenced_instruments": []
+ },
+ "output": {
+  "ref": "procore:rfi:9041",
+  "scope_change": "unclear",
+  "scope_quote": "",
+  "differing_site_condition": true,
+  "condition": "rock at elevator pit above geotech elevation",
+  "condition_quote": "Rock encountered at El. 92.5 vs. geotech El. 88.",
+  "amount_usd": null,
+  "schedule_days": null,
+  "confidence": "high"
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:20:49"
+}

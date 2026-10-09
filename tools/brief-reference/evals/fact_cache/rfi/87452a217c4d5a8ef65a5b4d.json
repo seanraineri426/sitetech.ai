@@ -1,0 +1,41 @@
+{
+ "kind": "rfi",
+ "ref": "procore:rfi:9045",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "procore:rfi:9045",
+  "label": "RFI #45",
+  "subject": "Unit 3B kitchen layout dimension conflict",
+  "status": "closed",
+  "question": "Kitchen wall dimension on A-412 conflicts with enlarged plan. Which governs?",
+  "answers": [
+   {
+    "official": true,
+    "text": "Enlarged plan governs."
+   }
+  ],
+  "cost_impact": "no_impact",
+  "cost_impact_value": 0,
+  "schedule_impact": "no_impact",
+  "schedule_impact_value": 0,
+  "referenced_instruments": []
+ },
+ "output": {
+  "ref": "procore:rfi:9045",
+  "scope_change": "none",
+  "scope_quote": "Enlarged plan governs.",
+  "differing_site_condition": false,
+  "condition": "",
+  "condition_quote": "",
+  "amount_usd": null,
+  "schedule_days": null,
+  "confidence": "high"
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:20:49"
+}

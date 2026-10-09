@@ -1,0 +1,64 @@
+{
+ "kind": "email",
+ "ref": "msgraph_outlook:message:msg_P1_N6",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "msgraph_outlook:message:msg_P1_N6",
+  "sent_local_date": "2026-10-08 (Thursday)",
+  "from_party": "Apex Switchgear Supply (FICTIONAL) (sub)",
+  "subject": "RE: Main switchgear 26 24 13-001 - release and delivery",
+  "body": "If we don't get approval by Friday, ship could slip."
+ },
+ "output": {
+  "ref": "msgraph_outlook:message:msg_P1_N6",
+  "facts": [
+   {
+    "kind": "conditional_risk",
+    "item": "switchgear ship date",
+    "spec_section": "26 24 13",
+    "submittal_no": "26 24 13-001",
+    "rfi_no": null,
+    "ce_no": null,
+    "old_date": null,
+    "new_date": null,
+    "new_date_high": null,
+    "delay_days": null,
+    "delay_days_high": null,
+    "date_phrase": "by Friday, ship could slip",
+    "date_basis": "vague",
+    "amount_usd": null,
+    "notice_types": [],
+    "sender_party": "Apex Switchgear Supply (FICTIONAL) (sub)",
+    "quote": "If we don't get approval by Friday, ship could slip.",
+    "confidence": "high"
+   },
+   {
+    "kind": "need_by_date",
+    "item": "approval",
+    "spec_section": "26 24 13",
+    "submittal_no": "26 24 13-001",
+    "rfi_no": null,
+    "ce_no": null,
+    "old_date": null,
+    "new_date": "2026-10-09",
+    "new_date_high": null,
+    "delay_days": null,
+    "delay_days_high": null,
+    "date_phrase": "by Friday",
+    "date_basis": "relative_to_sent",
+    "amount_usd": null,
+    "notice_types": [],
+    "sender_party": "Apex Switchgear Supply (FICTIONAL) (sub)",
+    "quote": "If we don't get approval by Friday, ship could slip.",
+    "confidence": "medium"
+   }
+  ]
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:19:15"
+}

@@ -1,0 +1,44 @@
+{
+ "kind": "email",
+ "ref": "msgraph_outlook:message:msg_P1_07",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "msgraph_outlook:message:msg_P1_07",
+  "sent_local_date": "2026-10-08 (Thursday)",
+  "from_party": "Crestline Glass (FICTIONAL) (sub)",
+  "subject": "RE: Storefront glazing 08 41 13-001 - delivery",
+  "body": "Tempering line is down; add about a month to delivery."
+ },
+ "output": {
+  "ref": "msgraph_outlook:message:msg_P1_07",
+  "facts": [
+   {
+    "kind": "schedule_date_change",
+    "item": "storefront glazing delivery",
+    "spec_section": "08 41 13",
+    "submittal_no": "08 41 13-001",
+    "rfi_no": null,
+    "ce_no": null,
+    "old_date": null,
+    "new_date": null,
+    "new_date_high": null,
+    "delay_days": 30,
+    "delay_days_high": null,
+    "date_phrase": "add about a month to delivery",
+    "date_basis": "relative_to_original",
+    "amount_usd": null,
+    "notice_types": [],
+    "sender_party": "Crestline Glass (FICTIONAL) (sub)",
+    "quote": "Tempering line is down; add about a month to delivery.",
+    "confidence": "high"
+   }
+  ]
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:19:03"
+}

@@ -1,0 +1,679 @@
+{
+  "_FICTIONAL": "ALL DATA IN THIS FIXTURE IS FICTIONAL. Not a real project, company, or person.",
+  "org_id": "1befe790-aca8-5579-92e3-e97c76435686",
+  "project_id": "f9fdf464-52c4-5d02-a931-c76a025e916c",
+  "name": "Linden Yard Apartments",
+  "location": "Riverton (fictional city), USA",
+  "timezone": "America/New_York",
+  "description": "186-unit mid-rise multifamily. Two wings (A and B). 5 stories Type IIIA wood frame over a 1-level concrete podium (retail + structured parking). Wing B has a steel transfer zone at Grid C/4-7 over the garage entry.",
+  "procore": {
+    "company_id": 4400123,
+    "project_id": 8800123,
+    "auth": "DMSA (read-only permission template)"
+  },
+  "project_mailbox": "lindenyard@larkspurdev.example",
+  "sharepoint_site": "Linden Yard Project Site (Sites.Selected)",
+  "schedule_source": "p6_xer_weekly_upload",
+  "contract": {
+    "type": "GMP (fictional AIA-style prime contract)",
+    "gmp_usd": 48600000,
+    "ntp": "2026-03-02",
+    "tco_contract_date": "2027-08-27",
+    "owner_contingency_usd": 1250000,
+    "gc_contingency_in_gmp_usd": 900000
+  },
+  "percent_complete_cost": 0.46,
+  "percent_complete_basis": "Owner draw #8 (through 2026-08-31), fictional",
+  "delay_cost_basis": {
+    "gc_general_conditions_per_calendar_day_usd": 8400,
+    "owner_carry_per_calendar_day_usd": 7600,
+    "daily_delay_cost_usd": 16000,
+    "source": "Onboarding config (illustrative, fictional)"
+  },
+  "calendar": {
+    "type": "5-day",
+    "holidays": [
+      "2026-09-07",
+      "2026-11-26",
+      "2026-11-27",
+      "2026-12-24",
+      "2026-12-25",
+      "2027-01-01",
+      "2027-05-31",
+      "2027-07-05",
+      "2027-09-06"
+    ]
+  },
+  "key_milestones": [
+    {
+      "activity_id": "A4000",
+      "name": "TCO",
+      "baseline": "2027-08-27"
+    }
+  ],
+  "long_lead_spec_sections": [
+    "05 12 00",
+    "08 53 13",
+    "26 24 13",
+    "14 21 00",
+    "08 41 13"
+  ],
+  "contract_terms": [
+    {
+      "id": "CT-1",
+      "doc_ref": "msgraph_sharepoint:document:SP-DOC-PRIME-001",
+      "page": 31,
+      "clause": "Prime Contract 15.1.2 (fictional)",
+      "text": "Claims by Contractor must be initiated by written notice within 21 days after occurrence of the event giving rise to the claim.",
+      "notice_days": 21,
+      "party": "GC->Owner",
+      "confirmed_by_human": true,
+      "confirmed_by": "Priya Nair",
+      "confirmed_on": "2026-09-15"
+    },
+    {
+      "id": "CT-2",
+      "doc_ref": "msgraph_sharepoint:document:SP-DOC-SUBFORM-001",
+      "page": 9,
+      "clause": "Subcontract form 9.3 (fictional)",
+      "text": "Subcontractor shall give written notice of any claim for delay or additional cost within 7 days of the event.",
+      "notice_days": 7,
+      "party": "Sub->GC",
+      "confirmed_by_human": true,
+      "confirmed_by": "Priya Nair",
+      "confirmed_on": "2026-09-15"
+    },
+    {
+      "id": "CT-3",
+      "doc_ref": "msgraph_sharepoint:document:SP-DOC-PRIME-001",
+      "page": 44,
+      "clause": "Prime Contract 9.3.1 (fictional)",
+      "text": "Applications for Payment shall reflect work actually in place; Owner may withhold for overbilled amounts.",
+      "notice_days": null,
+      "party": "GC->Owner",
+      "confirmed_by_human": false,
+      "confirmed_by": null,
+      "confirmed_on": null
+    }
+  ],
+  "holidays": [
+    "2026-09-07",
+    "2026-11-26",
+    "2026-11-27",
+    "2026-12-24",
+    "2026-12-25",
+    "2027-01-01",
+    "2027-05-31",
+    "2027-07-05",
+    "2027-09-06"
+  ],
+  "notice_periods": [
+    {
+      "id": "NP-1-delay",
+      "contract": "owner-GC",
+      "sub_name": null,
+      "notice_type": "delay",
+      "days": 21,
+      "day_basis": "calendar",
+      "trigger": "event",
+      "contract_section": "Prime Contract 15.1.2 (fictional), p.31",
+      "doc_ref": "msgraph_sharepoint:document:SP-DOC-PRIME-001",
+      "source_term": "CT-1",
+      "entered_by": "Priya Nair",
+      "entered_at": "2026-09-15",
+      "note": "transcribed from contract_terms CT-1; no new contract facts"
+    },
+    {
+      "id": "NP-1-cost_or_change_claim",
+      "contract": "owner-GC",
+      "sub_name": null,
+      "notice_type": "cost_or_change_claim",
+      "days": 21,
+      "day_basis": "calendar",
+      "trigger": "event",
+      "contract_section": "Prime Contract 15.1.2 (fictional), p.31",
+      "doc_ref": "msgraph_sharepoint:document:SP-DOC-PRIME-001",
+      "source_term": "CT-1",
+      "entered_by": "Priya Nair",
+      "entered_at": "2026-09-15",
+      "note": "transcribed from contract_terms CT-1; no new contract facts"
+    },
+    {
+      "id": "NP-2-delay",
+      "contract": "GC-sub",
+      "sub_name": "*",
+      "notice_type": "delay",
+      "days": 7,
+      "day_basis": "calendar",
+      "trigger": "event",
+      "contract_section": "Subcontract form 9.3 (fictional), p.9",
+      "doc_ref": "msgraph_sharepoint:document:SP-DOC-SUBFORM-001",
+      "source_term": "CT-2",
+      "entered_by": "Priya Nair",
+      "entered_at": "2026-09-15",
+      "note": "transcribed from contract_terms CT-2; sub_name '*' = every subcontract on this form"
+    },
+    {
+      "id": "NP-2-cost_or_change_claim",
+      "contract": "GC-sub",
+      "sub_name": "*",
+      "notice_type": "cost_or_change_claim",
+      "days": 7,
+      "day_basis": "calendar",
+      "trigger": "event",
+      "contract_section": "Subcontract form 9.3 (fictional), p.9",
+      "doc_ref": "msgraph_sharepoint:document:SP-DOC-SUBFORM-001",
+      "source_term": "CT-2",
+      "entered_by": "Priya Nair",
+      "entered_at": "2026-09-15",
+      "note": "transcribed from contract_terms CT-2; sub_name '*' = every subcontract on this form"
+    }
+  ],
+  "project_parties": [
+    {
+      "name": "Larkspur Development Partners (FICTIONAL)",
+      "role": "owner",
+      "domain": "larkspurdev.example",
+      "company_id": 7001
+    },
+    {
+      "name": "Ironbridge Builders (FICTIONAL)",
+      "role": "gc",
+      "domain": "ironbridgebuild.example",
+      "company_id": 7002
+    },
+    {
+      "name": "Arcwell Design Studio (FICTIONAL)",
+      "role": "architect_engineer",
+      "domain": "arcwell.example",
+      "company_id": 7003
+    },
+    {
+      "name": "Tandem Structural Engineers (FICTIONAL)",
+      "role": "architect_engineer",
+      "domain": "tandemse.example",
+      "company_id": 7004
+    },
+    {
+      "name": "Bayline Steel Fabricators (FICTIONAL)",
+      "role": "sub",
+      "domain": "baylinesteel.example",
+      "company_id": 7005
+    },
+    {
+      "name": "ClearSpan Windows (FICTIONAL)",
+      "role": "sub",
+      "domain": "clearspan.example",
+      "company_id": 7006
+    },
+    {
+      "name": "Timberline Framing (FICTIONAL)",
+      "role": "sub",
+      "domain": "timberlineframing.example",
+      "company_id": 7007
+    },
+    {
+      "name": "Polar Mechanical (FICTIONAL)",
+      "role": "sub",
+      "domain": "polarmech.example",
+      "company_id": 7008
+    },
+    {
+      "name": "Current Electric (FICTIONAL)",
+      "role": "sub",
+      "domain": "currentelectric.example",
+      "company_id": 7009
+    },
+    {
+      "name": "Brightwater Plumbing (FICTIONAL)",
+      "role": "sub",
+      "domain": "brightwaterplumb.example",
+      "company_id": 7010
+    },
+    {
+      "name": "Granite Line Concrete (FICTIONAL)",
+      "role": "sub",
+      "domain": "granitelineconc.example",
+      "company_id": 7011
+    },
+    {
+      "name": "Ampere Supply Co. (FICTIONAL)",
+      "role": "sub",
+      "domain": "amperesupply.example",
+      "company_id": 7012
+    },
+    {
+      "name": "Halcyon Hardscapes (FICTIONAL)",
+      "role": "sub",
+      "domain": "halcyonhardscapes.example",
+      "company_id": 7013
+    },
+    {
+      "name": "Ascend Elevator Co. (FICTIONAL)",
+      "role": "sub",
+      "domain": "ascendelevator.example",
+      "company_id": 7015
+    }
+  ],
+  "companies": [
+    {
+      "id": 7001,
+      "name": "Larkspur Development Partners (FICTIONAL)",
+      "role": "Owner/Developer",
+      "domain": "larkspurdev.example"
+    },
+    {
+      "id": 7002,
+      "name": "Ironbridge Builders (FICTIONAL)",
+      "role": "General Contractor",
+      "domain": "ironbridgebuild.example"
+    },
+    {
+      "id": 7003,
+      "name": "Arcwell Design Studio (FICTIONAL)",
+      "role": "Architect of Record",
+      "domain": "arcwell.example"
+    },
+    {
+      "id": 7004,
+      "name": "Tandem Structural Engineers (FICTIONAL)",
+      "role": "Structural EOR",
+      "domain": "tandemse.example"
+    },
+    {
+      "id": 7005,
+      "name": "Bayline Steel Fabricators (FICTIONAL)",
+      "role": "Structural steel fabricator/erector",
+      "domain": "baylinesteel.example"
+    },
+    {
+      "id": 7006,
+      "name": "ClearSpan Windows (FICTIONAL)",
+      "role": "Window supplier/installer",
+      "domain": "clearspan.example"
+    },
+    {
+      "id": 7007,
+      "name": "Timberline Framing (FICTIONAL)",
+      "role": "Wood framing sub",
+      "domain": "timberlineframing.example"
+    },
+    {
+      "id": 7008,
+      "name": "Polar Mechanical (FICTIONAL)",
+      "role": "HVAC sub",
+      "domain": "polarmech.example"
+    },
+    {
+      "id": 7009,
+      "name": "Current Electric (FICTIONAL)",
+      "role": "Electrical sub",
+      "domain": "currentelectric.example"
+    },
+    {
+      "id": 7010,
+      "name": "Brightwater Plumbing (FICTIONAL)",
+      "role": "Plumbing sub",
+      "domain": "brightwaterplumb.example"
+    },
+    {
+      "id": 7011,
+      "name": "Granite Line Concrete (FICTIONAL)",
+      "role": "Concrete/foundations sub",
+      "domain": "granitelineconc.example"
+    },
+    {
+      "id": 7012,
+      "name": "Ampere Supply Co. (FICTIONAL)",
+      "role": "Switchgear distributor (GC-direct PO)",
+      "domain": "amperesupply.example"
+    },
+    {
+      "id": 7013,
+      "name": "Halcyon Hardscapes (FICTIONAL)",
+      "role": "Paver supplier (not yet bought out)",
+      "domain": "halcyonhardscapes.example"
+    },
+    {
+      "id": 7014,
+      "name": "Ridgeway Construction Monitoring (FICTIONAL)",
+      "role": "Lender's construction monitor",
+      "domain": "ridgewaycm.example"
+    },
+    {
+      "id": 7015,
+      "name": "Ascend Elevator Co. (FICTIONAL)",
+      "role": "Elevator sub",
+      "domain": "ascendelevator.example"
+    }
+  ],
+  "people": [
+    {
+      "id": 5001,
+      "name": "Dana Whitfield",
+      "title": "Development Director (owner rep)",
+      "co": "owner",
+      "key": "dana",
+      "company": "Larkspur Development Partners (FICTIONAL)",
+      "email": "dwhitfield@larkspurdev.example"
+    },
+    {
+      "id": 5002,
+      "name": "Marcus Bell",
+      "title": "VP Construction (brief reader)",
+      "co": "owner",
+      "key": "marcus",
+      "company": "Larkspur Development Partners (FICTIONAL)",
+      "email": "mbell@larkspurdev.example"
+    },
+    {
+      "id": 5003,
+      "name": "Priya Nair",
+      "title": "Senior Project Manager",
+      "co": "gc",
+      "key": "priya",
+      "company": "Ironbridge Builders (FICTIONAL)",
+      "email": "pnair@ironbridgebuild.example"
+    },
+    {
+      "id": 5004,
+      "name": "Tom Alvarez",
+      "title": "Superintendent",
+      "co": "gc",
+      "key": "tom",
+      "company": "Ironbridge Builders (FICTIONAL)",
+      "email": "talvarez@ironbridgebuild.example"
+    },
+    {
+      "id": 5005,
+      "name": "Kevin Osei",
+      "title": "Project Engineer",
+      "co": "gc",
+      "key": "kevin",
+      "company": "Ironbridge Builders (FICTIONAL)",
+      "email": "kosei@ironbridgebuild.example"
+    },
+    {
+      "id": 5006,
+      "name": "Lauren Pike",
+      "title": "Procurement Manager",
+      "co": "gc",
+      "key": "lauren",
+      "company": "Ironbridge Builders (FICTIONAL)",
+      "email": "lpike@ironbridgebuild.example"
+    },
+    {
+      "id": 5007,
+      "name": "Hannah Cole",
+      "title": "Project Architect",
+      "co": "arch",
+      "key": "hannah",
+      "company": "Arcwell Design Studio (FICTIONAL)",
+      "email": "hcole@arcwell.example"
+    },
+    {
+      "id": 5008,
+      "name": "Raj Mehta",
+      "title": "Structural EOR",
+      "co": "seor",
+      "key": "raj",
+      "company": "Tandem Structural Engineers (FICTIONAL)",
+      "email": "rmehta@tandemse.example"
+    },
+    {
+      "id": 5009,
+      "name": "Gus Moreno",
+      "title": "Project Manager",
+      "co": "steel",
+      "key": "gus",
+      "company": "Bayline Steel Fabricators (FICTIONAL)",
+      "email": "gmoreno@baylinesteel.example"
+    },
+    {
+      "id": 5010,
+      "name": "Eli Novak",
+      "title": "Project Manager",
+      "co": "window",
+      "key": "eli",
+      "company": "ClearSpan Windows (FICTIONAL)",
+      "email": "enovak@clearspan.example"
+    },
+    {
+      "id": 5011,
+      "name": "Jake Rourke",
+      "title": "Owner / PM",
+      "co": "framer",
+      "key": "jake",
+      "company": "Timberline Framing (FICTIONAL)",
+      "email": "jrourke@timberlineframing.example"
+    },
+    {
+      "id": 5012,
+      "name": "Luis Pena",
+      "title": "Framing Foreman",
+      "co": "framer",
+      "key": "luis",
+      "company": "Timberline Framing (FICTIONAL)",
+      "email": "lpena@timberlineframing.example"
+    },
+    {
+      "id": 5013,
+      "name": "Sandra Kim",
+      "title": "Project Manager",
+      "co": "mech",
+      "key": "sandra",
+      "company": "Polar Mechanical (FICTIONAL)",
+      "email": "skim@polarmech.example"
+    },
+    {
+      "id": 5014,
+      "name": "Mike Dunn",
+      "title": "Project Manager",
+      "co": "elec",
+      "key": "mike",
+      "company": "Current Electric (FICTIONAL)",
+      "email": "mdunn@currentelectric.example"
+    },
+    {
+      "id": 5015,
+      "name": "Ray Ortiz",
+      "title": "Plumbing Foreman",
+      "co": "plumb",
+      "key": "ray",
+      "company": "Brightwater Plumbing (FICTIONAL)",
+      "email": "rortiz@brightwaterplumb.example"
+    },
+    {
+      "id": 5016,
+      "name": "Bill Hart",
+      "title": "Project Manager",
+      "co": "conc",
+      "key": "bill",
+      "company": "Granite Line Concrete (FICTIONAL)",
+      "email": "bhart@granitelineconc.example"
+    },
+    {
+      "id": 5017,
+      "name": "Nina Shah",
+      "title": "Inside Sales",
+      "co": "gear",
+      "key": "nina",
+      "company": "Ampere Supply Co. (FICTIONAL)",
+      "email": "nshah@amperesupply.example"
+    },
+    {
+      "id": 5018,
+      "name": "Carol Diaz",
+      "title": "Construction Monitor",
+      "co": "lender",
+      "key": "carol",
+      "company": "Ridgeway Construction Monitoring (FICTIONAL)",
+      "email": "cdiaz@ridgewaycm.example"
+    }
+  ],
+  "spec_sections": [
+    {
+      "id": 31001,
+      "number": "05 12 00",
+      "description": "Structural Steel Framing"
+    },
+    {
+      "id": 31002,
+      "number": "08 53 13",
+      "description": "Vinyl Windows"
+    },
+    {
+      "id": 31003,
+      "number": "26 24 13",
+      "description": "Switchboards"
+    },
+    {
+      "id": 31004,
+      "number": "23 31 13",
+      "description": "Metal Ducts"
+    },
+    {
+      "id": 31005,
+      "number": "10 28 13",
+      "description": "Toilet Accessories"
+    },
+    {
+      "id": 31006,
+      "number": "32 14 00",
+      "description": "Unit Paving"
+    },
+    {
+      "id": 31007,
+      "number": "14 21 00",
+      "description": "Electric Traction Elevators"
+    },
+    {
+      "id": 31008,
+      "number": "22 11 16",
+      "description": "Domestic Water Piping"
+    },
+    {
+      "id": 31010,
+      "number": "06 11 00",
+      "description": "Wood Framing"
+    },
+    {
+      "id": 31011,
+      "number": "22 14 26",
+      "description": "Facility Storm Drains"
+    },
+    {
+      "id": 31012,
+      "number": "08 41 13",
+      "description": "Aluminum-Framed Entrances and Storefronts"
+    },
+    {
+      "id": 31013,
+      "number": "31 23 16",
+      "description": "Excavation"
+    },
+    {
+      "id": 31014,
+      "number": "05 51 00",
+      "description": "Metal Stairs"
+    }
+  ],
+  "locations": [
+    {
+      "id": 41001,
+      "name": "Wing B > Podium L2 > Grid C/4-7"
+    },
+    {
+      "id": 41002,
+      "name": "Wing A > Level 2"
+    },
+    {
+      "id": 41003,
+      "name": "Wing A > Level 3"
+    },
+    {
+      "id": 41004,
+      "name": "Wing A > Level 4"
+    },
+    {
+      "id": 41005,
+      "name": "Wing A > Unit Stack 07 (L2-L6)"
+    },
+    {
+      "id": 41006,
+      "name": "Wing B > Elevator Pit"
+    },
+    {
+      "id": 41007,
+      "name": "Podium L2 > Amenity Deck"
+    },
+    {
+      "id": 41008,
+      "name": "Wing A > Roof"
+    },
+    {
+      "id": 41009,
+      "name": "Wing A > Stair 2"
+    },
+    {
+      "id": 41010,
+      "name": "Wing A > Retail > Grid A"
+    },
+    {
+      "id": 41011,
+      "name": "Wing A > Level 3 > Unit 3B"
+    }
+  ],
+  "cost_codes": [
+    {
+      "id": 51001,
+      "full_code": "01-5000",
+      "name": "General Conditions"
+    },
+    {
+      "id": 51002,
+      "full_code": "05-1200",
+      "name": "Structural Steel"
+    },
+    {
+      "id": 51003,
+      "full_code": "06-1100",
+      "name": "Wood Framing"
+    },
+    {
+      "id": 51004,
+      "full_code": "08-5313",
+      "name": "Vinyl Windows"
+    },
+    {
+      "id": 51005,
+      "full_code": "23-3113",
+      "name": "HVAC Ductwork"
+    },
+    {
+      "id": 51006,
+      "full_code": "26-2413",
+      "name": "Switchgear (GC-direct)"
+    },
+    {
+      "id": 51007,
+      "full_code": "32-1400",
+      "name": "Unit Paving / Amenity Deck"
+    },
+    {
+      "id": 51008,
+      "full_code": "31-2316",
+      "name": "Excavation"
+    },
+    {
+      "id": 51009,
+      "full_code": "22-1116",
+      "name": "Plumbing"
+    },
+    {
+      "id": 51010,
+      "full_code": "10-2813",
+      "name": "Toilet Accessories"
+    }
+  ]
+}
