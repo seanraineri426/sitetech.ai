@@ -162,6 +162,7 @@ def main():
         ("tests_recall_pack", f"{sys.executable} -m harness.tests_recall_pack", False),
         ("scorer_validation", f"{sys.executable} test_scorer_on_gold_example.py", False),
         ("prompt_injection_defense", f"{sys.executable} -m harness.tests_prompt_injection", False),
+        ("redacted_email_quote", f"{sys.executable} test_redacted_email_quote.py", False),
     ]
     
     for name, command, xfail in suites:

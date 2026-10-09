@@ -8,6 +8,14 @@ This folder holds the reasoning layer that turns synced project records into a c
 **Python (this reference implementation):** Dollar amounts use whole-dollar floats (e.g., `42000.0` = $42,000).  
 **TypeScript (production port):** Dollar amounts will use integer cents (e.g., `4200000` = $42,000.00) to avoid floating-point precision issues.
 
+## Email Body Storage
+
+**The brief reads only the stored, redacted `body_text` field and never a raw Graph body.** Email addresses in stored bodies are redacted to `[email-<domain>]` format (e.g., `Per [email-acmemech.example]: the rebar spacing...`). This ensures:
+- Quote verification works with placeholders (quotes spanning `[email-domain]` verify as supported)
+- Sender party resolution works via placeholder domain matching project parties
+- Numbers, change order refs, and spec refs remain unchanged
+- The verifier test (`test_redacted_email_quote.py`) validates all four behaviors
+
 **Core idea in one line:** *rules find, models connect, code checks.* Deterministic rules write a `findings` table (record IDs plus `days_overdue`). Models rank and connect findings into insights. A verifier drops any claim that lacks a resolvable record ID. Then a closed-book writer and a deterministic renderer produce the page.
 
 ## Index
