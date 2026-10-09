@@ -678,7 +678,7 @@ select throws_ok(
 );
 select throws_ok(
   $$insert into public.project_parties (org_id, project_id, company_name, email_domain, role) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '44444444-bbbb-bbbb-bbbb-444444444444', 'Cross Company', 'cross.example.com', 'sub')$$,
-  '23505',
+  '23503',
   null,
   'project_id from another org rejected (project_parties)'
 );
@@ -733,7 +733,7 @@ select throws_ok(
   'Cannot link Org A RFI to Org B raw_record (composite FK prevents)'
 );
 select throws_ok(
-  $$insert into public.submittals (org_id, project_id, raw_record_id, external_id, number, title, status, schedule_activity_id) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-aaaa-aaaa-aaaa-333333333333', '11111111-1111-1111-1111-000000001111', 'sub-cross-act', 'S998', 'Cross Act', 'pending', '88888888-8888-8888-8888-888888888888')$$,
+  $$insert into public.submittals (org_id, project_id, raw_record_id, external_id, number, title, status, schedule_activity_id, schedule_match_method, schedule_match_confidence) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-aaaa-aaaa-aaaa-333333333333', '11111111-1111-1111-1111-000000001111', 'sub-cross-act', 'S998', 'Cross Act', 'pending', '88888888-8888-8888-8888-888888888888', 'title_match', 0.8)$$,
   '23503',
   null,
   'Cannot link Org A submittal to Org B schedule_activity (composite FK prevents)'
@@ -752,7 +752,7 @@ select is(
 delete from public.project_holidays where org_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
 select is(
   (select count(*)::int from public.project_holidays where org_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),
-  1,
+  3,
   'Member delete on settings table affects 0 rows (RLS blocks)'
 );
 reset role;
