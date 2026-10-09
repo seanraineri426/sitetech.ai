@@ -30,6 +30,9 @@ def main():
     print("=" * 70)
     print()
     
+    # Set environment to use cached facts only (no model calls)
+    os.environ["FACTS_CACHE_ONLY"] = "1"
+    
     # Initialize fixture tools for Linden Yard (as_of 2026-10-06)
     print("Initializing Linden Yard fixture (as_of 2026-10-06)...")
     T = FixtureTools("2026-10-06", "2026-10-05", fixture_dir=FIXTURE)
@@ -97,9 +100,30 @@ def main():
     
     print()
     print("-" * 70)
-    print("Stage 3: RANK (code-only, using auto-insights)")
+    print("Stage 2.5: FACTS (cached extraction + code judgment)")
     print("-" * 70)
-    print("  Note: Model correlation stages stubbed - using code auto-insights")
+    try:
+        # Attach cached facts (email/RFI extraction) + run fact_rules
+        from harness.email_facts import attach as attach_facts
+        facts_summary = attach_facts(T, runner=None)  # runner=None means cache-only
+        print(f"✓ Loaded cached facts: {facts_summary.get('emails_with_facts', 0)} emails, {facts_summary.get('rfis_with_facts', 0)} RFIs")
+        print(f"  Dropped: {len(facts_summary.get('facts_dropped', []))}")
+        
+        # Add facts to rules_out
+        rules_out["facts_summary"] = facts_summary
+        rules_out["email_facts"] = getattr(T, "email_facts", {})
+        rules_out["rfi_facts"] = getattr(T, "rfi_facts", {})
+    except Exception as e:
+        print(f"✗ Facts stage failed: {e}")
+        import traceback
+        traceback.print_exc()
+        return 1
+    
+    print()
+    print("-" * 70)
+    print("Stage 3: RANK (with fact-based findings)")
+    print("-" * 70)
+    print("  Note: Cluster correlation still requires model")
     try:
         rank_out, rank_actions = rank.run(T, R, cfg, read_out, rules_out)
         insights = rank_out.get('insights', [])
