@@ -106,7 +106,8 @@ export class GraphClient {
   private async request(
     url: string,
     method: string,
-    token: string
+    token: string,
+    extraHeaders?: Record<string, string>
   ): Promise<Response> {
     // Enforce GET-only
     if (method !== "GET") {
@@ -146,15 +147,18 @@ export class GraphClient {
       );
     }
 
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+      "User-Agent": "ISV|SiteTech|1.0",
+      ...extraHeaders,
+    };
+
     return retryRequest(
       () =>
         fetch(url, {
           method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-            "User-Agent": "ISV|SiteTech|1.0",
-          },
+          headers,
           redirect: "error",
           signal: AbortSignal.timeout(30000), // 30s request timeout
         }),
@@ -170,7 +174,8 @@ export class GraphClient {
   async get<T>(
     path: string,
     params?: Record<string, string>,
-    schema?: z.ZodType<GraphResponse<T>>
+    schema?: z.ZodType<GraphResponse<T>>,
+    extraHeaders?: Record<string, string>
   ): Promise<GraphResponse<T>> {
     const token = await this.getAccessToken();
 
@@ -183,7 +188,7 @@ export class GraphClient {
       });
     }
 
-    const response = await this.request(url.toString(), "GET", token);
+    const response = await this.request(url.toString(), "GET", token, extraHeaders);
 
     if (!response.ok) {
       const errorCode = response.headers.get("X-Error-Code") || "UNKNOWN";
@@ -224,7 +229,8 @@ export class GraphClient {
   async delta<T extends { id: string }>(
     path: string,
     deltaLink?: string,
-    selectFields?: string
+    selectFields?: string,
+    extraHeaders?: Record<string, string>
   ): Promise<DeltaResult<T>> {
     // Build initial URL: /delta first, then query params
     let currentUrl: string;
@@ -239,7 +245,12 @@ export class GraphClient {
       currentUrl = url.toString();
     }
 
-    const response: GraphResponse<T> = await this.get<T>(currentUrl);
+    const response: GraphResponse<T> = await this.get<T>(
+      currentUrl,
+      undefined,
+      undefined,
+      extraHeaders
+    );
 
     const items: T[] = [];
     const removed: string[] = [];

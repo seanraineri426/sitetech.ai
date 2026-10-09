@@ -14,11 +14,17 @@ const RecipientSchema = z.object({
   emailAddress: EmailAddressSchema,
 }).passthrough();
 
+const BodySchema = z.object({
+  contentType: z.enum(["text", "html"]),
+  content: z.string(),
+}).passthrough();
+
 export const GraphMessageSchema = z.object({
   id: z.string(),
   conversationId: z.string(),
   subject: z.string(),
   bodyPreview: z.string(),
+  body: BodySchema.nullish(),
   from: RecipientSchema,
   toRecipients: z.array(RecipientSchema),
   ccRecipients: z.array(RecipientSchema),
@@ -105,6 +111,7 @@ export const MESSAGE_ALLOWLIST = [
   "conversationId",
   "subject",
   "bodyPreview",
+  "body",
   "from",
   "toRecipients",
   "ccRecipients",

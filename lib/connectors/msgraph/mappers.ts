@@ -5,15 +5,21 @@
  * CTO Decision (2026-10-07):
  * - Email addresses ARE stored (from/to/cc) - approved for email records only
  * - Email addresses are NOT fingerprinted as content (change signal)
- * - Fingerprint: message id + received_at + subject + body preview + participant domains + categories
+ * - Fingerprint: message id + received_at + subject + body text + participant domains + categories
  * - Exclude isRead from fingerprint (read status is not content)
  * - Model layer will map addresses to company+role; we store them under RLS + 30-day purge
+ * 
+ * CTO Decision (2026-10-09):
+ * - Store full email body as plain text including quoted reply history
+ * - Use body_text (not bodyPreview) in fingerprint
+ * - Request plain text via Prefer header; strip HTML if Graph returns HTML anyway
  */
 
 import { createHash } from "crypto";
 import { canonicalStringify } from "../shared/canonical-stringify";
 import type { NormalizedEmail, RawRecord } from "../types";
 import type { GraphMessage } from "./types";
+import { htmlToText } from "./html-to-text";
 
 /**
  * Extract domain from email address for fingerprinting.
@@ -25,16 +31,38 @@ function extractDomain(address: string): string {
 }
 
 /**
+ * Extract body text from Graph message body.
+ * Converts HTML to text if content type is HTML.
+ */
+function extractBodyText(body: GraphMessage["body"]): string | null {
+  if (!body?.content) {
+    return null;
+  }
+
+  if (body.contentType === "text") {
+    return body.content;
+  }
+
+  // If Graph returned HTML despite requesting plain text, convert it
+  return htmlToText(body.content);
+}
+
+/**
  * Build fingerprint payload for email.
  * Includes message identity, content, and participant domains (NOT full addresses).
  * Excludes isRead (read status is not content).
+ * 
+ * CTO 2026-10-09: Use body_text (full body including quoted history) instead of bodyPreview.
  */
-function buildEmailFingerprintPayload(message: GraphMessage): Record<string, unknown> {
+function buildEmailFingerprintPayload(
+  message: GraphMessage,
+  bodyText: string | null
+): Record<string, unknown> {
   return {
     id: message.id,
     conversationId: message.conversationId,
     subject: message.subject,
-    bodyPreview: message.bodyPreview,
+    bodyText: bodyText,
     receivedDateTime: message.receivedDateTime,
     sentDateTime: message.sentDateTime,
     hasAttachments: message.hasAttachments,
@@ -50,12 +78,15 @@ function buildEmailFingerprintPayload(message: GraphMessage): Record<string, unk
 /**
  * Map Graph message to normalized SiteTech email.
  * Raw email addresses are stored but NOT fingerprinted as content.
+ * 
+ * CTO 2026-10-09: Extract full body text including quoted reply history.
  */
 export function mapGraphMessageToNormalized(
   message: GraphMessage,
   mailbox: string
 ): NormalizedEmail {
-  const fingerprintPayload = buildEmailFingerprintPayload(message);
+  const bodyText = extractBodyText(message.body);
+  const fingerprintPayload = buildEmailFingerprintPayload(message, bodyText);
   const fingerprint = createHash("sha256")
     .update(canonicalStringify(fingerprintPayload))
     .digest("hex");
@@ -69,6 +100,7 @@ export function mapGraphMessageToNormalized(
     
     subject: message.subject,
     body_preview: message.bodyPreview,
+    body_text: bodyText,
     // Raw addresses stored (CTO approved for email records only)
     from: {
       name: message.from.emailAddress.name,
@@ -106,6 +138,7 @@ export function emailToRawRecord(email: NormalizedEmail): RawRecord {
     allowlistedPayload: {
       subject: email.subject,
       body_preview: email.body_preview,
+      body_text: email.body_text,
       from: email.from,
       to_recipients: email.to_recipients,
       cc_recipients: email.cc_recipients,

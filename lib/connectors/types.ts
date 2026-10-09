@@ -161,6 +161,7 @@ export interface NormalizedEmail {
   // Core fields
   subject: string;
   body_preview: string;
+  body_text: string | null;
   from: {
     name: string;
     address: string;

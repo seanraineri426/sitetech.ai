@@ -31,3 +31,4 @@ export {
   mapGraphMessageToNormalized,
   emailToRawRecord,
 } from "./mappers";
+export { htmlToText } from "./html-to-text";

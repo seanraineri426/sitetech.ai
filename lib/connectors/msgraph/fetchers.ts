@@ -38,6 +38,8 @@ export async function fetchMailFolders(
  * Delta sync for a single mail folder - ONE page at a time.
  * Returns page with checkpoint for resumption.
  * The caller drives the loop page-by-page.
+ * 
+ * Sends Prefer header to request plain text body content.
  */
 export async function fetchMailFolderDelta(
   client: GraphClient,
@@ -53,7 +55,8 @@ export async function fetchMailFolderDelta(
   const result = await client.delta<GraphMessage>(
     path,
     checkpoint,
-    selectFields
+    selectFields,
+    { Prefer: 'outlook.body-content-type="text"' }
   );
 
   return {

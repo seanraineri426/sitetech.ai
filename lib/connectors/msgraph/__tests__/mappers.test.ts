@@ -16,6 +16,10 @@ describe("Microsoft Graph mappers", () => {
     conversationId: "conv-456",
     subject: "Test Email",
     bodyPreview: "This is a test email preview",
+    body: {
+      contentType: "text",
+      content: "This is the full body text.",
+    },
     from: {
       emailAddress: {
         name: "John Sender",
@@ -54,7 +58,62 @@ describe("Microsoft Graph mappers", () => {
       expect(normalized.external_id).toBe("msg-123");
       expect(normalized.source_mailbox).toBe("user@example.com");
       expect(normalized.subject).toBe("Test Email");
+      expect(normalized.body_text).toBe("This is the full body text.");
       expect(normalized.fingerprint).toBeTruthy();
+    });
+
+    it("extracts plain text body_text from text content", () => {
+      const normalized = mapGraphMessageToNormalized(mockMessage, "user@example.com");
+
+      expect(normalized.body_text).toBe("This is the full body text.");
+    });
+
+    it("preserves quoted reply history in body_text", () => {
+      const messageWithHistory: GraphMessage = {
+        ...mockMessage,
+        body: {
+          contentType: "text",
+          content: "My reply.\n\nOn Oct 8, 2026, Bob wrote:\n> Original message.",
+        },
+      };
+
+      const normalized = mapGraphMessageToNormalized(messageWithHistory, "user@example.com");
+      expect(normalized.body_text).toContain("My reply");
+      expect(normalized.body_text).toContain("On Oct 8, 2026, Bob wrote:");
+      expect(normalized.body_text).toContain("> Original message");
+    });
+
+    it("converts HTML body to plain text", () => {
+      const messageWithHtml: GraphMessage = {
+        ...mockMessage,
+        body: {
+          contentType: "html",
+          content: "<p>Hello <strong>world</strong></p>",
+        },
+      };
+
+      const normalized = mapGraphMessageToNormalized(messageWithHtml, "user@example.com");
+      expect(normalized.body_text).toBe("Hello world");
+    });
+
+    it("handles null body", () => {
+      const messageWithoutBody: GraphMessage = {
+        ...mockMessage,
+        body: null,
+      };
+
+      const normalized = mapGraphMessageToNormalized(messageWithoutBody, "user@example.com");
+      expect(normalized.body_text).toBeNull();
+    });
+
+    it("handles undefined body", () => {
+      const messageWithoutBody: GraphMessage = {
+        ...mockMessage,
+        body: undefined,
+      };
+
+      const normalized = mapGraphMessageToNormalized(messageWithoutBody, "user@example.com");
+      expect(normalized.body_text).toBeNull();
     });
 
     it("preserves receivedDateTime as ISO UTC string in received_at", () => {
@@ -213,6 +272,20 @@ describe("Microsoft Graph mappers", () => {
       const raw = emailToRawRecord(normalized);
 
       expect(raw.allowlistedPayload.received_at_source).toBe("graph");
+    });
+
+    it("includes body_text in allowlisted payload", () => {
+      const normalized = mapGraphMessageToNormalized(mockMessage, "user@example.com");
+      const raw = emailToRawRecord(normalized);
+
+      expect(raw.allowlistedPayload.body_text).toBe("This is the full body text.");
+    });
+
+    it("includes conversation_id in allowlisted payload", () => {
+      const normalized = mapGraphMessageToNormalized(mockMessage, "user@example.com");
+      const raw = emailToRawRecord(normalized);
+
+      expect(raw.allowlistedPayload.conversation_id).toBe("conv-456");
     });
   });
 
