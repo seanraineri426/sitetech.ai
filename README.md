@@ -167,10 +167,14 @@ By default, signup is **invite-only** for the pilot. Users must be invited via t
 2. Click "Invite user" and enter their email
 3. They will receive a magic link to sign in
 
+**For hosted Supabase projects:** Ensure "Allow new users to sign up" is **OFF** in Authentication → Providers → Email settings.
+
 To enable open signup (any email can sign up), set:
 ```
 AUTH_OPEN_SIGNUP=true
 ```
+
+**Important:** Use `localhost` consistently in local development. Mixing `localhost` and `127.0.0.1` breaks the PKCE cookie flow. The app defaults to `http://localhost:3000`, Supabase runs on `http://127.0.0.1:54321`.
 
 See `.env.example` for all required environment variables.
 

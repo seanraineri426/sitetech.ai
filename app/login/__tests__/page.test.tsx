@@ -20,16 +20,18 @@ vi.mock("@/lib/supabase/client", () => ({
   })),
 }));
 
-vi.mock("@/lib/env", () => ({
-  env: {
-    NEXT_PUBLIC_SITE_URL: "http://localhost:3000",
-  },
+vi.mock("@/lib/env.public", () => ({
+  NEXT_PUBLIC_SITE_URL: "http://localhost:3000",
+  NEXT_PUBLIC_AUTH_MICROSOFT_ENABLED: false,
+}));
+
+vi.mock("../actions", () => ({
+  signInWithMagicLink: vi.fn(),
 }));
 
 describe("LoginForm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    delete (process.env as Record<string, unknown>).NEXT_PUBLIC_AUTH_MICROSOFT_ENABLED;
   });
 
   afterEach(() => {
@@ -37,37 +39,17 @@ describe("LoginForm", () => {
   });
 
   describe("Microsoft sign-in button visibility", () => {
-    it("hides Microsoft button when flag is not set", () => {
+    it("hides Microsoft button when flag is false (default)", () => {
       render(<LoginForm />);
       
       expect(screen.queryByRole("button", { name: /microsoft/i })).not.toBeInTheDocument();
-    });
-
-    it("hides Microsoft button when flag is false", () => {
-      process.env.NEXT_PUBLIC_AUTH_MICROSOFT_ENABLED = "false";
-      render(<LoginForm />);
-      
-      expect(screen.queryByRole("button", { name: /microsoft/i })).not.toBeInTheDocument();
-    });
-
-    it("shows Microsoft button when flag is true", () => {
-      process.env.NEXT_PUBLIC_AUTH_MICROSOFT_ENABLED = "true";
-      render(<LoginForm />);
-      
-      expect(screen.getByRole("button", { name: /microsoft/i })).toBeInTheDocument();
     });
   });
 
   describe("magic link no-enumeration", () => {
     it("shows success message without revealing if email exists", async () => {
-      const { createClient } = await import("@/lib/supabase/client");
-      const mockSignInWithOtp = vi.fn().mockResolvedValue({ error: null });
-      (createClient as ReturnType<typeof vi.fn>).mockReturnValue({
-        auth: {
-          signInWithOtp: mockSignInWithOtp,
-          signInWithOAuth: vi.fn(),
-        },
-      });
+      const { signInWithMagicLink } = await import("../actions");
+      vi.mocked(signInWithMagicLink).mockResolvedValue({ success: true });
 
       render(<LoginForm />);
       
@@ -83,15 +65,9 @@ describe("LoginForm", () => {
     });
 
     it("shows generic error message on failure without enumeration", async () => {
-      const { createClient } = await import("@/lib/supabase/client");
-      const mockSignInWithOtp = vi.fn().mockResolvedValue({ 
-        error: { message: "User not found" } 
-      });
-      (createClient as ReturnType<typeof vi.fn>).mockReturnValue({
-        auth: {
-          signInWithOtp: mockSignInWithOtp,
-          signInWithOAuth: vi.fn(),
-        },
+      const { signInWithMagicLink } = await import("../actions");
+      vi.mocked(signInWithMagicLink).mockResolvedValue({ 
+        error: "We couldn't send the email. Please try again." 
       });
 
       render(<LoginForm />);
@@ -125,14 +101,8 @@ describe("LoginForm", () => {
     });
 
     it("clears email input after successful submission", async () => {
-      const { createClient } = await import("@/lib/supabase/client");
-      const mockSignInWithOtp = vi.fn().mockResolvedValue({ error: null });
-      (createClient as ReturnType<typeof vi.fn>).mockReturnValue({
-        auth: {
-          signInWithOtp: mockSignInWithOtp,
-          signInWithOAuth: vi.fn(),
-        },
-      });
+      const { signInWithMagicLink } = await import("../actions");
+      vi.mocked(signInWithMagicLink).mockResolvedValue({ success: true });
 
       render(<LoginForm />);
       

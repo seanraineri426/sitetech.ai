@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { env } from "@/lib/env";
+import { NEXT_PUBLIC_SITE_URL, NEXT_PUBLIC_AUTH_MICROSOFT_ENABLED } from "@/lib/env.public";
+import { signInWithMagicLink } from "./actions";
 
 export function LoginForm() {
   const [email, setEmail] = useState("");
@@ -11,15 +12,13 @@ export function LoginForm() {
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const searchParams = useSearchParams();
   const next = searchParams.get("next");
-  const hasError = searchParams.get("error");
+  const errorParam = searchParams.get("error");
 
-  const isMicrosoftEnabled = process.env.NEXT_PUBLIC_AUTH_MICROSOFT_ENABLED === "true";
-  const isOpenSignup = process.env.AUTH_OPEN_SIGNUP === "true";
+  const isMicrosoftEnabled = NEXT_PUBLIC_AUTH_MICROSOFT_ENABLED;
 
-  // Show error message if error param is present
-  if (hasError && !message) {
-    setMessage({ type: "error", text: "Authentication failed. Please try again." });
-  }
+  // Derive error message from searchParams instead of setting during render
+  const errorMessage = errorParam ? "Authentication failed. Please try again." : null;
+  const displayMessage = message || (errorMessage ? { type: "error" as const, text: errorMessage } : null);
 
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,27 +32,17 @@ export function LoginForm() {
     setMessage(null);
 
     try {
-      const supabase = createClient();
-      
       // Build callback URL with next param if present
-      const callbackUrl = new URL("/auth/callback", env.NEXT_PUBLIC_SITE_URL);
+      const callbackUrl = new URL("/auth/callback", NEXT_PUBLIC_SITE_URL);
       if (next) {
         callbackUrl.searchParams.set("next", next);
       }
-      
-      const { error } = await supabase.auth.signInWithOtp({
-        email: email.trim(),
-        options: {
-          emailRedirectTo: callbackUrl.toString(),
-          shouldCreateUser: isOpenSignup,
-        },
-      });
 
-      if (error) {
-        // Generic message - don't reveal if email exists
-        setMessage({ type: "error", text: "We couldn't send the email. Please try again." });
+      const result = await signInWithMagicLink(email.trim(), callbackUrl.toString());
+
+      if (result.error) {
+        setMessage({ type: "error", text: result.error });
       } else {
-        // Generic success message - don't reveal if email exists
         setMessage({
           type: "success",
           text: "Check your email for a sign-in link.",
@@ -75,7 +64,7 @@ export function LoginForm() {
       const supabase = createClient();
       
       // Build callback URL with next param if present
-      const callbackUrl = new URL("/auth/callback", env.NEXT_PUBLIC_SITE_URL);
+      const callbackUrl = new URL("/auth/callback", NEXT_PUBLIC_SITE_URL);
       if (next) {
         callbackUrl.searchParams.set("next", next);
       }
@@ -160,15 +149,15 @@ export function LoginForm() {
             </>
           )}
 
-          {message && (
+          {displayMessage && (
             <div
               className={`mt-6 p-4 rounded-md ${
-                message.type === "success"
+                displayMessage.type === "success"
                   ? "bg-green-50 text-green-800 border border-green-200"
                   : "bg-red-50 text-red-800 border border-red-200"
               }`}
             >
-              <p className="text-sm">{message.text}</p>
+              <p className="text-sm">{displayMessage.text}</p>
             </div>
           )}
         </div>

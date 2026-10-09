@@ -35,16 +35,31 @@ export function sanitizeRedirectUrl(
       return defaultUrl;
     }
 
-    // Resolve against site URL and verify same origin
+    // Resolve against site URL to normalize path (handles dot segments)
     const siteUrlObj = new URL(siteUrl);
     const resolvedUrl = new URL(decoded, siteUrl);
 
+    // Extract the normalized path
+    const normalizedPath = resolvedUrl.pathname + resolvedUrl.search + resolvedUrl.hash;
+
+    // Re-check the OUTPUT: must start with exactly one / and no backslashes
+    if (!normalizedPath.startsWith("/") || normalizedPath.startsWith("//")) {
+      return defaultUrl;
+    }
+
+    if (normalizedPath.includes("\\")) {
+      return defaultUrl;
+    }
+
+    // Verify same origin after normalization
     if (resolvedUrl.origin !== siteUrlObj.origin) {
       return defaultUrl;
     }
 
-    // Return the pathname with query and hash
-    return resolvedUrl.pathname + resolvedUrl.search + resolvedUrl.hash;
+    // Return the original input (preserving encoding) since we've validated it's safe
+    // Extract just the path portion from the original input
+    const inputUrl = new URL(url, siteUrl);
+    return inputUrl.pathname + inputUrl.search + inputUrl.hash;
   } catch {
     return defaultUrl;
   }

@@ -57,6 +57,36 @@ describe("sanitizeRedirectUrl", () => {
     });
   });
 
+  describe("rejects dot segment attacks", () => {
+    it("rejects /.//evil.com", () => {
+      expect(sanitizeRedirectUrl("/.//evil.com", siteUrl, defaultUrl)).toBe(defaultUrl);
+    });
+
+    it("rejects /a/..//evil.com", () => {
+      expect(sanitizeRedirectUrl("/a/..//evil.com", siteUrl, defaultUrl)).toBe(defaultUrl);
+    });
+
+    it("rejects /%2e//evil.com", () => {
+      expect(sanitizeRedirectUrl("/%2e//evil.com", siteUrl, defaultUrl)).toBe(defaultUrl);
+    });
+
+    it("rejects /%2e%2e//evil.com", () => {
+      expect(sanitizeRedirectUrl("/%2e%2e//evil.com", siteUrl, defaultUrl)).toBe(defaultUrl);
+    });
+
+    it("rejects /.%2F/evil.com", () => {
+      expect(sanitizeRedirectUrl("/.%2F/evil.com", siteUrl, defaultUrl)).toBe(defaultUrl);
+    });
+
+    it("rejects /app/../..//evil.com", () => {
+      expect(sanitizeRedirectUrl("/app/../..//evil.com", siteUrl, defaultUrl)).toBe(defaultUrl);
+    });
+
+    it("rejects /%2F%2Fevil.com with leading slash", () => {
+      expect(sanitizeRedirectUrl("/%2F%2Fevil.com", siteUrl, defaultUrl)).toBe(defaultUrl);
+    });
+  });
+
   describe("rejects backslash variants", () => {
     it("rejects /\\evil", () => {
       expect(sanitizeRedirectUrl("/\\evil", siteUrl, defaultUrl)).toBe(defaultUrl);
