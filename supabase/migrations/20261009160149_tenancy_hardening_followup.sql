@@ -14,7 +14,7 @@ begin
   select count(*)::int, string_agg(id::text, ', ')
   into mismatch_count, mismatch_ids
   from (
-    select id from public.project_sources ps
+    select ps.id from public.project_sources ps
     left join public.integration_connections ic 
       on ps.connection_id = ic.id and ps.org_id = ic.org_id
     where ic.id is null
@@ -34,7 +34,7 @@ begin
   select count(*)::int, string_agg(id::text, ', ')
   into mismatch_count, mismatch_ids
   from (
-    select id from public.sync_runs sr
+    select sr.id from public.sync_runs sr
     left join public.project_sources ps 
       on sr.project_source_id = ps.id and sr.org_id = ps.org_id and sr.project_id = ps.project_id
     where ps.id is null
