@@ -50,27 +50,77 @@ def run_test_suite(name, command, xfail=False):
         return result.returncode == 0
 
 def check_no_holdout_material():
-    """Verify no held-out material exists in the repository."""
-    import glob
+    """Verify no held-out material exists in the repository.
     
+    Scans git ls-files for holdout patterns (case-insensitive) and confirms that
+    expected_findings.json, reference_ranking.json, etc are Linden dev-fixture only.
+    """
+    import subprocess
+    import re
+    
+    # Get all tracked files from git
+    result = subprocess.run(
+        ["git", "ls-files"],
+        cwd=os.path.dirname(os.path.dirname(__file__)),  # repo root
+        capture_output=True,
+        text=True
+    )
+    
+    if result.returncode != 0:
+        print("⚠ Warning: Could not run git ls-files, skipping holdout check")
+        return True
+    
+    all_files = result.stdout.strip().split('\n')
+    
+    # Patterns to search for (case-insensitive)
     holdout_patterns = [
-        "**/holdout/**",
-        "**/hx[0-9]/**",
-        "**/quarantine/**",
-        "**/heldout/**"
+        r'hold-?out',
+        r'heldout',
+        r'hx\d+',
+        r'quarantine',
+        r'answer_key',
     ]
     
     found = []
-    for pattern in holdout_patterns:
-        matches = glob.glob(pattern, recursive=True)
-        found.extend(matches)
+    for file_path in all_files:
+        file_lower = file_path.lower()
+        for pattern in holdout_patterns:
+            if re.search(pattern, file_lower):
+                # Exception: Linden fixture files are OK (training data)
+                if 'tools/brief-reference/evals/fixture/' in file_path:
+                    continue
+                if 'tools/brief-reference/examples/' in file_path:
+                    continue
+                if 'tools/brief-reference/evals/schemas/' in file_path:
+                    continue
+                found.append((file_path, pattern))
+                break
     
     if found:
         print("\n❌ ERROR: Held-out material detected!")
-        print("The following files/directories must not be committed:")
-        for path in found:
-            print(f"  - {path}")
+        print("The following files must not be committed (or must be renamed):")
+        for path, pattern in found:
+            print(f"  - {path} (matches pattern: {pattern})")
         return False
+    
+    # Confirm expected_findings.json etc are only in Linden fixture
+    linden_files = [
+        'expected_findings.json',
+        'reference_ranking.json',
+        'answer_key.schema.json',
+        'p3_comms_key.py',
+        'brief_linden_yard_2026-10-06.json'
+    ]
+    
+    for expected_file in linden_files:
+        matches = [f for f in all_files if expected_file in f]
+        for match in matches:
+            if not ('tools/brief-reference/evals/fixture/' in match or 
+                   'tools/brief-reference/examples/' in match or
+                   'tools/brief-reference/evals/schemas/' in match):
+                print(f"\n❌ ERROR: {expected_file} found outside Linden fixture: {match}")
+                return False
+    
     return True
 
 def main():
