@@ -354,19 +354,19 @@ reset role;
 -- ANON ROLE TESTS
 -- ============================================================================
 
--- Test 35-45: Anon cannot see any new tables
+-- Test 35-45: Anon has no access to any tables (permission denied)
 set role anon;
-select is((select count(*)::int from public.integration_connections), 0, 'Anon cannot see integration_connections');
-select is((select count(*)::int from public.project_sources), 0, 'Anon cannot see project_sources');
-select is((select count(*)::int from public.sync_runs), 0, 'Anon cannot see sync_runs');
-select is((select count(*)::int from public.raw_records), 0, 'Anon cannot see raw_records');
-select is((select count(*)::int from public.rfis), 0, 'Anon cannot see rfis');
-select is((select count(*)::int from public.submittals), 0, 'Anon cannot see submittals');
-select is((select count(*)::int from public.emails), 0, 'Anon cannot see emails');
-select is((select count(*)::int from public.schedule_activities), 0, 'Anon cannot see schedule_activities');
-select is((select count(*)::int from public.project_notice_periods), 0, 'Anon cannot see project_notice_periods');
-select is((select count(*)::int from public.project_holidays), 0, 'Anon cannot see project_holidays');
-select is((select count(*)::int from public.project_parties), 0, 'Anon cannot see project_parties');
+select throws_ok($$select count(*) from public.integration_connections$$, '42501', null, 'Anon cannot access integration_connections');
+select throws_ok($$select count(*) from public.project_sources$$, '42501', null, 'Anon cannot access project_sources');
+select throws_ok($$select count(*) from public.sync_runs$$, '42501', null, 'Anon cannot access sync_runs');
+select throws_ok($$select count(*) from public.raw_records$$, '42501', null, 'Anon cannot access raw_records');
+select throws_ok($$select count(*) from public.rfis$$, '42501', null, 'Anon cannot access rfis');
+select throws_ok($$select count(*) from public.submittals$$, '42501', null, 'Anon cannot access submittals');
+select throws_ok($$select count(*) from public.emails$$, '42501', null, 'Anon cannot access emails');
+select throws_ok($$select count(*) from public.schedule_activities$$, '42501', null, 'Anon cannot access schedule_activities');
+select throws_ok($$select count(*) from public.project_notice_periods$$, '42501', null, 'Anon cannot access project_notice_periods');
+select throws_ok($$select count(*) from public.project_holidays$$, '42501', null, 'Anon cannot access project_holidays');
+select throws_ok($$select count(*) from public.project_parties$$, '42501', null, 'Anon cannot access project_parties');
 reset role;
 
 -- ============================================================================
