@@ -1,38 +1,28 @@
 "use client";
 
-import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { createOrganization } from "./actions";
 
 export function CreateOrgForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [name, setName] = useState("");
-  const [slug, setSlug] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    try {
-      const supabase = createClient();
-      const { error: rpcError } = await supabase.rpc("create_org", {
-        p_name: name.trim(),
-        p_slug: slug.trim().toLowerCase(),
-      });
+    const formData = new FormData(e.currentTarget);
+    const result = await createOrganization(formData);
 
-      if (rpcError) {
-        setError(rpcError.message);
-        setLoading(false);
-        return;
-      }
-
-      router.refresh();
-    } catch {
-      setError("Failed to create organization. Please try again.");
+    if (result.error) {
+      setError(result.error);
       setLoading(false);
+    } else {
+      // Success - refresh the page to show the new org
+      router.refresh();
     }
   };
 
@@ -44,13 +34,10 @@ export function CreateOrgForm() {
         </label>
         <input
           id="name"
+          name="name"
           type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
           disabled={loading}
           required
-          minLength={1}
-          maxLength={255}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
           placeholder="Acme Construction"
         />
@@ -62,14 +49,11 @@ export function CreateOrgForm() {
         </label>
         <input
           id="slug"
+          name="slug"
           type="text"
-          value={slug}
-          onChange={(e) => setSlug(e.target.value)}
           disabled={loading}
           required
-          minLength={2}
-          maxLength={63}
-          pattern="[a-z0-9-]+"
+          pattern="[a-z0-9-]{2,63}"
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
           placeholder="acme-construction"
         />

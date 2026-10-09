@@ -1,10 +1,12 @@
-import "server-only";
 import { z } from "zod";
 
 const envSchema = z.object({
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),
+
+  // Site configuration
+  NEXT_PUBLIC_SITE_URL: z.string().url().default("http://localhost:3000"),
 
   // Supabase (public)
   NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),
@@ -29,6 +31,7 @@ const envSchema = z.object({
   
   // Auth configuration
   NEXT_PUBLIC_AUTH_MICROSOFT_ENABLED: z.string().optional(),
+  AUTH_OPEN_SIGNUP: z.string().optional(),
 });
 
 export const env = envSchema.parse(process.env);

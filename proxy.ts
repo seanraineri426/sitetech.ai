@@ -35,10 +35,23 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   // Protect /app routes - redirect to login if not authenticated
-  if (request.nextUrl.pathname.startsWith("/app") && !user) {
+  // Match /app or /app/* but not /apple or /application
+  const isAppRoute =
+    request.nextUrl.pathname === "/app" || request.nextUrl.pathname.startsWith("/app/");
+
+  if (isAppRoute && !user) {
     const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("next", request.nextUrl.pathname);
-    return NextResponse.redirect(loginUrl);
+    // Include full path with query string
+    const nextPath = request.nextUrl.pathname + request.nextUrl.search;
+    loginUrl.searchParams.set("next", nextPath);
+    
+    // Copy cookies from Supabase response to redirect response
+    const redirectResponse = NextResponse.redirect(loginUrl);
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie);
+    });
+    
+    return redirectResponse;
   }
 
   return supabaseResponse;

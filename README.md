@@ -139,9 +139,8 @@ cp .env.example .env.local
 3. Configure Auth redirect URLs in Supabase Dashboard:
    - Authentication → URL Configuration
    - Add to "Redirect URLs":
-     - Local: `http://127.0.0.1:54321/auth/v1/callback`
-     - Production: `https://<project-ref>.supabase.co/auth/v1/callback`
-     - Your app domain: `https://yourdomain.com/auth/callback`
+     - Local development: `http://127.0.0.1:3000/auth/callback`, `http://localhost:3000/auth/callback`
+     - Production: `https://app.sitetech.ai/auth/callback`
 
 ### Microsoft (Azure AD) Sign-In (Optional)
 
@@ -155,7 +154,23 @@ To enable Microsoft sign-in:
 2. Configure Azure AD OAuth in Supabase:
    - Follow [Supabase Azure AD guide](https://supabase.com/docs/guides/auth/social-login/auth-azure)
    - Add Azure AD application credentials to your Supabase project
+   - Set the Microsoft Entra app redirect URIs to:
+     - Local: `http://127.0.0.1:54321/auth/v1/callback`
+     - Hosted: `https://<project-ref>.supabase.co/auth/v1/callback`
    - No additional environment variables needed in the app (handled by Supabase)
+
+### Invite-Only Signup (Default)
+
+By default, signup is **invite-only** for the pilot. Users must be invited via the Supabase dashboard:
+
+1. In Supabase Dashboard → Authentication → Users
+2. Click "Invite user" and enter their email
+3. They will receive a magic link to sign in
+
+To enable open signup (any email can sign up), set:
+```
+AUTH_OPEN_SIGNUP=true
+```
 
 See `.env.example` for all required environment variables.
 
@@ -175,7 +190,7 @@ See `.env.example` for all required environment variables.
 ## API Endpoints
 
 - `GET /api/health` — Health check endpoint (returns `{ ok: true, supabase: { configured: boolean } }`)
-- `POST /auth/callback` — OAuth callback handler for authentication
+- `GET /auth/callback` — OAuth callback handler for authentication
 
 ## Stack
 
