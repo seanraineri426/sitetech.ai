@@ -43,6 +43,27 @@ done
 echo -e "\n${YELLOW}Installing pgTAP extension...${NC}"
 sudo -u postgres psql -d $DB_NAME -v ON_ERROR_STOP=1 -c "CREATE EXTENSION IF NOT EXISTS pgtap;"
 
+# Grant PUBLIC execute on pgTAP functions (they are created after our event trigger is active)
+echo -e "${YELLOW}Granting PUBLIC execute on pgTAP functions...${NC}"
+sudo -u postgres psql -d $DB_NAME -v ON_ERROR_STOP=1 -c "
+DO \$\$
+DECLARE
+  func record;
+BEGIN
+  FOR func IN 
+    SELECT p.oid::regprocedure as func_sig
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    JOIN pg_depend d ON d.objid = p.oid AND d.deptype = 'e'
+    JOIN pg_extension e ON e.oid = d.refobjid AND e.extname = 'pgtap'
+    WHERE n.nspname IN ('public', 'tap')
+  LOOP
+    EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO PUBLIC', func.func_sig);
+  END LOOP;
+END;
+\$\$;
+"
+
 # Run pgTAP tests
 echo -e "\n${YELLOW}Running pgTAP tests...${NC}"
 PGPASSWORD=postgres pg_prove -d $DB_NAME -U authenticator supabase/tests/*.test.sql
