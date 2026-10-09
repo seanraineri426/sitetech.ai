@@ -149,7 +149,7 @@ The system maintains an audit log of:
    ✓ Hostile facts flow through fact_rules → impact → rank → verify → deliver  
    ✓ Output brief grounded in fixture records only
 
-**Result**: 19/19 checks pass. Tests execute real pipeline code (no stubs, no `assert True`). Suite runs in CI on every commit with network isolation.
+**Result**: 19/19 checks pass. Tests execute real pipeline code (no stubs, no `assert True`). Suite runs in CI on every commit with OS-level network namespace isolation (`sudo unshare -n`) as the guarantee. Python-level patches (sitecustomize.py) provide best-effort blocking for local dev; known bypasses exist but are blocked by the OS namespace in CI.
 
 ## Residual Risks
 

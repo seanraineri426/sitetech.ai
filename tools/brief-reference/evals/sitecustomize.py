@@ -89,10 +89,11 @@ if os.environ.get("OFFLINE_TESTS") == "1":
             # Propagate OFFLINE_TESTS and PYTHONPATH to child processes
             if 'env' not in kwargs:
                 kwargs['env'] = os.environ.copy()
-            if kwargs['env'] is not None:
-                kwargs['env']['OFFLINE_TESTS'] = '1'
-                if 'PYTHONPATH' in os.environ:
-                    kwargs['env']['PYTHONPATH'] = os.environ['PYTHONPATH']
+            if kwargs['env'] is None:
+                kwargs['env'] = os.environ.copy()
+            kwargs['env']['OFFLINE_TESTS'] = '1'
+            if 'PYTHONPATH' in os.environ:
+                kwargs['env']['PYTHONPATH'] = os.environ['PYTHONPATH']
             
             super().__init__(args, **kwargs)
     

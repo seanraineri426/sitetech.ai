@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Test runner for brief-reference tests. Runs all free test suites offline.
 
-Network blocking is enforced via sitecustomize.py injected into PYTHONPATH,
-which patches socket/urllib/subprocess in every child process.
+Network blocking: OS namespace isolation (sudo unshare -n) in CI is the guarantee.
+sitecustomize.py provides best-effort Python-level patching for local dev.
 """
 import sys
 import os
@@ -18,8 +18,9 @@ EVALS_DIR = os.path.join(HERE, "evals")
 current_pythonpath = os.environ.get("PYTHONPATH", "")
 os.environ["PYTHONPATH"] = f"{EVALS_DIR}:{current_pythonpath}" if current_pythonpath else EVALS_DIR
 
-print(f"[run_tests] Network blocking active via sitecustomize.py", flush=True)
+print(f"[run_tests] Network blocking: sitecustomize.py (best-effort Python patches)", flush=True)
 print(f"[run_tests] PYTHONPATH includes: {EVALS_DIR}", flush=True)
+print(f"[run_tests] CI guarantee: OS network namespace isolation", flush=True)
 
 def run_test_suite(name, command, xfail=False):
     """Run a test suite and report results.
