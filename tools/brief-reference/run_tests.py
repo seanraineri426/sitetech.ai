@@ -83,17 +83,23 @@ def check_no_holdout_material():
         r'answer_key',
     ]
     
+    # Allow-list: specific files permitted to match holdout patterns
+    allowed_holdout_files = {
+        'tools/brief-reference/evals/fixture/expected_findings.json',
+        'tools/brief-reference/evals/fixture/reference_ranking.json',
+        'tools/brief-reference/evals/fixture/src/reference_ranking.py',
+        'tools/brief-reference/evals/fixture/src/p3_comms_key.py',
+        'tools/brief-reference/schemas/expected_findings.schema.json',
+        'tools/brief-reference/examples/brief_linden_yard_2026-10-06.json',
+    }
+    
     found = []
     for file_path in all_files:
         file_lower = file_path.lower()
         for pattern in holdout_patterns:
             if re.search(pattern, file_lower):
-                # Exception: Linden fixture files are OK (training data)
-                if 'tools/brief-reference/evals/fixture/' in file_path:
-                    continue
-                if 'tools/brief-reference/examples/' in file_path:
-                    continue
-                if 'tools/brief-reference/schemas/' in file_path:
+                # Check if file is in the allow-list
+                if file_path in allowed_holdout_files:
                     continue
                 found.append((file_path, pattern))
                 break
