@@ -836,11 +836,11 @@ reset role;
 set role postgres;
 insert into auth.users (id, email) values ('99999999-9999-9999-9999-999999999999', 'delete-test@example.com');
 insert into public.project_notice_periods (org_id, project_id, contract_kind, notice_type, days, day_basis, entered_by) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-aaaa-aaaa-aaaa-333333333333', 'owner_gc', 'other', 5, 'calendar', '99999999-9999-9999-9999-999999999999');
-delete from auth.users where id = '99999999-9999-9999-9999-999999999999';
+delete from public.profiles where id = '99999999-9999-9999-9999-999999999999';
 select is(
   (select entered_by from public.project_notice_periods where notice_type = 'other'),
   null,
-  'Deleting user sets entered_by to null'
+  'Deleting profile sets entered_by to null'
 );
 reset role;
 
