@@ -221,16 +221,26 @@ export function redactAddresses(text: string): string {
 
 /**
  * Map Graph message to normalized SiteTech email.
- * Raw email addresses are stored but NOT fingerprinted as content.
+ * Raw email addresses are stored in from/to/cc fields only.
+ * All text fields (subject, body_preview, body_text) are redacted.
  * 
  * CTO 2026-10-09: Extract full body text including quoted reply history.
+ * CTO 2026-10-09 (updated): Redact addresses in stored body_text too.
  */
 export function mapGraphMessageToNormalized(
   message: GraphMessage,
   mailbox: string
 ): NormalizedEmail {
+  // Extract body text (null bytes stripped, capped)
   const bodyText = extractBodyText(message.body);
-  const fingerprintPayload = buildEmailFingerprintPayload(message, bodyText);
+  
+  // Redact addresses in all text fields
+  const redactedSubject = redactAddresses(message.subject);
+  const redactedBodyPreview = redactAddresses(message.bodyPreview);
+  const redactedBodyText = bodyText ? redactAddresses(bodyText) : null;
+  
+  // Fingerprint uses redacted body text
+  const fingerprintPayload = buildEmailFingerprintPayload(message, redactedBodyText);
   const fingerprint = createHash("sha256")
     .update(canonicalStringify(fingerprintPayload))
     .digest("hex");
@@ -242,9 +252,9 @@ export function mapGraphMessageToNormalized(
     
     source_mailbox: mailbox,
     
-    subject: message.subject,
-    body_preview: message.bodyPreview,
-    body_text: bodyText,
+    subject: redactedSubject,
+    body_preview: redactedBodyPreview,
+    body_text: redactedBodyText,
     // Raw addresses stored (CTO approved for email records only)
     from: {
       name: message.from.emailAddress.name,
@@ -275,12 +285,12 @@ export function mapGraphMessageToNormalized(
 /**
  * Convert normalized email to raw record shape for storage layer.
  * 
- * CTO 2026-10-09: Store body_text_sha256 (NOT body_text itself).
+ * CTO 2026-10-09: Store body_text_sha256 of redacted body_text (NOT body_text itself).
  * Store participant domains only (NOT raw addresses) in allowlistedPayload.
- * Redact addresses from subject and body_preview before storage.
+ * Text fields (subject, body_preview, body_text) are already redacted in normalized email.
  */
 export function emailToRawRecord(email: NormalizedEmail): RawRecord {
-  // Compute body_text_sha256
+  // Compute body_text_sha256 from already-redacted body_text
   const bodyTextSha256 = email.body_text
     ? createHash('sha256').update(email.body_text).digest('hex')
     : null;
@@ -290,16 +300,13 @@ export function emailToRawRecord(email: NormalizedEmail): RawRecord {
   const toDomains = email.to_recipients.map(r => extractDomain(r.address)).sort();
   const ccDomains = email.cc_recipients.map(r => extractDomain(r.address)).sort();
 
-  // Redact addresses from subject and body_preview
-  const redactedSubject = redactAddresses(email.subject);
-  const redactedBodyPreview = redactAddresses(email.body_preview);
-
   return {
     entityType: "email",
     externalId: email.external_id,
     allowlistedPayload: {
-      subject: redactedSubject,
-      body_preview: redactedBodyPreview,
+      // Already redacted in normalized email
+      subject: email.subject,
+      body_preview: email.body_preview,
       body_text_sha256: bodyTextSha256,
       // Participant domains only (NOT raw addresses)
       from_domain: fromDomain,

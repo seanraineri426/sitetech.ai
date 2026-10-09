@@ -623,6 +623,289 @@ describe("Microsoft Graph mappers", () => {
       
       expect(elapsed).toBeLessThan(50);
     });
+
+    describe("construction text byte-for-byte unchanged", () => {
+      const constructionInputs = [
+        "#5@10 EW",
+        "#4@12\" o.c. T&B",
+        "03 30 00 Cast-in-Place Concrete",
+        "Spec 08 71 00 §2.3",
+        "$48,200 CO",
+        "CO #12 @ $4,500",
+        "$1.2M",
+        "($3,450.00)",
+        "RFI #045",
+        "RFI-045 rev 2",
+        "PCO 017",
+        "CE-23",
+        "ASI 4",
+        "SK-12",
+        "10/09/2026",
+        "Oct 9, 2026",
+        "2026-10-09T14:00:00Z",
+        "due 10/15 @ 2pm",
+        "W12x26@16",
+        "L4x4x1/4@24",
+        "meeting@2pm",
+        "beam B-3@grid C/4",
+      ];
+
+      for (const input of constructionInputs) {
+        it(`unchanged: ${input}`, async () => {
+          const { redactAddresses } = await import("../mappers");
+          expect(redactAddresses(input)).toBe(input);
+        });
+      }
+
+      it("realistic multi-line subject unchanged byte-for-byte", async () => {
+        const { redactAddresses } = await import("../mappers");
+        const subject = `RE: RFI #045 - Concrete Mix Design CO #12 @ $4,500
+Spec 03 30 00 Cast-in-Place Concrete - W12x26@16
+Due 10/15 @ 2pm, beam B-3@grid C/4, #5@10 EW
+Meeting@2pm Oct 9, 2026 ($48,200 CO)`;
+        
+        const result = redactAddresses(subject);
+        expect(result).toBe(subject);
+        expect(Buffer.from(result).equals(Buffer.from(subject))).toBe(true);
+      });
+
+      it("construction text unchanged through emailToRawRecord", async () => {
+        const { emailToRawRecord, mapGraphMessageToNormalized } = await import("../mappers");
+        const mockMessage = {
+          id: "msg1",
+          conversationId: "conv1",
+          subject: "CO #12 @ $4,500",
+          bodyPreview: "W12x26@16, #5@10 EW, due 10/15 @ 2pm",
+          body: { contentType: "text" as const, content: "beam B-3@grid C/4" },
+          from: { emailAddress: { name: "A", address: "a@x.com" } },
+          toRecipients: [],
+          ccRecipients: [],
+          receivedDateTime: "2026-10-09T12:00:00Z",
+          sentDateTime: "2026-10-09T12:00:00Z",
+          hasAttachments: false,
+          importance: "normal" as const,
+          isRead: false,
+          categories: [],
+        };
+
+        const normalized = mapGraphMessageToNormalized(mockMessage, "user@example.com");
+        const raw = emailToRawRecord(normalized);
+        const payload = raw.allowlistedPayload as Record<string, unknown>;
+
+        expect(payload.subject).toBe("CO #12 @ $4,500");
+        expect(payload.body_preview).toBe("W12x26@16, #5@10 EW, due 10/15 @ 2pm");
+      });
+    });
+
+    describe("byte-for-byte except addresses", () => {
+      it("construction + 1 address: exact span replacement", async () => {
+        const { redactAddresses } = await import("../mappers");
+        const input = "Contact alice@example.com for CO #12 @ $4,500";
+        const result = redactAddresses(input);
+        
+        // Build expected by manually replacing the known address span
+        const expected = "Contact [email-example.com] for CO #12 @ $4,500";
+        expect(result).toBe(expected);
+        
+        // Verify only the address span changed
+        const beforeAddr = "Contact ";
+        const afterAddr = " for CO #12 @ $4,500";
+        expect(result.startsWith(beforeAddr)).toBe(true);
+        expect(result.endsWith(afterAddr)).toBe(true);
+      });
+
+      it("construction + 2 addresses: exact spans replacement", async () => {
+        const { redactAddresses } = await import("../mappers");
+        const input = "From bob@x.com to carol@y.com re: W12x26@16, #5@10 EW";
+        const result = redactAddresses(input);
+        
+        // Build expected by manually replacing known address spans
+        const expected = "From [email-x.com] to [email-y.com] re: W12x26@16, #5@10 EW";
+        expect(result).toBe(expected);
+        
+        // Verify construction text unchanged
+        expect(result).toContain("W12x26@16");
+        expect(result).toContain("#5@10 EW");
+      });
+
+      it("construction + 3 addresses in realistic text", async () => {
+        const { redactAddresses } = await import("../mappers");
+        const input = `RFI #045 from alice@gc.com to bob@sub.example.com, carol@another.org
+Spec 03 30 00 - due 10/15 @ 2pm
+CO #12 @ $4,500, beam B-3@grid C/4`;
+        
+        const result = redactAddresses(input);
+        
+        // Build expected manually
+        const expected = `RFI #045 from [email-gc.com] to [email-sub.example.com], [email-another.org]
+Spec 03 30 00 - due 10/15 @ 2pm
+CO #12 @ $4,500, beam B-3@grid C/4`;
+        
+        expect(result).toBe(expected);
+        
+        // Verify no addresses remain and construction text intact
+        expect(result).not.toContain("alice@");
+        expect(result).not.toContain("bob@");
+        expect(result).not.toContain("carol@");
+        expect(result).toContain("due 10/15 @ 2pm");
+        expect(result).toContain("CO #12 @ $4,500");
+        expect(result).toContain("beam B-3@grid C/4");
+      });
+    });
+
+    describe("body_text redaction", () => {
+      it("body_text IS redacted, contains no address-like x@y.z (text body)", async () => {
+        const { mapGraphMessageToNormalized } = await import("../mappers");
+        const textContent = "Contact alice@example.com or bob@test.org for details.";
+        const mockMessage = {
+          id: "msg1",
+          conversationId: "conv1",
+          subject: "Test",
+          bodyPreview: "Preview",
+          body: { contentType: "text" as const, content: textContent },
+          from: { emailAddress: { name: "A", address: "a@x.com" } },
+          toRecipients: [],
+          ccRecipients: [],
+          receivedDateTime: "2026-10-09T12:00:00Z",
+          sentDateTime: "2026-10-09T12:00:00Z",
+          hasAttachments: false,
+          importance: "normal" as const,
+          isRead: false,
+          categories: [],
+        };
+
+        const normalized = mapGraphMessageToNormalized(mockMessage, "user@example.com");
+        
+        // body_text must be redacted
+        expect(normalized.body_text).not.toContain("alice@");
+        expect(normalized.body_text).not.toContain("bob@");
+        expect(normalized.body_text).toContain("[email-example.com]");
+        expect(normalized.body_text).toContain("[email-test.org]");
+      });
+
+      it("body_text IS redacted, contains no address-like x@y.z (HTML body)", async () => {
+        const { mapGraphMessageToNormalized } = await import("../mappers");
+        const htmlContent = "<p>Contact alice@example.com or <a href='mailto:bob@test.org'>bob@test.org</a></p>";
+        const mockMessage = {
+          id: "msg1",
+          conversationId: "conv1",
+          subject: "Test",
+          bodyPreview: "Preview",
+          body: { contentType: "html" as const, content: htmlContent },
+          from: { emailAddress: { name: "A", address: "a@x.com" } },
+          toRecipients: [],
+          ccRecipients: [],
+          receivedDateTime: "2026-10-09T12:00:00Z",
+          sentDateTime: "2026-10-09T12:00:00Z",
+          hasAttachments: false,
+          importance: "normal" as const,
+          isRead: false,
+          categories: [],
+        };
+
+        const normalized = mapGraphMessageToNormalized(mockMessage, "user@example.com");
+        
+        // body_text must be redacted
+        expect(normalized.body_text).not.toContain("alice@");
+        expect(normalized.body_text).not.toContain("bob@");
+      });
+
+      it("body_text byte-for-byte except address spans", async () => {
+        const { mapGraphMessageToNormalized } = await import("../mappers");
+        const textContent = "From alice@example.com: CO #12 @ $4,500, W12x26@16";
+        const mockMessage = {
+          id: "msg1",
+          conversationId: "conv1",
+          subject: "Test",
+          bodyPreview: "Preview",
+          body: { contentType: "text" as const, content: textContent },
+          from: { emailAddress: { name: "A", address: "a@x.com" } },
+          toRecipients: [],
+          ccRecipients: [],
+          receivedDateTime: "2026-10-09T12:00:00Z",
+          sentDateTime: "2026-10-09T12:00:00Z",
+          hasAttachments: false,
+          importance: "normal" as const,
+          isRead: false,
+          categories: [],
+        };
+
+        const normalized = mapGraphMessageToNormalized(mockMessage, "user@example.com");
+        
+        // Build expected: input with only address span replaced
+        const expected = "From [email-example.com]: CO #12 @ $4,500, W12x26@16";
+        expect(normalized.body_text).toBe(expected);
+        
+        // Construction text preserved
+        expect(normalized.body_text).toContain("CO #12 @ $4,500");
+        expect(normalized.body_text).toContain("W12x26@16");
+      });
+
+      it("200KB body with scattered addresses redacts under 100ms", async () => {
+        const { mapGraphMessageToNormalized } = await import("../mappers");
+        
+        // Build 200KB text with addresses every ~500 chars
+        let content = "";
+        for (let i = 0; i < 400; i++) {
+          content += "x".repeat(490) + " alice@example.com ";
+        }
+        
+        const mockMessage = {
+          id: "msg1",
+          conversationId: "conv1",
+          subject: "Test",
+          bodyPreview: "Preview",
+          body: { contentType: "text" as const, content },
+          from: { emailAddress: { name: "A", address: "a@x.com" } },
+          toRecipients: [],
+          ccRecipients: [],
+          receivedDateTime: "2026-10-09T12:00:00Z",
+          sentDateTime: "2026-10-09T12:00:00Z",
+          hasAttachments: false,
+          importance: "normal" as const,
+          isRead: false,
+          categories: [],
+        };
+
+        const t0 = performance.now();
+        const normalized = mapGraphMessageToNormalized(mockMessage, "user@example.com");
+        const elapsed = performance.now() - t0;
+        
+        expect(elapsed).toBeLessThan(100);
+        expect(normalized.body_text).not.toContain("alice@");
+      });
+
+      it("from/to/cc still hold raw addresses", async () => {
+        const { mapGraphMessageToNormalized } = await import("../mappers");
+        const mockMessage = {
+          id: "msg1",
+          conversationId: "conv1",
+          subject: "Test",
+          bodyPreview: "Preview",
+          body: { contentType: "text" as const, content: "Body with alice@example.com" },
+          from: { emailAddress: { name: "Alice", address: "alice@example.com" } },
+          toRecipients: [{ emailAddress: { name: "Bob", address: "bob@test.org" } }],
+          ccRecipients: [{ emailAddress: { name: "Carol", address: "carol@x.com" } }],
+          receivedDateTime: "2026-10-09T12:00:00Z",
+          sentDateTime: "2026-10-09T12:00:00Z",
+          hasAttachments: false,
+          importance: "normal" as const,
+          isRead: false,
+          categories: [],
+        };
+
+        const normalized = mapGraphMessageToNormalized(mockMessage, "user@example.com");
+        
+        // Raw addresses preserved in from/to/cc
+        expect(normalized.from.address).toBe("alice@example.com");
+        expect(normalized.to_recipients[0].address).toBe("bob@test.org");
+        expect(normalized.cc_recipients[0].address).toBe("carol@x.com");
+        
+        // But text fields are redacted
+        expect(normalized.body_text).not.toContain("alice@");
+        expect(normalized.body_text).toContain("[email-example.com]");
+      });
+    });
   });
 
   describe("size caps and null byte stripping", () => {
