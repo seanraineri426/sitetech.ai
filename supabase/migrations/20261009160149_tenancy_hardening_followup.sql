@@ -1,0 +1,146 @@
+-- Migration 0004: Tenancy hardening follow-up (fixes gaps in merged PR #8)
+-- Fixes: column-specific SET NULL, missing cascades, user delete FKs, anon privileges
+
+-- ============================================================================
+-- PRE-CHECK: Verify no data mismatches before applying constraints
+-- ============================================================================
+
+do $$
+declare
+  mismatch_count int;
+  mismatch_ids text;
+begin
+  -- Check for cross-org connection references in project_sources
+  select count(*)::int, string_agg(id::text, ', ')
+  into mismatch_count, mismatch_ids
+  from (
+    select ps.id from public.project_sources ps
+    left join public.integration_connections ic 
+      on ps.connection_id = ic.id and ps.org_id = ic.org_id
+    where ic.id is null
+    limit 5
+  ) sample;
+  
+  if mismatch_count > 0 then
+    raise exception 'Found % project_sources with cross-org connection_id references (sample ids: %)', 
+      (select count(*)::int from public.project_sources ps
+       left join public.integration_connections ic 
+         on ps.connection_id = ic.id and ps.org_id = ic.org_id
+       where ic.id is null),
+      mismatch_ids;
+  end if;
+  
+  -- Check for cross-org project_source references in sync_runs
+  select count(*)::int, string_agg(id::text, ', ')
+  into mismatch_count, mismatch_ids
+  from (
+    select sr.id from public.sync_runs sr
+    left join public.project_sources ps 
+      on sr.project_source_id = ps.id and sr.org_id = ps.org_id and sr.project_id = ps.project_id
+    where ps.id is null
+    limit 5
+  ) sample;
+  
+  if mismatch_count > 0 then
+    raise exception 'Found % sync_runs with cross-org project_source_id references (sample ids: %)', 
+      (select count(*)::int from public.sync_runs sr
+       left join public.project_sources ps 
+         on sr.project_source_id = ps.id and sr.org_id = ps.org_id and sr.project_id = ps.project_id
+       where ps.id is null),
+      mismatch_ids;
+  end if;
+end;
+$$;
+
+-- ============================================================================
+-- 1. FIX COLUMN-SPECIFIC SET NULL for composite FKs
+-- ============================================================================
+
+-- schedule_activities.raw_record_id -> raw_records (nullable, part of 3-column FK)
+alter table public.schedule_activities drop constraint schedule_activities_raw_record_fk;
+alter table public.schedule_activities add constraint schedule_activities_raw_record_fk 
+  foreign key (raw_record_id, org_id, project_id) references public.raw_records(id, org_id, project_id) on delete set null (raw_record_id);
+
+-- ============================================================================
+-- 2. ADD CASCADE to composite FK that replaced cascading single-column FKs
+-- ============================================================================
+
+-- project_sources.connection_id -> integration_connections (was cascade in 0002)
+alter table public.project_sources drop constraint project_sources_connection_fk;
+alter table public.project_sources add constraint project_sources_connection_fk 
+  foreign key (connection_id, org_id) references public.integration_connections(id, org_id) on delete cascade;
+
+-- sync_runs.project_source_id -> project_sources (was cascade in 0002)
+alter table public.sync_runs drop constraint sync_runs_project_source_fk;
+alter table public.sync_runs add constraint sync_runs_project_source_fk 
+  foreign key (project_source_id, org_id, project_id) references public.project_sources(id, org_id, project_id) on delete cascade;
+
+-- ============================================================================
+-- 3. ADD ON DELETE SET NULL for user FKs
+-- ============================================================================
+
+-- projects.created_by -> profiles
+alter table public.projects drop constraint projects_created_by_fkey;
+alter table public.projects add constraint projects_created_by_fkey 
+  foreign key (created_by) references public.profiles(id) on delete set null;
+
+-- audit_log.actor_user_id -> profiles
+alter table public.audit_log drop constraint audit_log_actor_user_id_fkey;
+alter table public.audit_log add constraint audit_log_actor_user_id_fkey 
+  foreign key (actor_user_id) references public.profiles(id) on delete set null;
+
+-- ============================================================================
+-- 4. ADD MISSING audit_log org FK with CASCADE
+-- ============================================================================
+
+-- Drop the conflicting FK from 0001 (SET NULL) before adding CASCADE
+-- Decision: audit rows are deleted with org (match purge-on-disconnect)
+alter table public.audit_log drop constraint audit_log_org_id_fkey;
+
+alter table public.audit_log add constraint audit_log_org_fk 
+  foreign key (org_id) references public.orgs(id) on delete cascade;
+
+-- ============================================================================
+-- 5. COMPREHENSIVE ANON PRIVILEGE REVOCATION
+-- ============================================================================
+
+-- Revoke ALL from anon on all tables and sequences
+revoke all on all tables in schema public from anon;
+revoke all on all sequences in schema public from anon;
+revoke all on all functions in schema public from anon;
+
+-- Alter default privileges: anon gets nothing
+alter default privileges for role postgres in schema public revoke all on tables from anon;
+alter default privileges for role postgres in schema public revoke all on sequences from anon;
+alter default privileges for role postgres in schema public revoke all on functions from anon;
+
+-- Alter default privileges: authenticated cannot truncate
+alter default privileges for role postgres in schema public revoke truncate on tables from authenticated;
+
+-- Revoke execute on functions from PUBLIC (prevents anon access via PUBLIC role)
+-- Exception: keep PUBLIC execute on extension functions (e.g., pgTAP)
+do $$
+declare
+  func record;
+begin
+  for func in 
+    select p.oid::regprocedure as func_sig
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'
+      and not exists (
+        select 1 from pg_depend d 
+        where d.classid = 'pg_proc'::regclass 
+          and d.objid = p.oid 
+          and d.deptype = 'e'
+      )
+  loop
+    execute format('revoke execute on function %s from public', func.func_sig);
+  end loop;
+end;
+$$;
+
+-- Revoke default PUBLIC execute privilege for functions created by postgres
+-- This overrides PostgreSQL's system default that grants EXECUTE to PUBLIC
+-- The global form (without IN SCHEMA) is required; the IN SCHEMA form is a no-op for PUBLIC
+alter default privileges for role postgres revoke execute on functions from public;

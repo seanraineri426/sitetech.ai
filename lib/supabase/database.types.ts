@@ -24,7 +24,7 @@ isOneToOne: false
       referencedRelation: "profiles"
       referencedColumns: ["id"]
     },{
-      foreignKeyName: "audit_log_org_id_fkey"
+      foreignKeyName: "audit_log_org_fk"
       columns: ["org_id"]
 isOneToOne: false
       referencedRelation: "orgs"
