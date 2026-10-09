@@ -6,7 +6,7 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { ActionCardData } from '@/lib/actions/types';
-import { redactEmailAddresses } from '@/lib/actions/redact-email';
+import { redactAddresses } from '@/lib/redact/addresses';
 
 function WhyPanel({
   why,
@@ -57,13 +57,13 @@ function WhyPanel({
 
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Subject</p>
-                    <p className="text-base">{redactEmailAddresses(why.subject)}</p>
+                    <p className="text-base">{redactAddresses(why.subject)}</p>
                   </div>
 
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Excerpt</p>
                     <blockquote className="text-base border-l-2 border-primary pl-4 italic">
-                      &ldquo;{redactEmailAddresses(why.quote)}&rdquo;
+                      &ldquo;{redactAddresses(why.quote)}&rdquo;
                     </blockquote>
                   </div>
                 </>
@@ -222,8 +222,8 @@ export function ActionCard({ data, onApprove, onEdit, onDismiss }: ActionCardPro
           {data.draft.kind === 'email' && (
             <div className="space-y-0.5 text-muted-foreground">
               <p>To: {data.draft.toDisplay}</p>
-              <p>Subject: {redactEmailAddresses(data.draft.subject)}</p>
-              <p className="line-clamp-2">{redactEmailAddresses(data.draft.body)}</p>
+              <p>Subject: {redactAddresses(data.draft.subject)}</p>
+              <p className="line-clamp-2">{redactAddresses(data.draft.body)}</p>
             </div>
           )}
           {data.draft.kind === 'procore_paste' && (
