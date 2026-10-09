@@ -102,12 +102,13 @@ export class GraphClient {
 
   /**
    * Request chokepoint: validates method, origin, and scope BEFORE attaching token.
+   * Validates optional Prefer header (only value allowed: outlook.body-content-type="text").
    */
   private async request(
     url: string,
     method: string,
     token: string,
-    extraHeaders?: Record<string, string>
+    preferBodyText?: boolean
   ): Promise<Response> {
     // Enforce GET-only
     if (method !== "GET") {
@@ -147,12 +148,17 @@ export class GraphClient {
       );
     }
 
-    const headers: Record<string, string> = {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/json",
-      "User-Agent": "ISV|SiteTech|1.0",
-      ...extraHeaders,
-    };
+    // Build headers: standard headers LAST to prevent override
+    const headers: Record<string, string> = {};
+    
+    if (preferBodyText) {
+      headers.Prefer = 'outlook.body-content-type="text"';
+    }
+    
+    // Standard headers last - cannot be overridden
+    headers.Authorization = `Bearer ${token}`;
+    headers.Accept = "application/json";
+    headers["User-Agent"] = "ISV|SiteTech|1.0";
 
     return retryRequest(
       () =>
@@ -175,7 +181,7 @@ export class GraphClient {
     path: string,
     params?: Record<string, string>,
     schema?: z.ZodType<GraphResponse<T>>,
-    extraHeaders?: Record<string, string>
+    preferBodyText?: boolean
   ): Promise<GraphResponse<T>> {
     const token = await this.getAccessToken();
 
@@ -188,7 +194,7 @@ export class GraphClient {
       });
     }
 
-    const response = await this.request(url.toString(), "GET", token, extraHeaders);
+    const response = await this.request(url.toString(), "GET", token, preferBodyText);
 
     if (!response.ok) {
       const errorCode = response.headers.get("X-Error-Code") || "UNKNOWN";
@@ -230,7 +236,7 @@ export class GraphClient {
     path: string,
     deltaLink?: string,
     selectFields?: string,
-    extraHeaders?: Record<string, string>
+    preferBodyText?: boolean
   ): Promise<DeltaResult<T>> {
     // Build initial URL: /delta first, then query params
     let currentUrl: string;
@@ -249,7 +255,7 @@ export class GraphClient {
       currentUrl,
       undefined,
       undefined,
-      extraHeaders
+      preferBodyText
     );
 
     const items: T[] = [];

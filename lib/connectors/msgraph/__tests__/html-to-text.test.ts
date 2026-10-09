@@ -23,9 +23,24 @@ describe("htmlToText", () => {
     expect(result).toContain('• Item 2');
   });
 
-  it("decodes HTML entities", () => {
+  it("decodes HTML entities with &amp; last", () => {
     const html = 'A &amp; B &lt; C &gt; D &quot;E&quot; &#39;F&#39; &nbsp;G';
     expect(htmlToText(html)).toBe('A & B < C > D "E" \'F\'  G');
+  });
+
+  it("decodes &amp; last so &amp;lt; becomes &lt; not <", () => {
+    const html = '&amp;lt; &amp;gt; &amp;amp;';
+    expect(htmlToText(html)).toBe('&lt; &gt; &amp;');
+  });
+
+  it("decodes numeric entities (decimal)", () => {
+    const html = 'Non-breaking space: &#160; Em dash: &#8212;';
+    expect(htmlToText(html)).toBe('Non-breaking space: \u00A0 Em dash: \u2014');
+  });
+
+  it("decodes numeric entities (hex)", () => {
+    const html = 'Right quote: &#x2019; Euro: &#x20AC;';
+    expect(htmlToText(html)).toBe('Right quote: \u2019 Euro: \u20AC');
   });
 
   it("collapses multiple newlines", () => {
@@ -61,5 +76,70 @@ describe("htmlToText", () => {
     expect(htmlToText('')).toBe('');
     expect(htmlToText('   ')).toBe('');
     expect(htmlToText('<div></div>')).toBe('');
+  });
+
+  it("removes <style> block contents entirely", () => {
+    const html = '<style>body { color: red; }</style><p>Visible text</p>';
+    expect(htmlToText(html)).toBe('Visible text');
+  });
+
+  it("removes <script> block contents entirely", () => {
+    const html = '<script>alert("test");</script><p>Visible text</p>';
+    expect(htmlToText(html)).toBe('Visible text');
+  });
+
+  it("removes <head> block contents entirely", () => {
+    const html = '<head><title>Page Title</title></head><p>Visible text</p>';
+    expect(htmlToText(html)).toBe('Visible text');
+  });
+
+  it("converts </blockquote> to newline", () => {
+    const html = '<blockquote>Quoted text</blockquote>More text';
+    const result = htmlToText(html);
+    expect(result).toContain('Quoted text\n');
+    expect(result).toContain('More text');
+  });
+
+  it("handles realistic Outlook HTML with style block and quoted reply", () => {
+    const html = `
+      <html>
+      <head>
+        <style>
+          .MsoNormal { margin: 0; }
+          a { color: blue; }
+        </style>
+      </head>
+      <body>
+        <div class="WordSection1">
+          <p class="MsoNormal">This is my reply with &#8220;smart quotes&#8221;.</p>
+          <p class="MsoNormal">&nbsp;</p>
+          <div style="border:none;border-top:solid #E1E1E1 1.0pt;padding:3.0pt 0in 0in 0in">
+            <p class="MsoNormal"><b>From:</b> John Doe<br>
+            <b>Sent:</b> October 9, 2026</p>
+          </div>
+          <blockquote style="margin-top:5.0pt;margin-bottom:5.0pt">
+            <p class="MsoNormal">Original message with &amp;lt;angle brackets&amp;gt;.</p>
+          </blockquote>
+        </div>
+      </body>
+      </html>
+    `;
+    const result = htmlToText(html);
+    
+    // Style block should be removed
+    expect(result).not.toContain('MsoNormal');
+    expect(result).not.toContain('color: blue');
+    
+    // Smart quotes should be decoded (&#8220; = U+201C, &#8221; = U+201D)
+    expect(result).toContain('This is my reply with');
+    expect(result).toContain('smart quotes');
+    
+    // Quoted reply should be preserved with proper structure
+    expect(result).toContain('From:');
+    expect(result).toContain('John Doe');
+    expect(result).toContain('Original message with &lt;angle brackets&gt;');
+    
+    // Should have line breaks between sections
+    expect(result.split('\n').length).toBeGreaterThan(1);
   });
 });

@@ -297,7 +297,7 @@ describe("Microsoft Graph fetchers", () => {
     });
   });
 
-  describe("fetchMailFolderDelta Prefer header", () => {
+  describe("fetchMailFolderDelta", () => {
     it("sends Prefer header to request plain text body content", async () => {
       mockFetch.mockResolvedValueOnce(mockTokenResponse);
       mockFetch.mockResolvedValueOnce({

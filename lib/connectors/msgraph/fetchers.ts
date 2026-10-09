@@ -56,7 +56,7 @@ export async function fetchMailFolderDelta(
     path,
     checkpoint,
     selectFields,
-    { Prefer: 'outlook.body-content-type="text"' }
+    true // preferBodyText
   );
 
   return {

@@ -252,6 +252,42 @@ describe("Microsoft Graph mappers", () => {
       expect(normalized.to_recipients[0].address).toBe("jane@example.com");
       expect(normalized.cc_recipients[0].address).toBe("bob@example.com");
     });
+
+    it("DOES change fingerprint when body_text changes", () => {
+      const message1: GraphMessage = {
+        ...mockMessage,
+        body: { contentType: "text", content: "Original body" },
+      };
+      const message2: GraphMessage = {
+        ...mockMessage,
+        body: { contentType: "text", content: "Modified body" },
+      };
+
+      const normalized1 = mapGraphMessageToNormalized(message1, "user@example.com");
+      const normalized2 = mapGraphMessageToNormalized(message2, "user@example.com");
+
+      // Body content is fingerprinted
+      expect(normalized1.fingerprint).not.toBe(normalized2.fingerprint);
+    });
+
+    it("does NOT change fingerprint when only bodyPreview changes (body_text stays same)", () => {
+      const message1: GraphMessage = {
+        ...mockMessage,
+        body: { contentType: "text", content: "Full body text" },
+        bodyPreview: "Preview 1",
+      };
+      const message2: GraphMessage = {
+        ...mockMessage,
+        body: { contentType: "text", content: "Full body text" },
+        bodyPreview: "Preview 2",
+      };
+
+      const normalized1 = mapGraphMessageToNormalized(message1, "user@example.com");
+      const normalized2 = mapGraphMessageToNormalized(message2, "user@example.com");
+
+      // Fingerprint uses body_text not bodyPreview per CTO 2026-10-09
+      expect(normalized1.fingerprint).toBe(normalized2.fingerprint);
+    });
   });
 
   describe("emailToRawRecord", () => {
