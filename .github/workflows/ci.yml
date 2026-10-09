@@ -54,10 +54,14 @@ jobs:
       - name: Test brief reference (offline, network isolated)
         run: |
           cd tools/brief-reference
-          unshare -n python3 run_tests.py || {
-            echo "Note: unshare -n requires CAP_SYS_ADMIN; falling back to PYTHONPATH-based blocking";
-            python3 run_tests.py;
-          }
+          # Try sudo unshare -n first (GitHub runners support this)
+          if sudo unshare -n python3 run_tests.py 2>/dev/null; then
+            echo "✓ Tests passed with network namespace isolation"
+          else
+            echo "✗ Network namespace isolation failed"
+            echo "Tests MUST run with either sudo unshare -n or docker --network none"
+            exit 1
+          fi
 
   rls-tests:
     runs-on: ubuntu-latest

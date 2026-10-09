@@ -41,11 +41,27 @@ const eslintConfig = defineConfig([
         "error",
         {
           selector: "ImportExpression[source.value=/brief-reference/]",
-          message: "Dynamic import() from tools/brief-reference/ is forbidden"
+          message: "Dynamic import() with string literal from tools/brief-reference/ is forbidden"
+        },
+        {
+          selector: "ImportExpression[source.type='TemplateLiteral']",
+          message: "Dynamic import() with template literal is forbidden (cannot verify brief-reference boundary at lint time)"
+        },
+        {
+          selector: "ImportExpression:not([source.type='Literal']):not([source.type='StringLiteral'])",
+          message: "Dynamic import() must use string literals only (cannot verify brief-reference boundary at lint time)"
         },
         {
           selector: "CallExpression[callee.name='require'][arguments.0.value=/brief-reference/]",
-          message: "require() from tools/brief-reference/ is forbidden"
+          message: "require() with string literal from tools/brief-reference/ is forbidden"
+        },
+        {
+          selector: "CallExpression[callee.name='require'][arguments.0.type='TemplateLiteral']",
+          message: "require() with template literal is forbidden (cannot verify brief-reference boundary at lint time)"
+        },
+        {
+          selector: "CallExpression[callee.name='require']:not([arguments.0.type='Literal']):not([arguments.0.type='StringLiteral'])",
+          message: "require() must use string literals only (cannot verify brief-reference boundary at lint time)"
         }
       ]
     }

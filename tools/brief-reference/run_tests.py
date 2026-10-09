@@ -160,7 +160,6 @@ def main():
         ("tests_zero_cost", "python3 -m harness.tests_zero_cost", False),
         ("tests_recall_pack", "python3 -m harness.tests_recall_pack", False),
         ("scorer_validation", "python3 test_scorer_on_gold_example.py", False),
-        ("linden_gate", "python3 test_linden_gate.py", True),  # XFAIL: 8/11 recall, needs deterministic linking
         ("prompt_injection_defense", "python3 -m harness.tests_prompt_injection", False),
     ]
     
@@ -168,15 +167,51 @@ def main():
         passed = run_test_suite(name, command, xfail)
         if not passed:
             all_passed = False
-            if xfail:
-                print(f"❌ FAILED (expected to fail, but passed): {name}")
-            else:
-                print(f"❌ FAILED: {name}")
+            print(f"❌ FAILED: {name}")
         else:
-            if xfail:
-                print(f"✓ XFAIL (expected failure): {name}")
-            else:
-                print(f"✓ PASSED: {name}")
+            print(f"✓ PASSED: {name}")
+    
+    # Special handling for linden_gate: XFAIL with specific acceptance criteria
+    print("\n" + "=" * 60)
+    print("Running: linden_gate (XFAIL)")
+    print("=" * 60)
+    result = subprocess.run(
+        "python3 test_linden_gate.py",
+        shell=True,
+        cwd=os.path.join(os.path.dirname(__file__), "evals"),
+        capture_output=True,
+        text=True
+    )
+    
+    # Parse the output to check if it meets XFAIL criteria
+    output = result.stdout + result.stderr
+    xfail_acceptable = False
+    
+    if result.returncode == 1:
+        # Extract metrics from output
+        import re
+        recall_match = re.search(r'recall[:\s]+(\d+)/(\d+)', output, re.IGNORECASE)
+        must_not_flag_match = re.search(r'must[_\s-]not[_\s-]flag[:\s]+(\d+)', output, re.IGNORECASE)
+        fabricated_match = re.search(r'fabricated[_\s]refs?[:\s]+(\d+)', output, re.IGNORECASE)
+        
+        if recall_match:
+            surfaced, total = int(recall_match.group(1)), int(recall_match.group(2))
+            must_not_flag_violations = int(must_not_flag_match.group(1)) if must_not_flag_match else 0
+            fabricated_refs = int(fabricated_match.group(1)) if fabricated_match else 0
+            
+            # Accept as XFAIL if recall >= 8/11, no violations, no fabricated refs
+            if surfaced >= 8 and total >= 11 and must_not_flag_violations == 0 and fabricated_refs == 0:
+                xfail_acceptable = True
+                print(f"✓ XFAIL (expected failure): linden_gate")
+                print(f"  Reason: {surfaced}/{total} recall (target 10/11), {must_not_flag_violations} must-not-flag, {fabricated_refs} fabricated")
+    
+    if not xfail_acceptable:
+        all_passed = False
+        print(f"❌ FAILED: linden_gate")
+        print("  Gate failed below acceptable XFAIL threshold (need exit==1, recall>=8/11, 0 violations, 0 fabricated)")
+        if result.returncode != 1:
+            print(f"  Exit code: {result.returncode} (expected 1)")
+        print(f"  Output:\n{output[:500]}")
     
     print(f"\n{'=' * 60}")
     if all_passed:
