@@ -38,6 +38,7 @@ import { LoginForm } from "../login-form";
 describe("LoginForm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.flag = false;
   });
 
   afterEach(() => {

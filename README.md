@@ -169,7 +169,7 @@ By default, signup is **invite-only** for the pilot. Users must be invited via t
 
 **For hosted Supabase projects:** To enforce invite-only:
 - Set `AUTH_OPEN_SIGNUP=false` (or leave unset) in your environment
-- Set `enable_signup = false` in `supabase/config.toml` (lines 179 and 224)
+- Set `enable_signup = false` in `supabase/config.toml` (lines 176 and 221)
 - Disable "Allow new users to sign up" in Supabase Dashboard → Authentication → Providers → Email
 
 To enable open signup (any email can sign up), set:

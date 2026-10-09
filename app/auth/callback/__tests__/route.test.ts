@@ -177,6 +177,7 @@ describe("/auth/callback", () => {
       "/%2F%2Fevil.com",
       "//evil.com",
       "/%09/evil.com",
+      "/%2509/evil.com",
       "/\uff0f/evil.com",
     ];
 
