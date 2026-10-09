@@ -14,7 +14,7 @@
  *            required_on_site_date, lead_time, design_team/internal review and
  *            buffer times, received_date, approvers per revision with response
  *            and responded_at ({id, name, revision, response, responded_at}),
- *            scheduled_task (object: {id, name})
+ *            scheduled_task (object: {id, code, name})
  * 
  * DROPPED from Submittals per CTO 2026-10-07: location, cost_code
  * DROPPED from RFIs: drawing_number, rfi_manager, received_from, ball_in_court,
@@ -80,7 +80,7 @@ export const SUBMITTAL_ALLOWLIST = [
   "internal_review_time",
   "buffer_time",
   "approvers", // Array: {id, name, revision, response, responded_at}, NO emails
-  "scheduled_task", // Object: {id, name}
+  "scheduled_task", // Object: {id, code, name}
   "project.id",
   "company.id",
 ] as const;
@@ -188,6 +188,7 @@ function buildAllowlistedSubmittalPayload(
   const scheduled_task = submittal.scheduled_task
     ? {
         id: submittal.scheduled_task.id,
+        code: submittal.scheduled_task.code ?? null,
         name: submittal.scheduled_task.name,
       }
     : null;
@@ -365,8 +366,8 @@ export function mapProcoreSubmittalToNormalized(
     scheduled_task: submittal.scheduled_task
       ? {
           id: String(submittal.scheduled_task.id),
+          code: submittal.scheduled_task.code ?? null,
           name: submittal.scheduled_task.name,
-          // code not on CTO allowlist - omitted
         }
       : null,
   };

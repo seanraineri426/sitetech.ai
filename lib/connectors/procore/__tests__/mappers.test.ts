@@ -279,6 +279,41 @@ describe("Procore mappers", () => {
       // Fingerprint should be SAME because email is not in allowlist
       expect(normalized1.fingerprint).toBe(normalized2.fingerprint);
     });
+
+    it("changes when scheduled_task.code changes", () => {
+      const normalized1 = mapProcoreSubmittalToNormalized(mockSubmittal);
+      const modified = {
+        ...mockSubmittal,
+        scheduled_task: {
+          ...mockSubmittal.scheduled_task!,
+          code: "B2030",
+        },
+      };
+      const normalized2 = mapProcoreSubmittalToNormalized(modified);
+
+      expect(normalized1.fingerprint).not.toBe(normalized2.fingerprint);
+    });
+
+    it("changes when scheduled_task.code is added", () => {
+      const noCode = {
+        ...mockSubmittal,
+        scheduled_task: {
+          ...mockSubmittal.scheduled_task!,
+          code: null,
+        },
+      };
+      const normalized1 = mapProcoreSubmittalToNormalized(noCode);
+      const withCode = {
+        ...mockSubmittal,
+        scheduled_task: {
+          ...mockSubmittal.scheduled_task!,
+          code: "A1020",
+        },
+      };
+      const normalized2 = mapProcoreSubmittalToNormalized(withCode);
+
+      expect(normalized1.fingerprint).not.toBe(normalized2.fingerprint);
+    });
   });
 
   describe("RFI nested object fingerprinting", () => {
@@ -515,6 +550,62 @@ describe("Procore mappers", () => {
       const submittal = { ...mockSubmittal, scheduled_task: null };
       const normalized = mapProcoreSubmittalToNormalized(submittal);
       expect(normalized.scheduled_task).toBeNull();
+    });
+
+    it("handles null scheduled_task.code", () => {
+      const submittal = {
+        ...mockSubmittal,
+        scheduled_task: {
+          id: 333,
+          code: null,
+          name: "Install Steel",
+        },
+      };
+      const normalized = mapProcoreSubmittalToNormalized(submittal);
+      expect(normalized.scheduled_task).not.toBeNull();
+      expect(normalized.scheduled_task?.code).toBeNull();
+    });
+
+    it("preserves scheduled_task.code when present", () => {
+      const normalized = mapProcoreSubmittalToNormalized(mockSubmittal);
+      expect(normalized.scheduled_task).not.toBeNull();
+      expect(normalized.scheduled_task?.code).toBe("A1020");
+    });
+
+    it("handles absent scheduled_task.code key (not just null)", () => {
+      const submittal = {
+        ...mockSubmittal,
+        scheduled_task: {
+          id: 333,
+          name: "Install Steel",
+          // code key entirely absent
+        } as ProcoreSubmittal["scheduled_task"],
+      };
+      const normalized = mapProcoreSubmittalToNormalized(submittal);
+      expect(normalized.scheduled_task).not.toBeNull();
+      expect(normalized.scheduled_task?.code).toBeNull();
+    });
+
+    it("absent code key produces same fingerprint as explicit null", () => {
+      const withAbsentCode = {
+        ...mockSubmittal,
+        scheduled_task: {
+          id: 333,
+          name: "Install Steel",
+          // code key entirely absent
+        } as ProcoreSubmittal["scheduled_task"],
+      };
+      const withNullCode = {
+        ...mockSubmittal,
+        scheduled_task: {
+          id: 333,
+          code: null,
+          name: "Install Steel",
+        },
+      };
+      const fp1 = mapProcoreSubmittalToNormalized(withAbsentCode).fingerprint;
+      const fp2 = mapProcoreSubmittalToNormalized(withNullCode).fingerprint;
+      expect(fp1).toBe(fp2);
     });
   });
 

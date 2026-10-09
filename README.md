@@ -156,6 +156,38 @@ The application uses a multi-tenant architecture with organization-based isolati
 
 All tables use Row Level Security (RLS) to enforce tenant isolation. See `supabase/migrations/` for the complete schema.
 
+## Connectors
+
+### Procore Connector
+
+The Procore connector implements CTO-approved field allowlists for RFIs and Submittals:
+
+**Submittal Allowlist:**
+- Core fields: `id`, `number`, `title`, `specification_section`, `status`, `revision`
+- Dates: `created_at`, `updated_at`, `received_date`, `due_date`, `required_on_site_date`
+- Timing: `lead_time`, `design_team_review_time`, `internal_review_time`, `buffer_time`
+- Approvers: `{id, name, revision, response, responded_at}` (emails stripped per CTO)
+- Schedule linkage: `scheduled_task {id, code, name}`
+  - **CTO 2026-10-09:** `code` restored as schedule join key; field meaning to be verified against Procore sandbox
+  - `code` is likely the P6 activity ID (when Procore schedule is imported from P6)
+  - Will be the primary join key from submittals to P6 `schedule_activities` (match_method `task_code`)
+- Project refs: `project.id`, `company.id`
+
+**RFI Allowlist:**
+- Core fields: `id`, `number`, `subject`, `question`, `official_response`, `status`
+- Location/cost: `location {id, name}`, `cost_code {id, code, name}`
+- People: `assignees {id, name}`, `responsible_contractor {id, name}` (emails stripped per CTO)
+- Impacts: `cost_impact {status, value}`, `schedule_impact {status, value}`
+- Dates: `initiated_at`, `due_date`, `created_at`, `updated_at`
+- Project refs: `project.id`, `company.id`
+
+**Dropped fields (per CTO 2026-10-07):**
+- All email addresses (assignee.login, approver.login, etc.)
+- Submittal: location, cost_code (dropped from submittals only)
+- RFI: drawing_number, rfi_manager, received_from, ball_in_court, specification_section
+
+See `lib/connectors/procore/mappers.ts` for implementation details.
+
 ### Running the Security Tests
 
 **Prerequisites:**

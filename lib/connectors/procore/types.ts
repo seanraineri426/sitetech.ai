@@ -71,7 +71,7 @@ const ProcoreApproverSchema = z.object({
 
 const ProcoreScheduledTaskSchema = z.object({
   id: z.number().nullable(),
-  code: z.string().nullable(),
+  code: z.string().nullish(),
   name: z.string().nullable(),
 }).passthrough();
 
