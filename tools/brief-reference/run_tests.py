@@ -192,7 +192,7 @@ def main():
         # Extract metrics from output
         import re
         recall_match = re.search(r'recall[:\s]+(\d+)/(\d+)', output, re.IGNORECASE)
-        must_not_flag_match = re.search(r'must[_\s-]not[_\s-]flag[:\s]+(\d+)', output, re.IGNORECASE)
+        must_not_flag_match = re.search(r'must[_\s-]not[_\s-]flag(?:\s+violations?)?[:\s]+(\d+)', output, re.IGNORECASE)
         fabricated_match = re.search(r'fabricated[_\s]refs?[:\s]+(\d+)', output, re.IGNORECASE)
         
         # All three metrics must be present and parseable, or FAIL
