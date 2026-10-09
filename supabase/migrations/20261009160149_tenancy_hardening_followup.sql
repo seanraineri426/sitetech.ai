@@ -127,9 +127,22 @@ alter default privileges for role postgres in schema public revoke truncate on t
 
 -- Revoke execute on functions from PUBLIC (prevents anon access via PUBLIC role)
 revoke execute on all functions in schema public from public;
-alter default privileges for role postgres in schema public revoke execute on functions from public;
 
--- Also revoke default execute from anon directly (overrides bootstrap grants)
--- This must revoke both the general default and the postgres-specific default
-alter default privileges in schema public revoke all on functions from anon;
-alter default privileges for role postgres in schema public revoke all on functions from anon;
+-- Create event trigger to revoke PUBLIC execute on newly created functions
+-- This overrides PostgreSQL's system default that grants EXECUTE to PUBLIC
+create or replace function public.revoke_public_execute_on_functions()
+returns event_trigger language plpgsql as $$
+declare
+  obj record;
+begin
+  for obj in select * from pg_event_trigger_ddl_commands() where command_tag = 'CREATE FUNCTION'
+  loop
+    execute format('revoke execute on function %s from public', obj.object_identity);
+  end loop;
+end;
+$$;
+
+create event trigger revoke_public_execute_on_create_function
+  on ddl_command_end
+  when tag in ('CREATE FUNCTION')
+  execute function public.revoke_public_execute_on_functions();
