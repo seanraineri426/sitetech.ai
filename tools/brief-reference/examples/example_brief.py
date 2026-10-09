@@ -147,10 +147,7 @@ sections = {
    {"item_id": "T6", "headline": "Framing manpower on critical L4 (top item 6)", "citations": top[5]["citations"][:1]},
    {"headline": "L2 plumbing rough-in inspection failed. A1620 has 4 wd of float. New RFI 46. Re-inspection Fri 10/9", "tag": "NEW", "confidence": "Confirmed",
     "owner": TOM, "action": "Correct the 3 items and get RFI 46 answered before re-inspection on 10/9",
-    "citations": [C("procore:inspection_log:80301", "Inspection log 10/6 (Failed)"), C("procore:rfi:9046", "RFI #46"), C("p6:activity:A1620", "A1620", ["total_float_wd"], as_of=XER)]},
-   {"headline": "Duct shop drawings approved 9/15 against M-401 Rev 2; Rev 3 (ASI-07) issued 9/24. Fabricated Stack 07 duct at risk of rework (A1700 TF 9). See top item 7", "tag": "NEW", "confidence": "Confirmed",
-    "owner": KEVIN, "action": "Re-review the duct shop drawings against Rev 3 and confirm fabricated quantities",
-    "citations": [C("procore:submittal:6401", "Submittal 23 31 13-002"), C("procore:drawing_revision:7741", "M-401 Rev 3")]}],
+    "citations": [C("procore:inspection_log:80301", "Inspection log 10/6 (Failed)"), C("procore:rfi:9046", "RFI #46"), C("p6:activity:A1620", "A1620", ["total_float_wd"], as_of=XER)]}],
  "cost_risks": [
    {"item_id": "T3", "headline": "Owner contingency 92.4% used incl. pending (top item 3)", "citations": top[2]["citations"][:1]},
    {"item_id": "T4", "headline": "Timberline pay app ahead of earned value (top item 4)", "citations": top[3]["citations"][:1]},
@@ -175,7 +172,11 @@ sections = {
     "finding_id": fid("SUB-REVIEW-OVERDUE|submittal|6601")}],
  "procurement_issues": [
    {"item_id": "T1", "headline": "Switchgear PO-0117 not issued; quote expires 10/9 (top item 1)", "citations": top[0]["citations"][:1]},
-   {"item_id": "T5", "headline": "Windows: zero margin to the 2/15 on-site date (top item 5)", "citations": top[4]["citations"][1:2]}],
+   {"item_id": "T5", "headline": "Windows: zero margin to the 2/15 on-site date (top item 5)", "citations": top[4]["citations"][1:2]},
+   {"headline": "Submittal 23 31 13-002 (duct shop drawings) approved 9/15 before M-401 Rev 3 (ASI-07, issued 9/24): approved before revision, confirm fabrication hold. Stack 07 duct at risk of rework (A1700 TF 9). See top item 7", 
+    "tag": "NEW", "confidence": "Confirmed",
+    "owner": KEVIN, "action": "Re-review the duct shop drawings against Rev 3 and confirm fabricated quantities",
+    "citations": [C("procore:submittal:6401", "Submittal 23 31 13-002"), C("procore:drawing_revision:7741", "M-401 Rev 3")]}],
  "new_decisions": [
    {"decision_ref": "DEC-PCO-014", "summary": "Owner approved PCO-014 (retail storefront upgrade) at $118,000 by email. The Procore change order is not issued yet. Contingency math is unchanged because the amount was already counted as pending.",
     "kind": "made", "owner": PRIYA, "follow_through": "GC to issue the CO for signature", "tag": "NEW",

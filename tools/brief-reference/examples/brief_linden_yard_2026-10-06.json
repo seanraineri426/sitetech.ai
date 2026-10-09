@@ -973,6 +973,27 @@
             ]
           }
         ]
+      },
+      {
+        "headline": "Submittal 23 31 13-002 (duct shop drawings) approved 9/15 before M-401 Rev 3 (ASI-07, issued 9/24): approved before revision, confirm fabrication hold. Stack 07 duct at risk of rework (A1700 TF 9). See top item 7",
+        "tag": "NEW",
+        "confidence": "Confirmed",
+        "owner": {
+          "name": "Kevin Osei",
+          "role": "GC Project Engineer",
+          "company": "Ironbridge Builders"
+        },
+        "action": "Re-review the duct shop drawings against Rev 3 and confirm fabricated quantities",
+        "citations": [
+          {
+            "ref": "procore:submittal:6401",
+            "label": "Submittal 23 31 13-002"
+          },
+          {
+            "ref": "procore:drawing_revision:7741",
+            "label": "M-401 Rev 3"
+          }
+        ]
       }
     ],
     "new_decisions": [

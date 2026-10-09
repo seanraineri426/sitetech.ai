@@ -42,7 +42,7 @@ The brief is only useful if a superintendent or PM can act on it without re-chec
 | F6 | Framing manpower on the critical path fell 14 → 6; not weather | Must reject the weather explanation (N5) | top 7 |
 | F7 | Owner paver decision 3 days late, carried forward from 2 prior OACs; blocks a submittal | Decision tracking across meetings | any section |
 | F8 | Sub's formal notice of delay/cost; the GC's notice window to the owner runs out soon | Contract terms; no legal conclusion allowed | top 7 |
-| F9 | Ducts approved against M-401 Rev 2; Rev 3 issued after approval | Revision-after-approval; may merge into F8 | any |
+| F9 | Ducts approved against M-401 Rev 2; Rev 3 issued after approval | Standalone fabrication-hold; never merge | any (procurement_issues) |
 | F10 | Failed rough-in inspection on near-critical activity; new RFI 46 | Daily-log text to schedule link | any |
 | F11 | Rock in elevator pit: RFI 41, CE-031 $145k unpriced, crew idle | Must not double-count with F4 | any |
 
