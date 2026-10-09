@@ -27,6 +27,26 @@ describe("PR5 review probes", () => {
     const n = mapGraphMessageToNormalized({ ...base, body: { contentType: "text", content: "x".repeat(5_000_000) } }, "mb");
     expect(n.body_text!.length).toBeLessThanOrEqual(200_000 + 100);
   });
+  it("1MB <script repeated completes in under 200ms", () => {
+    const input = "<script ".repeat(125_000);
+    const t0 = performance.now();
+    htmlToText(input);
+    const elapsed = performance.now() - t0;
+    console.log(`1MB <script repeated: ${elapsed.toFixed(0)}ms`);
+    expect(elapsed).toBeLessThan(200);
+  });
+  it("5MB HTML body through mapGraphMessageToNormalized capped", () => {
+    const largeHtml = "<p>" + "x".repeat(5_000_000) + "</p>";
+    const n = mapGraphMessageToNormalized({ ...base, body: { contentType: "html", content: largeHtml } }, "mb");
+    expect(n.body_text!.length).toBeLessThanOrEqual(200_000 + " [truncated]".length);
+    expect(n.body_text).toMatch(/\[truncated\]$/);
+  });
+  it("5MB HTML body fingerprint stable across runs", () => {
+    const largeHtml = "<p>" + "x".repeat(5_000_000) + "</p>";
+    const n1 = mapGraphMessageToNormalized({ ...base, body: { contentType: "html", content: largeHtml } }, "mb");
+    const n2 = mapGraphMessageToNormalized({ ...base, body: { contentType: "html", content: largeHtml } }, "mb");
+    expect(n1.fingerprint).toBe(n2.fingerprint);
+  });
   it("named entities &rsquo; &mdash; decoded", () => { expect(htmlToText("it&rsquo;s &mdash; ok")).toBe("it\u2019s \u2014 ok"); });
   it("Outlook conditional comment content dropped", () => {
     expect(htmlToText("<!--[if gte mso 9]><xml><o:PixelsPerInch>96</o:PixelsPerInch></xml><![endif]--><p>Hi</p>")).toBe("Hi");
