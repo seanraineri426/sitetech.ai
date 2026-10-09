@@ -135,15 +135,33 @@ returns event_trigger language plpgsql as $$
 declare
   obj record;
   func_schema text;
+  func_oid oid;
+  is_extension_func boolean;
 begin
   for obj in select * from pg_event_trigger_ddl_commands() where command_tag = 'CREATE FUNCTION'
   loop
     -- Extract schema from object_identity (format: schema.function_name(args))
     func_schema := split_part(obj.object_identity, '.', 1);
     
-    -- Only revoke from functions in the public schema
+    -- Only process functions in the public schema
     if func_schema = 'public' then
-      execute format('revoke execute on function %s from public', obj.object_identity);
+      -- Check if this function is part of an extension (e.g., pgTAP)
+      -- Extension functions should keep their default privileges
+      select p.oid, (p.proextconfig is not null or exists (
+        select 1 from pg_depend d 
+        where d.objid = p.oid 
+          and d.deptype = 'e'
+      ))
+      into func_oid, is_extension_func
+      from pg_proc p
+      join pg_namespace n on n.oid = p.pronamespace
+      where n.nspname = func_schema 
+        and p.oid::regprocedure::text = obj.object_identity;
+      
+      -- Only revoke from non-extension functions
+      if not coalesce(is_extension_func, false) then
+        execute format('revoke execute on function %s from public', obj.object_identity);
+      end if;
     end if;
   end loop;
 end;
