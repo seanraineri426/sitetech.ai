@@ -30,7 +30,7 @@
 - Linked schedule activity id, activity name, planned start date (from Procore or P6)
 - Days overdue (computed: today - RFI due date)
 - Days to activity start (computed: activity start - today, accounting for working calendar)
-- Float consumed if activity slips (from CPM float walk)
+- Float consumed if activity slips (from P6 total float)
 - Daily delay cost (from project settings)
 - Project time zone (from project settings)
 - Observed holidays (from project settings)
@@ -52,6 +52,8 @@
 
 **Approval tier:**
 - PE approves always (human click required)
+
+**Due / escalation:** Activity start − 5 working days. Not approved by due → moves up one level (PE → PM → PX).
 
 **Scoring:**
 - **Float days protected:** If RFI is answered before activity start, log float days that would have been consumed. Counted as "confirmed" only when the RFI answer shows up in synced Procore data and the activity starts on or before its planned date.
@@ -103,6 +105,8 @@
 - **Banned wording:** waived, liable, breach, entitled
 
 **Approval tier:** PE
+
+**Due / escalation:** Release-by date (activity start − lead time). Not approved by due → moves up one level (PE → PM → PX).
 
 **Scoring:**
 - **Float days protected:** Submittal returned before activity start → float days preserved. Counted as "confirmed" when submittal approval shows in synced Procore data and activity starts on or before planned date.
@@ -208,6 +212,8 @@
 
 **Approval tier:** PM
 
+**Due / escalation:** Directive date + 5 working days. Not approved by due → moves up one level (PM → PX).
+
 **Scoring:**
 - **Change dollars captured:** tracked in three separate stages, never summed together:
   1. **Raised:** PM approved the card (timestamp, card id)
@@ -242,7 +248,7 @@
 **Required inputs:**
 - Activity id, name, responsible party (vendor/sub), original start/finish, current start/finish
 - Slip duration (days)
-- Float (from CPM float walk)
+- Float (from P6 total float)
 - Successor activities (from P6 logic)
 - Next unblocked activities (computed: activities with no other blocking predecessors)
 - Daily delay cost, time zone, holidays (from project settings)
@@ -262,6 +268,8 @@
 - **Banned wording:** waived, liable, breach, entitled
 
 **Approval tier:** PM
+
+**Due / escalation:** 2 working days after slip detected. Not approved by due → moves up one level (PM → PX).
 
 **Scoring:**
 - **Float days protected:** If expedite succeeds or resequence absorbs the slip without critical path impact, log the float days saved. Counted as "confirmed" when updated schedule data shows the activity completed without slipping project completion.
@@ -313,7 +321,7 @@
 
 **Approval tier:** PX (PM prepares, PX approves)
 
-**Due / escalation:** Response deadline − 2 business days. If not approved by due, escalates from PM to PX on the same day (urgent notice handling).
+**Due / escalation:** Response deadline − 2 business days. (Already PX-tier; urgent notice handling.)
 
 **Scoring:**
 - **Notices answered on time:** count and % (answered before deadline)
@@ -367,6 +375,8 @@
 - **Banned wording:** waived, liable, breach, entitled
 
 **Approval tier:** PM
+
+**Due / escalation:** Blocking date. Not approved by due → moves up one level (PM → PX).
 
 **Scoring:**
 - **Float days protected:** If decision is received before blocking date, log the float days preserved. Counted as "confirmed" when decision shows in synced data (email reply or meeting minutes) and procurement/activity proceeds on schedule.
@@ -422,6 +432,8 @@
 - **Banned wording:** waived, liable, breach, entitled
 
 **Approval tier:** Determined by linked object: RFI/submittal → PE; cost, schedule, owner-related → PM; notice → PX; unlinked → PM
+
+**Due / escalation:** Commitment due date + 1 working day. Not approved by due → moves up one level (PM → PX).
 
 **Scoring:**
 - **Commitment completion rate:** % of commitments completed on time
@@ -585,7 +597,7 @@
 
 **Approval tier:** PX (always)
 
-**Due / escalation:** Event date + notice period − 2 business days. If not approved by due, escalates to CEO.
+**Due / escalation:** Event date + notice period − 2 business days. If not approved by due, escalates to CEO. **🔶 OPEN:** CEO tier not in current enum (PE/PM/PX); add CEO tier or change escalation target?
 
 **Scoring:**
 - **Notices sent before deadline:** count and % (on-time compliance)
