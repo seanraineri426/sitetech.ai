@@ -40,7 +40,7 @@ The model parses the user's plain-English question into a structured JSON scenar
 ```
 
 **Fields:**
-- `activityId` (string): P6 or Procore schedule activity unique id
+- `activityId` (string): P6 schedule activity unique id
 - `activityName` (string): Activity description from schedule
 - `slipDays` (integer): Number of days to slip the activity finish date (positive = delay, negative = accelerate)
 - `confidence` (enum): `"high"`, `"medium"`, `"low"` – model's confidence in the activity match
@@ -99,13 +99,9 @@ ALTER TABLE schedule_activities
   ADD COLUMN calendar_id TEXT,
   ADD COLUMN remaining_duration_days INTEGER,
   ADD COLUMN original_duration_days INTEGER,
-  ADD COLUMN early_start DATE,
-  ADD COLUMN early_finish DATE,
-  ADD COLUMN late_start DATE,
-  ADD COLUMN late_finish DATE,
   ADD COLUMN actual_start DATE,
   ADD COLUMN actual_finish DATE,
-  ADD COLUMN driving_path BOOLEAN DEFAULT FALSE;
+  ADD COLUMN driving_path BOOLEAN;
 ```
 
 ### schedule_relationships table (new, proposed)
@@ -144,9 +140,9 @@ CREATE TABLE schedule_calendars (
 ### Delay cost configuration
 **Current on main:** `projects.daily_delay_cost_usd` (unit not specified)
 
-**Proposed:** Add `delay_cost_unit` to clarify:
+**Proposed:** Add `delay_cost_unit`:
 ```sql
-ALTER TABLE projects ADD COLUMN delay_cost_unit TEXT DEFAULT 'calendar_day' CHECK (delay_cost_unit IN ('calendar_day', 'working_day'));
+ALTER TABLE projects ADD COLUMN delay_cost_unit TEXT CHECK (delay_cost_unit IN ('calendar_day', 'working_day'));
 ```
 
 **If delay cost is per calendar day:** slip propagation (in working days) must be converted to calendar days for $ computation. Conversion: count calendar days between original completion and new completion, accounting for non-working days.
@@ -165,38 +161,30 @@ All computation is deterministic code over the latest successful P6 XER snapshot
 
 **CTO guardrail: We are NOT building a schedule engine.** Float and dates come straight from the P6 XER file. What-if pushes a slip forward through successor activities using P6's dependencies (FS, SS, FF), lags, and calendars. The result is labeled **"estimate, confirm in P6"**. Constraints and resource leveling stay in P6.
 
-**Critical status:** Taken from P6 XER (total_float ≤ 0, or the XER's driving/longest-path flag if present).
+**Critical status:** Taken from P6 XER (total_float ≤ 0).
 
-**Completion slip:** `max over impacted activities of max(0, propagated delay − P6 total float in days)`
+**Rules (from `docs/what-if-examples/compute.py`):**
 
-**Goal:** Compute the impact of slipping an activity by N working days on:
-- The activity's finish date (accounting for P6 working calendar + holidays)
-- Float consumed (from P6's total_float field, converted from hours using hours_per_day)
-- Successor activities' start/finish dates (propagated via P6 relationships)
-- Project completion date (if slip exceeds available float on any path to completion)
+* **Counting rule:** Day 1 is the first working day AFTER the start date; the start date itself is not counted. Activity dates are inclusive (a 4-day activity starting Mon Nov 9 finishes Thu Nov 12).
 
-**Algorithm (forward slip propagation):**
+* **No CPM recalculation.** Early/late dates and total float come from the P6 snapshot as given. A slip is pushed forward through every successor of the slipped activity:
+  * **FS+lag:** successor start >= predecessor finish + (1 + lag) working days
+  * **SS+lag:** successor start >= predecessor start + lag working days
+  * **FF+lag:** successor finish >= predecessor finish + lag working days (start back-calculated from remaining duration)
+  * **SF:** treated as FS and flagged "SF relationship detected, check in P6"
+  
+  Lags are hours / hours_per_day, counted on the SUCCESSOR's calendar (**🔶 OPEN:** P6's default is predecessor's calendar; XER project setting should decide). With several predecessors the latest (driving) requirement wins. For a slip an activity never moves earlier than its P6 date; for an acceleration successors move earlier only as far as all their predecessors allow (and not before the data date).
 
-1. **Load the latest successful P6 XER snapshot:** Use P6's calculated float values (total_float_days), calendars, and relationships.
-2. **Identify the activity:** by `activityId` from the scenario input
-3. **Apply the slip:**
-   - New finish date = original early finish + `slipDays` working days (per activity's P6 calendar: skip non-working days, project holidays)
-   - **For in-progress activities:** use P6's remaining_duration from the data date, not original finish
-4. **Propagate to successors:** for each P6 relationship:
-   - **FS (finish-to-start):** Successor's new early start = max(successor's original early start, activity's new finish + lag + 1 working day). **Note:** The +1 working day is the FS convention (activity finishes Friday → successor starts Monday).
-   - **SS (start-to-start):** Successor's new early start = max(original, activity's new start + lag)
-   - **FF (finish-to-finish):** Successor's new early finish = max(original, activity's new finish + lag); back-calculate start from duration
-   - **SF (start-to-finish, rare):** ⚠️ **Treat as FS and flag result "SF relationship detected, check in P6".** SF logic is complex; verify manually in P6.
-   - If successor has multiple predecessors, take the latest (driving) constraint
-   - Recurse through successors until no more delays propagate
-5. **Compute float consumed:**
-   - Float from P6's total_float (hours → days via hours_per_day)
-   - Float consumed = min(propagated delay to this activity, P6 float)
-   - Remaining float = max(0, P6 float − propagated delay)
-   - Negative float (< 0 remaining) = activity slipped past its late finish, impacts completion
-6. **Completion slip:** For all impacted activities, compute `max(0, propagated delay − P6 float)`. The maximum across all impacted activities is the project completion slip.
-7. **Working calendar:** Use P6 calendar from XER + project holidays from settings. Skip non-working days when computing new dates.
-8. **Label:** All results labeled **"estimate, confirm in P6"** (not a full recalculation).
+* **Slip modes:**
+  * **"shift":** a not-started activity starts N working days later (start and finish move)
+  * **"extend":** finish moves N working days (start fixed; in-progress = remaining duration from the data date grows)
+  * Negative N = acceleration
+
+* **Propagated delay of an activity** = working days its early finish moved. **Resulting float** = P6 total float - delay (no clamp; negative means it now drives completion late). **Float consumed** = min(delay, P6 float) for delay > 0. **🔶 OPEN:** No activity starts with negative float in the fixture because constraints stay in P6.
+
+* **Completion slip** = working days the completion activity's early finish moved. **Calendar days** = calendar-date difference between the old and new completion finish. **$** = calendar days × daily delay cost (calendar-day unit). No $ when delay cost is not set; acceleration reports days recovered only (no $ savings).
+
+* **Notice deadline (only when completion slips)** = event date + notice period in business days (skip weekends and project holidays; same counting rule). Passed if deadline < as_of. **🔶 OPEN:** Source of notice event date (proposed: the received date of the email or upload that revealed the slip).
 
 **What this does NOT do (stays in P6):**
 - Constraint checking (must-start, must-finish, SNET, FNLT, etc.)
@@ -517,31 +505,33 @@ Every number displayed in the what-if result must include a citation (tap to see
 ## Test cases required (deterministic correctness)
 
 Each test case includes:
-1. **Input:** scenario (activityId, slipDays) + schedule fixture (P6 XER or Procore JSON) + project settings (daily delay cost, holidays, notice periods)
+1. **Input:** scenario (activityId, slipDays) + schedule fixture (P6 XER) + project settings (daily delay cost, holidays, notice periods)
 2. **Expected output:** impacts (primaryActivity, successors, projectCompletion), dollars, notices (all fields)
 3. **Assertion:** computed output matches expected output exactly (no tolerance; deterministic)
 
 ### Test case list (minimum for M2)
 
+Reference fixture: `docs/what-if-examples/fixture.json`. All numbers computed by `compute.py`.
+
 | Test | Scenario | Expected result |
 |---|---|---|
-| **TC1: Zero float (critical path)** | Slip critical path activity A3000 (float = 0) by 10 working days | Completion slip: 10 working days = 18 calendar days. $ impact = 18 calendar days × $12,000/calendar day = **$216,000**. |
-| **TC2: Positive float** | Slip activity A2310 (3 days float) by 2 working days | Activity finish slips 2 working days; float consumed = 2 days; remaining float = 1 day; completion slip = 0; $ impact = $0 |
-| **TC3: Float exhausted** | Slip activity A2310 (3 days float) by 8 working days | Resulting float = -5 days. Completion slip = 2 working days = 4 calendar days. $ impact = 4 calendar days × $12,000/calendar day = **$48,000**. |
-| **TC4: Negative float** | Slip a critical path activity by 10 working days | Completion slip = 10 working days = (convert to calendar days on project calendar). $ impact = (calendar days) × $12,000/calendar day. |
-| **TC5: Multi-path** | Slip an activity with 2 successors: one on critical path (float = 0), one with float = 15 days | Only the critical path successor impacts project completion; $ impact based on critical path slip only |
-| **TC6: Holiday spanning** | Slip Nov 18 by 10 working days, spanning Thanksgiving holidays (Nov 26-27) | New finish = Dec 4 (16 calendar days from Nov 18). Working days: Nov 19, Nov 20, Nov 23, Nov 24, Nov 25, Nov 30, Dec 01, Dec 02, Dec 03, Dec 04 (10 working days). |
-| **TC7: Shutdown period** | Slip an activity by 10 working days spanning winter shutdown (Dec 24-25, Dec 31-Jan 1) per P6 calendar | New finish accounts for shutdown days per P6 calendar; 10 working days = more calendar days due to holidays |
-| **TC8: In-progress activity** | Slip an in-progress activity (data date Oct 8, remaining duration 7 working days from P6, planned finish Oct 15) by 5 working days | Uses P6 remaining_duration from data date (Oct 8 + 7 working days = Oct 15); new finish = Oct 22 (5 working days from Oct 15); successors slip accordingly |
-| **TC9: FS lag** | Slip an activity by 10 working days; **FS+5 is the driving relationship** to successor | Successor start slips by 10 working days (FS+5 lag is preserved, FS+5 is driving); project completion slips if successor is on critical path |
-| **TC10: SS logic** | Slip an activity with start-to-start (SS) successor logic by 10 working days | Successor start slips by 10 working days (or slip + lag if SS+lag); verify propagation |
-| **TC11: FF logic** | Slip an activity with finish-to-finish (FF) successor logic by 10 working days | Successor finish slips by 10 working days (or slip + lag if FF+lag); verify back-calculation of start |
-| **TC12: SF logic** | Slip an activity with start-to-finish (SF) successor logic | ⚠️ Treated as FS; result flagged "SF relationship detected, check in P6" |
-| **TC13: Daily delay cost not set** | Slip a critical path activity by 10 working days, daily delay cost = null in settings | Completion slip: 10 working days = (calendar days). $ impact = null. UI shows "Set delay cost to see $ impact". |
-| **TC14: Notice triggered** | Slip causes project completion to slip, triggering delay notice requirement per contract settings | `notices` array includes delay_time_extension with noticeInfo: "If this happens: notice period per settings is 7 business days (§8.3), deadline [date]. Confirm with PX." |
-| **TC15: Notice deadline passed** | Slip causes project completion to slip, and notice deadline (computed from settings) has already passed (deadline < today) | Card text exactly: "Deadline per project settings was \<date\>; confirm with PX". No legal conclusions (no "waived", "defaulted", etc.). |
-| **TC16: No successors** | Slip an activity with no successors (end of a path, not on critical path) | Activity finish slips; float consumed; no impact on project completion; $ impact = $0 |
-| **TC17: Accelerate (negative slip)** | Slip an activity by -5 working days (acceleration) | Activity finish moves earlier; successors' early start may move earlier if this is the driving predecessor; float increases; **days recovered reported** (no $ savings computed) |
+| **TC1: Zero float** | A3000 (completion, 0d float) slips 10 wd | Completion slip: 10 wd = 14 calendar days. $ = $168,000 (14 cd × $12k/cd) |
+| **TC2: Positive float** | A1100 (7d float) slips 5 wd | Float consumed 5d, remaining float +2d. Completion slip: 0 wd. $ = $0 (absorbed by float) |
+| **TC3: Float exceeded** | A1100 (7d float) slips 12 wd | Resulting float -5d. Completion slip: 5 wd = 7 cd. $ = $84,000 (7 cd × $12k/cd) |
+| **TC4: Negative float** | A2100 (critical, 0d float) slips 8 wd | Resulting float -8d. Completion slip: 8 wd = 10 cd. $ = $120,000 (10 cd × $12k/cd) |
+| **TC5: Multi-path merge** | A1100 slips exactly its 7d float | Two paths to A3000: A1100→A3000 (FS+2) and A2200→A3000 (FS). A1200 is open end with no successors. Latest predecessor drives (tie, no slip). $ = $0 |
+| **TC6: Holiday spanning** | A2200 slips 10 wd across Thanksgiving (Nov 26-27) | A2200 moves to Nov 23-30 (skipping Nov 26-27 holidays). A3000 starts Dec 1. Completion slip: 10 wd = 14 cd. $ = $168,000 |
+| **TC7: Shutdown period** | A3000 slips 20 wd across Dec 25 and Jan 1 | Completion slip: 20 wd = 30 cd. $ = $360,000. (Dec 25, Jan 1 non-work) |
+| **TC8: In-progress** | A1000 (in progress, 6d remaining from Oct 8) extends +5 wd | Uses remaining duration from data date. Slip absorbed by float. $ = $0 |
+| **TC9: Lag (FS+2)** | A1100 slips 9 wd; FS+2 lag to A3000 preserved | Completion slip: 2 wd = 2 cd (lag + 1 convention). $ = $24,000 |
+| **TC10: SS logic** | A2000 slips 4 wd; A2100 follows via SS+5 | Completion slip: 4 wd = 4 cd. $ = $48,000 |
+| **TC11: FF logic** | A2100 finish extends +3 wd; A2200 follows via FF+2 | Completion slip: 3 wd = 3 cd. $ = $36,000 |
+| **TC12: SF logic** | A2200 slips 2 wd; A2200→A3000 treated as SF | SF flagged. Completion slip: 2 wd = 2 cd. $ = $24,000 |
+| **TC13: Delay cost not set** | TC1 with daily_delay_cost_usd = null | Completion slip: 10 wd = 14 cd. $ = null. UI: "Set delay cost in settings to see $ impact" |
+| **TC14: Notice triggered** | A2100 slips 5 wd, event Nov 19 (deadline spans Thanksgiving) | Completion slip: 5 wd = 7 cd. $ = $84,000. Notice deadline: Nov 19 + 7 business days = Dec 2 |
+| **TC15: Notice deadline passed** | A3000 slips 3 wd, event Sep 28, as_of Oct 9 | Completion slip: 3 wd = 3 cd. $ = $36,000. Notice: "Deadline per project settings was Oct 7; confirm with PX" |
+| **TC16: No successors** | A1200 (open end, 19d float) slips 10 wd | Float consumed 10d, remaining +9d. Completion slip: 0 wd. $ = $0 |
+| **TC17: Accelerate** | A2100 finish -10 wd (acceleration) | Completion slip: -7 wd = -13 cd (limited by A1100 path). $ = null (days recovered reported, no $ savings) |
 
 ---
 
@@ -581,4 +571,5 @@ Each test case includes:
 - **v1.0 (Oct 9, 2026, 14:00 UTC):** Initial spec for M2. Open questions noted inline.
 - **v1.1 (Oct 9, 2026, 18:07 UTC):** PM resolved 9 OPEN questions. Applied CTO guardrail (NOT building schedule engine).
 - **v1.2 (Oct 9, 2026, 18:14 UTC):** Lead review at 1966299 (first round). Renamed "slip propagation". Added Data requirements section. P6 XER only. Fixed FS+1 convention, SF flag, notice deadline calculation. Created fixture and compute script.
-- **v1.3 (Oct 9, 2026, 21:15 UTC):** Lead review at 4383096 (second round, complete). Rebuilt fixture with contiguous activities. Fixed propagate_slip to honor shared float. Added Jul 5, 2027 holiday. Updated all examples/test cases with computed numbers. Fixed working→calendar day $ conversion. Removed CPM references. Data requirements match main migration. Added Due/escalation to A1/A2/A4/A5/A7/A8. Fixed A6 escalation, flagged A11 CEO escalation OPEN. requires_procore on all actions. Party enum gc_vendor OPEN, cure_default display label clarified. A4 email mode consistent across precondition/eval.
+- **v1.3 (Oct 9, 2026, 18:56 UTC):** Lead review at 4069227 (second round). Rebuilt fixture with contiguous activities. Fixed propagate_slip to honor shared float. Added Jul 5, 2027 holiday. Updated all examples/test cases with computed numbers. Fixed working→calendar day $ conversion. Removed CPM references. Data requirements match main migration. Added Due/escalation to A1/A2/A4/A5/A7/A8. Fixed A6 escalation, flagged A11 CEO escalation OPEN. requires_procore on all actions. Party enum gc_vendor OPEN, cure_default display label clarified. A4 email mode consistent across precondition/eval.
+- **v1.4 (Oct 9, 2026, 19:20 UTC):** Reference fixture & compute (sha256 verified). Replaced all examples with reference numbers from fixture (A1000/A1100/A1200/A2000/A2100/A2200/A3000). Added verbatim rules from compute.py docstring (counting rule, shift vs extend, FS/SS/FF/SF, lag calendar, no max(0) float clamp, completion slip, $, notice). Marked OPEN: notice event date source, lag calendar (successor vs predecessor), no negative float constraints. Removed early/late columns from Data requirements (exist on main), use project_holidays, removed delay_cost_unit and driving_path defaults. TC1-TC17 updated with exact reference numbers. Added check.py for fixture validation. Note: A4 closed-RFI path needs Procore.

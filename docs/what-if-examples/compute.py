@@ -1,296 +1,213 @@
 #!/usr/bin/env python3
+"""SiteTech what-if reference computation (docs/what-if-math.md).
+
+Usage:
+  python3 compute.py            print every number the doc cites; if expected.json exists, compare and exit 1 on mismatch
+  python3 compute.py --write    also (re)write expected.json
+
+Rules implemented (the doc must state the same ones):
+  * Counting rule: day 1 is the first working day AFTER the start date; the start date itself is not counted.
+    Activity dates are inclusive (a 4-day activity starting Mon Nov 9 finishes Thu Nov 12).
+  * No CPM recalculation. Early/late dates and total float come from the P6 snapshot as given. A slip is pushed
+    forward through every successor of the slipped activity:
+        FS+lag: successor start >= predecessor finish + (1 + lag) working days
+        SS+lag: successor start >= predecessor start + lag working days
+        FF+lag: successor finish >= predecessor finish + lag working days (start back-calculated from remaining duration)
+        SF    : treated as FS and flagged "SF relationship detected, check in P6"
+    Lags are hours / hours_per_day, counted on the SUCCESSOR's calendar. With several predecessors the latest
+    (driving) requirement wins. For a slip an activity never moves earlier than its P6 date; for an acceleration
+    successors move earlier only as far as all their predecessors allow (and not before the data date).
+  * Slip modes: "shift" = a not-started activity starts N working days later (start and finish move);
+    "extend" = finish moves N working days (start fixed; in-progress = remaining duration from the data date grows).
+    Negative N = acceleration.
+  * Propagated delay of an activity = working days its early finish moved. Resulting float = P6 total float - delay
+    (no clamp; negative means it now drives completion late). Float consumed = min(delay, P6 float) for delay > 0.
+  * Completion slip = working days the completion activity's early finish moved. Calendar days = calendar-date
+    difference between the old and new completion finish. $ = calendar days x daily delay cost (calendar-day unit).
+    No $ when delay cost is not set; acceleration reports days recovered only (no $ savings).
+  * Notice deadline (only when completion slips) = event date + notice period in business days (skip weekends and
+    project holidays; same counting rule). Passed if deadline < as_of.
 """
-SiteTech what-if math: reproducible computation from fixture.json
+import json, os, sys, copy
+from datetime import date, timedelta
 
-Counting rule: Day 1 is the first working day AFTER the start date.
-The start date itself is not counted.
-"""
+HERE = os.path.dirname(os.path.abspath(__file__))
+FIXTURE = os.path.join(HERE, "fixture.json")
+EXPECTED = os.path.join(HERE, "expected.json")
 
-import json
-from datetime import datetime, timedelta
-from typing import Dict, List, Tuple
+D = date.fromisoformat
+def fmt(d): return d.isoformat() if d else None
+def short(d): return d.strftime("%b %-d") if d else "-"
 
-def load_fixture():
-    with open('fixture.json', 'r') as f:
-        return json.load(f)
+class Cal:
+    def __init__(self, c):
+        self.work = set(c["work_days"]); self.hol = {D(h) for h in c["holidays"]}
+    def is_work(self, d): return d.isoweekday() in self.work and d not in self.hol
+    def add(self, d, n):
+        """Move n working days from d (day 1 = first working day after d). n=0 returns d."""
+        step = 1 if n > 0 else -1
+        while n:
+            d += timedelta(days=step)
+            if self.is_work(d): n -= step
+        return d
+    def diff(self, a, b):
+        """Signed working days from a to b (count of working days in (a, b])."""
+        if b == a: return 0
+        lo, hi, s = (a, b, 1) if b > a else (b, a, -1)
+        n, d = 0, lo
+        while d < hi:
+            d += timedelta(days=1); n += self.is_work(d)
+        return s * n
+    def span(self, a, b):  # inclusive working days a..b
+        return self.diff(a, b) + (1 if self.is_work(a) else 0)
 
-def is_working_day(date: datetime, calendar: Dict, holidays: List[str]) -> bool:
-    """Check if date is a working day per calendar."""
-    if date.strftime('%Y-%m-%d') in holidays:
-        return False
-    # weekday(): Monday=0, Sunday=6; calendar work_days: Monday=1, Sunday=7
-    weekday = date.weekday() + 1
-    if weekday == 7:
-        weekday = 0  # Sunday
-    return weekday in calendar['work_days']
+def business_add(d, n, holidays):
+    while n:
+        d += timedelta(days=1)
+        if d.weekday() < 5 and d not in holidays: n -= 1
+    return d
 
-def add_working_days(start: datetime, days: int, calendar: Dict, holidays: List[str]) -> datetime:
-    """
-    Add working days to a start date.
-    Day 1 is the first working day AFTER start. Start date is not counted.
-    """
-    current = start
-    added = 0
-    while added < days:
-        current += timedelta(days=1)
-        if is_working_day(current, calendar, holidays):
-            added += 1
-    return current
+def topo(acts, rels):
+    indeg = {a: 0 for a in acts}; succ = {a: [] for a in acts}
+    for r in rels: indeg[r["successor_id"]] += 1; succ[r["predecessor_id"]].append(r["successor_id"])
+    q = [a for a in acts if indeg[a] == 0]; out = []
+    while q:
+        a = q.pop(0); out.append(a)
+        for s in succ[a]:
+            indeg[s] -= 1
+            if indeg[s] == 0: q.append(s)
+    if len(out) != len(acts): raise ValueError("relationship loop")
+    return out
 
-def add_business_days(start: datetime, days: int, holidays: List[str]) -> datetime:
-    """
-    Add business days (Mon-Fri excluding holidays) to start date.
-    Used for notice deadline calculations.
-    Day 1 is the first business day AFTER start.
-    """
-    current = start
-    added = 0
-    while added < days:
-        current += timedelta(days=1)
-        if current.weekday() < 5 and current.strftime('%Y-%m-%d') not in holidays:
-            added += 1
-    return current
-
-def count_calendar_days(start: datetime, end: datetime) -> int:
-    """Count calendar days between two dates (end - start, inclusive)."""
-    return (end - start).days
-
-def propagate_slip(fixture: Dict, activity_id: str, slip_working_days: int) -> Dict:
-    """
-    Propagate a slip forward through successors using P6 FS/SS/FF logic.
-    Total float is shared along a path - we track the cumulative delay
-    and remaining float at each activity.
-    
-    Returns impact summary with working→calendar day conversion for $.
-    """
-    calendar = fixture['calendar']
-    holidays = calendar['holidays']
-    hours_per_day = fixture['project']['hours_per_day']
-    
-    # Build activity and relationship lookups
-    activities = {a['id']: a for a in fixture['activities']}
-    successors_by_pred = {}
-    for rel in fixture['relationships']:
-        pred = rel['predecessor_id']
-        if pred not in successors_by_pred:
-            successors_by_pred[pred] = []
-        successors_by_pred[pred].append(rel)
-    
-    # Find project completion activity (driving_path=True or zero float)
-    completion_activity = next((a for a in fixture['activities'] 
-                                if a.get('driving_path') or a['total_float_days'] == 0), 
-                               fixture['activities'][-1])
-    
-    # Track impacted activities
-    impacted = []
-    
-    # Queue: (activity_id, delay_working_days)
-    queue = [(activity_id, slip_working_days)]
-    visited = set()
-    
-    while queue:
-        current_id, current_delay = queue.pop(0)
-        if current_id in visited:
-            continue
-        visited.add(current_id)
-        
-        activity = activities[current_id]
-        float_days = activity['total_float_days']
-        
-        # Remaining float after this delay
-        resulting_float = float_days - current_delay
-        
-        # Record impact
-        original_finish = datetime.strptime(activity['early_finish'], '%Y-%m-%d')
-        new_finish = add_working_days(original_finish, current_delay, calendar, holidays)
-        
-        impacted.append({
-            'id': current_id,
-            'name': activity['name'],
-            'original_finish': activity['early_finish'],
-            'new_finish': new_finish.strftime('%Y-%m-%d'),
-            'propagated_delay_working_days': current_delay,
-            'p6_total_float_days': float_days,
-            'resulting_float_days': resulting_float,
-            'on_critical_path': resulting_float <= 0
-        })
-        
-        # Propagate to successors
-        if current_id in successors_by_pred:
-            for rel in successors_by_pred[current_id]:
-                succ_id = rel['successor_id']
-                rel_type = rel['type']
-                lag_days = rel['lag_hours'] / hours_per_day if hours_per_day > 0 else 0
-                
-                if rel_type == 'FS':
-                    # Finish-to-start: successor starts when predecessor finishes + lag
-                    # Delay propagates forward only if we've consumed all predecessor float
-                    propagated = max(0, current_delay - float_days)
-                    queue.append((succ_id, propagated))
-                elif rel_type == 'SS':
-                    # Start-to-start: delay propagates to successor start
-                    propagated = max(0, current_delay - float_days)
-                    queue.append((succ_id, propagated))
-                elif rel_type == 'FF':
-                    # Finish-to-finish: delay propagates to successor finish
-                    propagated = max(0, current_delay - float_days)
-                    queue.append((succ_id, propagated))
-                elif rel_type == 'SF':
-                    # Start-to-finish: warn and treat as FS
-                    propagated = max(0, current_delay - float_days)
-                    queue.append((succ_id, propagated))
-    
-    # Find completion slip from the completion activity
-    completion_impact = next((imp for imp in impacted if imp['id'] == completion_activity['id']), None)
-    
-    if completion_impact and completion_impact['resulting_float_days'] < 0:
-        # Completion slips by the amount of negative float
-        completion_slip_working_days = abs(completion_impact['resulting_float_days'])
-        
-        # Convert to calendar days
-        original_completion = datetime.strptime(completion_activity['early_finish'], '%Y-%m-%d')
-        new_completion = add_working_days(original_completion, int(completion_slip_working_days), 
-                                         calendar, holidays)
-        completion_slip_calendar_days = count_calendar_days(original_completion, new_completion)
-        
-        dollar_impact = completion_slip_calendar_days * fixture['project']['daily_delay_cost_usd']
+def run(F, sc):
+    F = copy.deepcopy(F); ov = sc.get("override", {}); flags = []
+    for k, t in ov.get("relationship_type", {}).items():
+        p, s = k.split("->")
+        for r in F["relationships"]:
+            if r["predecessor_id"] == p and r["successor_id"] == s: r["type"] = t
+    proj = F["project"]; snap = F["schedule_snapshot"]
+    cost = ov["daily_delay_cost_usd"] if "daily_delay_cost_usd" in ov else proj.get("daily_delay_cost_usd")
+    cals = {c["id"]: Cal(c) for c in F["calendars"]}
+    A = {a["id"]: a for a in F["activities"]}; hpd = snap["hours_per_day"]; dd = D(snap["data_date"])
+    cal = lambda aid: cals[A[aid]["calendar_id"]]
+    ES = {k: D(a["early_start"]) for k, a in A.items()}; EF = {k: D(a["early_finish"]) for k, a in A.items()}
+    nES, nEF = dict(ES), dict(EF); changed = set(); driving = {}
+    x, n, mode = sc["activity_id"], sc["slip_working_days"], sc["mode"]
+    c = cal(x)
+    if mode == "shift":
+        if A[x]["status"] != "not_started": raise ValueError("shift mode needs a not-started activity; use extend")
+        nES[x] = c.add(ES[x], n); nEF[x] = c.add(EF[x], n)
+    elif mode == "extend":
+        nEF[x] = c.add(EF[x], n)
+        if nEF[x] < nES[x]: raise ValueError("acceleration longer than remaining duration")
+    else: raise ValueError(mode)
+    changed.add(x); accel = n < 0
+    preds = {}
+    for r in F["relationships"]: preds.setdefault(r["successor_id"], []).append(r)
+    for s in topo(list(A), F["relationships"]):
+        if s == x or not any(r["predecessor_id"] in changed for r in preds.get(s, [])): continue
+        cs = cal(s); dur = cs.span(ES[s], EF[s]); started = A[s]["status"] != "not_started"
+        best_start, best_finish, best_by = None, None, None
+        for r in preds[s]:
+            p = r["predecessor_id"]; lag = r["lag_hours"] / hpd
+            if lag != int(lag): raise ValueError("fractional-day lag not supported in reference")
+            lag = int(lag); t = r["type"]; label = f"{p} {r['type']}{'+%d' % lag if lag else ''}"
+            if t == "SF": flags.append(f"SF relationship detected ({p}->{s}), check in P6"); t = "FS"
+            if started:                                   # in progress: start is fixed; only FF can move the finish
+                if t == "FF":
+                    fin = cs.add(nEF[p], lag)
+                    if best_finish is None or fin > best_finish: best_finish, best_by = fin, label
+                continue
+            if t == "FS": st = cs.add(nEF[p], 1 + lag)
+            elif t == "SS": st = cs.add(nES[p], lag)
+            else: st = cs.add(cs.add(nEF[p], lag), -(dur - 1))   # FF: finish requirement, start back-calculated
+            if best_start is None or st > best_start: best_start, best_by = st, label
+        if started:
+            if best_finish is None: continue
+            nEF[s] = max(EF[s], best_finish) if not accel else max(best_finish, cs.add(dd, dur))
+        else:
+            floor_ = ES[s] if not accel else cs.add(dd, 1)   # slips never pull earlier than P6; accelerations stop at the data date
+            nES[s] = max(best_start, floor_); nEF[s] = cs.add(nES[s], dur - 1)
+            if best_start < floor_: best_by = "own P6 date" if not accel else "data date"
+        driving[s] = best_by
+        if nES[s] != ES[s] or nEF[s] != EF[s]: changed.add(s)
+    acts = []
+    for k in A:
+        if k not in changed and k != x: continue
+        delay = cal(k).diff(EF[k], nEF[k]); tf = A[k]["total_float_days"]; res = tf - delay
+        acts.append({"id": k, "name": A[k]["name"], "original_start": fmt(ES[k]), "original_finish": fmt(EF[k]),
+                     "new_start": fmt(nES[k]), "new_finish": fmt(nEF[k]), "propagated_delay_wd": delay,
+                     "p6_total_float_days": tf, "float_consumed_days": max(0, min(delay, tf)) if delay > 0 else 0,
+                     "resulting_float_days": res, "on_critical_path": res <= 0, "driven_by": driving.get(k, "scenario input")})
+    primary = acts.pop(next(i for i, a in enumerate(acts) if a["id"] == x))
+    acts.sort(key=lambda a: (not a["on_critical_path"], a["resulting_float_days"], a["id"]))
+    comp = snap["completion_activity_id"]; cc = cal(comp)
+    slip_wd = cc.diff(EF[comp], nEF[comp]); slip_cd = (nEF[comp] - EF[comp]).days
+    if accel: dollars, note = None, "acceleration: days recovered reported, no $ savings computed"
+    elif cost is None: dollars, note = None, "Set delay cost in settings to see $ impact"
+    elif slip_cd <= 0: dollars, note = 0, "slip absorbed by float"
     else:
-        completion_slip_working_days = 0
-        completion_slip_calendar_days = 0
-        dollar_impact = 0
-    
-    return {
-        'impacted': impacted,
-        'completion_slip_working_days': completion_slip_working_days,
-        'completion_slip_calendar_days': completion_slip_calendar_days,
-        'dollar_impact': dollar_impact,
-        'completion_activity': completion_activity['id']
-    }
+        if proj["delay_cost_unit"] != "calendar_day": raise ValueError("reference fixture uses calendar_day")
+        dollars, note = slip_cd * cost, f"{slip_cd} calendar days x ${cost:,}/calendar day"
+    notices = []
+    if slip_wd > 0:
+        hol = set().union(*(c.hol for c in cals.values()))
+        for npd in F["notice_periods"]:
+            if npd["notice_type"] != "delay_time_extension": continue
+            ev = D(sc["event_date"])
+            dl = business_add(ev, npd["days"], hol) if npd["day_basis"] == "business" else ev + timedelta(days=npd["days"])
+            passed = dl < D(F["as_of"])
+            text = (f"Deadline per project settings was {short(dl)}; confirm with PX" if passed else
+                    f"If this happens: notice period per settings is {npd['days']} {npd['day_basis']} days (\u00a7{npd['contract_section']}), deadline {short(dl)}. Confirm with PX.")
+            notices.append({"notice_type": npd["notice_type"], "event_date": sc["event_date"], "notice_period_days": npd["days"],
+                            "day_basis": npd["day_basis"], "deadline": fmt(dl), "passed": passed, "card_text": text})
+    return {"id": sc["id"], "title": sc["title"], "intent": sc["intent"],
+            "input": {k: sc[k] for k in ("activity_id", "mode", "slip_working_days", "event_date")} | ({"override": ov} if ov else {}),
+            "primary": primary, "successors": acts,
+            "completion": {"activity_id": comp, "original_finish": fmt(EF[comp]), "new_finish": fmt(nEF[comp]),
+                           "slip_working_days": slip_wd, "slip_calendar_days": slip_cd},
+            "dollars": {"daily_delay_cost_usd": cost, "unit": proj["delay_cost_unit"], "dollar_impact": dollars, "note": note},
+            "notices": notices, "flags": sorted(set(flags)), "estimate_label": "estimate, confirm in P6"}
+
+def show(r):
+    p = r["primary"]; c = r["completion"]; d = r["dollars"]
+    print(f"\n{r['id']}: {r['title']}\n  intent: {r['intent']}\n  input: {r['input']}")
+    for a in [p] + r["successors"]:
+        print(f"  {a['id']:6s} {a['name'][:34]:34s} {short(D(a['original_start']))}-{short(D(a['original_finish']))} -> "
+              f"{short(D(a['new_start']))}-{short(D(a['new_finish']))}  delay {a['propagated_delay_wd']:+d} wd  TF {a['p6_total_float_days']}"
+              f" -> {a['resulting_float_days']:+d}  consumed {a['float_consumed_days']}  {'CRITICAL' if a['on_critical_path'] else ''}  [{a['driven_by']}]")
+    print(f"  completion {c['activity_id']}: {short(D(c['original_finish']))} -> {short(D(c['new_finish']))} = "
+          f"{c['slip_working_days']:+d} working days = {c['slip_calendar_days']:+d} calendar days")
+    print(f"  $: {d['dollar_impact'] if d['dollar_impact'] is None else '$%s' % format(d['dollar_impact'], ',')}  ({d['note']})")
+    for nt in r["notices"]: print(f"  notice: event {nt['event_date']} + {nt['notice_period_days']} {nt['day_basis']} days = {nt['deadline']} passed={nt['passed']} | {nt['card_text']}")
+    for f in r["flags"]: print(f"  flag: {f}")
 
 def main():
-    fixture = load_fixture()
-    
-    print("=" * 80)
-    print("SITETECH WHAT-IF EXAMPLES - COMPUTED FROM FIXTURE")
-    print("=" * 80)
-    print()
-    
-    print("FIXTURE SUMMARY")
-    print("-" * 80)
-    print(f"Project: {fixture['project']['name']}")
-    print(f"Data date: {fixture['data_date']}")
-    print(f"Hours per day: {fixture['project']['hours_per_day']}")
-    print(f"Daily delay cost: ${fixture['project']['daily_delay_cost_usd']:,} per {fixture['project']['delay_cost_unit']}")
-    print(f"Calendar: {fixture['calendar']['name']}")
-    print(f"Work days: {fixture['calendar']['work_days']} (1=Mon, 5=Fri)")
-    print(f"Holidays: {', '.join(fixture['calendar']['holidays'])}")
-    print()
-    
-    print("ACTIVITIES")
-    print("-" * 80)
-    for activity in fixture['activities']:
-        print(f"{activity['id']}: {activity['name']}")
-        print(f"  Early: {activity['early_start']} to {activity['early_finish']}")
-        print(f"  Late:  {activity['late_start']} to {activity['late_finish']}")
-        print(f"  Float: {activity['total_float_days']} days")
-        print(f"  Critical: {activity.get('driving_path', False)}")
-        print()
-    
-    print("EXAMPLE 1: L3 shaft framing slips 21 working days")
-    print("-" * 80)
-    result = propagate_slip(fixture, 'A2310', 21)
-    
-    primary = result['impacted'][0]
-    print(f"Primary activity: {primary['id']}")
-    print(f"  Original finish: {primary['original_finish']}")
-    print(f"  New finish: {primary['new_finish']}")
-    print(f"  Slip: {primary['propagated_delay_working_days']} working days")
-    print(f"  P6 total float: {primary['p6_total_float_days']} days")
-    print(f"  Resulting float: {primary['resulting_float_days']} days")
-    print()
-    
-    print("PROPAGATION CHAIN:")
-    for imp in result['impacted']:
-        print(f"  {imp['id']}: {imp['name']}")
-        print(f"    Propagated delay: {imp['propagated_delay_working_days']} working days")
-        print(f"    P6 total float: {imp['p6_total_float_days']} days")
-        print(f"    Resulting float: {imp['resulting_float_days']} days")
-        print(f"    On critical path: {imp['on_critical_path']}")
-    print()
-    
-    print(f"Completion activity: {result['completion_activity']}")
-    print(f"Completion slip: {result['completion_slip_working_days']} working days = {result['completion_slip_calendar_days']} calendar days")
-    print(f"Dollar impact: {result['completion_slip_working_days']} working days → {result['completion_slip_calendar_days']} calendar days × ${fixture['project']['daily_delay_cost_usd']:,}/calendar day = ${result['dollar_impact']:,}")
-    print()
-    
-    # Date math examples
-    print("DATE MATH EXAMPLES")
-    print("-" * 80)
-    
-    # Oct 22 + 21 working days
-    oct22 = datetime.strptime('2026-10-22', '%Y-%m-%d')
-    result_date = add_working_days(oct22, 21, fixture['calendar'], fixture['calendar']['holidays'])
-    print(f"Oct 22 + 21 working days = {result_date.strftime('%b %d, %Y')}")
-    
-    # Oct 22 + 7 business days (notice)
-    result_notice = add_business_days(oct22, 7, fixture['calendar']['holidays'])
-    print(f"Oct 22 + 7 business days = {result_notice.strftime('%b %d, %Y')}")
-    
-    # Nov 13 + 7 business days
-    nov13 = datetime.strptime('2026-11-13', '%Y-%m-%d')
-    result_nov = add_business_days(nov13, 7, fixture['calendar']['holidays'])
-    print(f"Nov 13 + 7 business days = {result_nov.strftime('%b %d, %Y')}")
-    print()
-    
-    # TC6: Holiday spanning
-    print("TC6: Holiday spanning (Thanksgiving Nov 26-27)")
-    print("-" * 80)
-    nov18 = datetime.strptime('2026-11-18', '%Y-%m-%d')
-    result_tc6 = add_working_days(nov18, 10, fixture['calendar'], fixture['calendar']['holidays'])
-    calendar_days_tc6 = count_calendar_days(nov18, result_tc6)
-    print(f"Nov 18 + 10 working days = {result_tc6.strftime('%b %d')} ({calendar_days_tc6} calendar days)")
-    
-    # Enumerate working days for TC6
-    print(f"  Working days: ", end="")
-    current = nov18
-    count = 0
-    days_list = []
-    while count < 10:
-        current += timedelta(days=1)
-        if is_working_day(current, fixture['calendar'], fixture['calendar']['holidays']):
-            count += 1
-            days_list.append(f"{current.strftime('%b %d')}")
-    print(", ".join(days_list))
-    print()
-    
-    # Test critical path slip (10 working days on critical activity)
-    print("TC1: Critical path activity slips 10 working days")
-    print("-" * 80)
-    result_tc1 = propagate_slip(fixture, 'A3000', 10)
-    print(f"Completion slip: {result_tc1['completion_slip_working_days']} working days = {result_tc1['completion_slip_calendar_days']} calendar days")
-    print(f"Dollar impact: ${result_tc1['dollar_impact']:,}")
-    print()
-    
-    # Test positive float (slip within float)
-    print("TC2: Activity with 3 days float slips 2 working days")
-    print("-" * 80)
-    result_tc2 = propagate_slip(fixture, 'A2310', 2)
-    tc2_primary = result_tc2['impacted'][0]
-    print(f"Float consumed: {tc2_primary['propagated_delay_working_days']} days")
-    print(f"Remaining float: {tc2_primary['resulting_float_days']} days")
-    print(f"Completion slip: {result_tc2['completion_slip_working_days']} working days")
-    print(f"Dollar impact: ${result_tc2['dollar_impact']:,}")
-    print()
-    
-    # Test float exhausted
-    print("TC3: Activity with 3 days float slips 8 working days")
-    print("-" * 80)
-    result_tc3 = propagate_slip(fixture, 'A2310', 8)
-    tc3_primary = result_tc3['impacted'][0]
-    print(f"Primary activity resulting float: {tc3_primary['resulting_float_days']} days")
-    print(f"Completion slip: {result_tc3['completion_slip_working_days']} working days = {result_tc3['completion_slip_calendar_days']} calendar days")
-    print(f"Dollar impact: ${result_tc3['dollar_impact']:,}")
-    print()
+    F = json.load(open(FIXTURE))
+    snap = F["schedule_snapshot"]; cal = Cal(F["calendars"][0])
+    print("SiteTech what-if reference | data date", snap["data_date"], "| as of", F["as_of"], "| completion", snap["completion_activity_id"],
+          "| delay cost $%s/%s" % (format(F["project"]["daily_delay_cost_usd"], ","), F["project"]["delay_cost_unit"]))
+    print("Holidays:", ", ".join(F["calendars"][0]["holidays"]))
+    for a in F["activities"]:
+        print(f"  {a['id']} {a['name']}: ES {a['early_start']} EF {a['early_finish']} LS {a['late_start']} LF {a['late_finish']} "
+              f"TF {a['total_float_days']}d ({a['total_float_hr_cnt']}h/{snap['hours_per_day']}) {a['status']}")
+    for r in F["relationships"]: print(f"  {r['predecessor_id']} -> {r['successor_id']} {r['type']} lag {r['lag_hours']}h = {r['lag_hours']//snap['hours_per_day']}d")
+    results = [run(F, sc) for sc in F["scenarios"]]
+    for r in results: show(r)
+    date_facts = {"Nov 18 + 10 working days": fmt(cal.add(D("2026-11-18"), 10)),
+                  "Oct 9 + 7 business days": fmt(business_add(D("2026-10-09"), 7, cal.hol)),
+                  "Nov 19 + 7 business days": fmt(business_add(D("2026-11-19"), 7, cal.hol)),
+                  "Sep 28 + 7 business days": fmt(business_add(D("2026-09-28"), 7, cal.hol)),
+                  "data date Oct 8 + 6 remaining working days (A1000 early finish)": fmt(cal.add(D("2026-10-08"), 6))}
+    print("\nDate facts (counting rule: day 1 = first working day after the start date)")
+    for k, v in date_facts.items(): print(f"  {k} = {v}")
+    out = {"fixture": "fixture.json", "counting_rule": "day 1 is the first working day after the start date; start date not counted",
+           "date_facts": date_facts, "scenarios": results}
+    if "--write" in sys.argv:
+        json.dump(out, open(EXPECTED, "w"), indent=2); open(EXPECTED, "a").write("\n"); print("\nwrote expected.json")
+    elif os.path.exists(EXPECTED):
+        same = json.load(open(EXPECTED)) == json.loads(json.dumps(out))
+        print("\nexpected.json:", "MATCH" if same else "MISMATCH"); sys.exit(0 if same else 1)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

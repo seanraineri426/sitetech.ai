@@ -1,88 +1,148 @@
 {
+  "_comment": "Reference fixture for docs/what-if-math.md. P6-style: dates are inclusive working days; early/late dates and total float are as P6 would export them (consistent with a backward pass from the completion activity A3000). compute.py does NOT recompute CPM; it only pushes a slip forward. check.py independently re-derives the dates/floats to prove this fixture is consistent.",
   "project": {
     "name": "Linden Yard",
-    "timezone": "America/Los_Angeles",
-    "hours_per_day": 8,
+    "timezone": "America/New_York",
     "daily_delay_cost_usd": 12000,
-    "delay_cost_unit": "calendar_day"
+    "delay_cost_unit": "calendar_day",
+    "delay_cost_source": "projects.daily_delay_cost_usd (entered in project settings)"
   },
-  "data_date": "2026-10-08",
-  "calendar": {
-    "id": "STD",
-    "name": "Standard 5-day week",
-    "work_days": [1, 2, 3, 4, 5],
-    "holidays": [
-      "2026-11-26",
-      "2026-11-27",
-      "2026-12-24",
-      "2026-12-25",
-      "2026-12-31",
-      "2027-01-01",
-      "2027-07-05"
-    ]
+  "schedule_snapshot": {
+    "id": "P6_XER_2026-10-08",
+    "source": "P6 XER",
+    "data_date": "2026-10-08",
+    "hours_per_day": 8,
+    "completion_activity_id": "A3000",
+    "relationship_lag_calendar": "successor"
   },
+  "as_of": "2026-10-09",
+  "calendars": [
+    {
+      "id": "STD",
+      "name": "Standard 5-day week",
+      "work_days": [1, 2, 3, 4, 5],
+      "work_days_convention": "1=Mon ... 5=Fri",
+      "holidays": ["2026-11-26", "2026-11-27", "2026-12-25", "2027-01-01", "2027-07-05"]
+    }
+  ],
+  "notice_periods": [
+    {
+      "contract_kind": "owner_gc",
+      "counterparty_name": null,
+      "notice_type": "delay_time_extension",
+      "days": 7,
+      "day_basis": "business",
+      "contract_section": "8.3"
+    }
+  ],
   "activities": [
     {
-      "id": "A2310",
-      "name": "L3 shaft framing",
-      "calendar_id": "STD",
-      "early_start": "2026-10-09",
-      "early_finish": "2026-10-22",
-      "late_start": "2026-10-14",
-      "late_finish": "2026-10-27",
-      "total_float_days": 3.0,
-      "original_duration_days": 10,
-      "remaining_duration_days": 10,
-      "status": "not_started",
-      "actual_start": null,
-      "actual_finish": null,
-      "driving_path": false
+      "id": "A1000", "name": "L3 shaft framing", "calendar_id": "STD", "status": "in_progress",
+      "actual_start": "2026-10-01", "actual_finish": null,
+      "original_duration_days": 12, "remaining_duration_days": 6,
+      "early_start": "2026-10-09", "early_finish": "2026-10-16",
+      "late_start": "2026-10-20", "late_finish": "2026-10-27",
+      "total_float_hr_cnt": 56, "total_float_days": 7,
+      "_note": "In progress at data date Oct 8: 6 of 12 working days done (Oct 1-8). early_start/late_start are the start of REMAINING work; remaining 6 days counted from the data date (day 1 = Oct 9) -> early finish Oct 16."
     },
     {
-      "id": "A2320",
-      "name": "L3 MEP rough-in",
-      "calendar_id": "STD",
-      "early_start": "2026-10-23",
-      "early_finish": "2026-11-05",
-      "late_start": "2026-10-28",
-      "late_finish": "2026-11-10",
-      "total_float_days": 3.0,
-      "original_duration_days": 10,
-      "remaining_duration_days": 10,
-      "status": "not_started",
-      "actual_start": null,
-      "actual_finish": null,
-      "driving_path": false
+      "id": "A1100", "name": "L3 MEP rough-in", "calendar_id": "STD", "status": "not_started",
+      "actual_start": null, "actual_finish": null,
+      "original_duration_days": 10, "remaining_duration_days": 10,
+      "early_start": "2026-10-19", "early_finish": "2026-10-30",
+      "late_start": "2026-10-28", "late_finish": "2026-11-10",
+      "total_float_hr_cnt": 56, "total_float_days": 7
     },
     {
-      "id": "A3000",
-      "name": "Exterior envelope closeout",
-      "calendar_id": "STD",
-      "early_start": "2026-11-06",
-      "early_finish": "2026-11-19",
-      "late_start": "2026-11-06",
-      "late_finish": "2026-11-19",
-      "total_float_days": 0.0,
-      "original_duration_days": 10,
-      "remaining_duration_days": 10,
-      "status": "not_started",
-      "actual_start": null,
-      "actual_finish": null,
-      "driving_path": true
+      "id": "A1200", "name": "L3 corridor ceiling close-in", "calendar_id": "STD", "status": "not_started",
+      "actual_start": null, "actual_finish": null,
+      "original_duration_days": 5, "remaining_duration_days": 5,
+      "early_start": "2026-11-02", "early_finish": "2026-11-06",
+      "late_start": "2026-12-01", "late_finish": "2026-12-07",
+      "total_float_hr_cnt": 152, "total_float_days": 19,
+      "_note": "Open end (no successors): P6 late finish = project finish Dec 7."
+    },
+    {
+      "id": "A2000", "name": "Curtain wall install", "calendar_id": "STD", "status": "not_started",
+      "actual_start": null, "actual_finish": null,
+      "original_duration_days": 20, "remaining_duration_days": 20,
+      "early_start": "2026-10-09", "early_finish": "2026-11-05",
+      "late_start": "2026-10-09", "late_finish": "2026-11-05",
+      "total_float_hr_cnt": 0, "total_float_days": 0
+    },
+    {
+      "id": "A2100", "name": "Perimeter sealant and flashing", "calendar_id": "STD", "status": "not_started",
+      "actual_start": null, "actual_finish": null,
+      "original_duration_days": 18, "remaining_duration_days": 18,
+      "early_start": "2026-10-16", "early_finish": "2026-11-10",
+      "late_start": "2026-10-16", "late_finish": "2026-11-10",
+      "total_float_hr_cnt": 0, "total_float_days": 0
+    },
+    {
+      "id": "A2200", "name": "Envelope water testing", "calendar_id": "STD", "status": "not_started",
+      "actual_start": null, "actual_finish": null,
+      "original_duration_days": 4, "remaining_duration_days": 4,
+      "early_start": "2026-11-09", "early_finish": "2026-11-12",
+      "late_start": "2026-11-09", "late_finish": "2026-11-12",
+      "total_float_hr_cnt": 0, "total_float_days": 0
+    },
+    {
+      "id": "A3000", "name": "Interior finishes and closeout (completion)", "calendar_id": "STD", "status": "not_started",
+      "actual_start": null, "actual_finish": null,
+      "original_duration_days": 15, "remaining_duration_days": 15,
+      "early_start": "2026-11-13", "early_finish": "2026-12-07",
+      "late_start": "2026-11-13", "late_finish": "2026-12-07",
+      "total_float_hr_cnt": 0, "total_float_days": 0
     }
   ],
   "relationships": [
-    {
-      "predecessor_id": "A2310",
-      "successor_id": "A2320",
-      "type": "FS",
-      "lag_hours": 0
-    },
-    {
-      "predecessor_id": "A2320",
-      "successor_id": "A3000",
-      "type": "FS",
-      "lag_hours": 0
-    }
+    {"predecessor_id": "A1000", "successor_id": "A1100", "type": "FS", "lag_hours": 0},
+    {"predecessor_id": "A1100", "successor_id": "A1200", "type": "FS", "lag_hours": 0},
+    {"predecessor_id": "A1100", "successor_id": "A3000", "type": "FS", "lag_hours": 16},
+    {"predecessor_id": "A2000", "successor_id": "A2100", "type": "SS", "lag_hours": 40},
+    {"predecessor_id": "A2100", "successor_id": "A2200", "type": "FF", "lag_hours": 16},
+    {"predecessor_id": "A2200", "successor_id": "A3000", "type": "FS", "lag_hours": 0}
+  ],
+  "scenarios": [
+    {"id": "EX1", "title": "Worked example 1: L3 shaft framing (in progress, 7d float) slips 3 weeks", "intent": "shared float along a path; merge at completion; in-progress",
+     "activity_id": "A1000", "mode": "extend", "slip_working_days": 15, "event_date": "2026-10-09"},
+    {"id": "EX2", "title": "Worked example 2: Curtain wall install (critical) slips 3 weeks", "intent": "critical path through SS+5 and FF+2; spans Thanksgiving and Dec 25",
+     "activity_id": "A2000", "mode": "shift", "slip_working_days": 15, "event_date": "2026-10-09"},
+    {"id": "TC1", "title": "Zero float: completion activity A3000 slips 10 working days", "intent": "zero float",
+     "activity_id": "A3000", "mode": "shift", "slip_working_days": 10, "event_date": "2026-10-09"},
+    {"id": "TC2", "title": "Positive float: A1100 (7d float) slips 5 working days", "intent": "within float",
+     "activity_id": "A1100", "mode": "shift", "slip_working_days": 5, "event_date": "2026-10-09"},
+    {"id": "TC3", "title": "Float exceeded: A1100 (7d float) slips 12 working days", "intent": "slip beyond float",
+     "activity_id": "A1100", "mode": "shift", "slip_working_days": 12, "event_date": "2026-10-09"},
+    {"id": "TC4", "title": "Negative float: critical A2100 (0d float) slips 8 working days", "intent": "negative resulting float (fixture has no constraints, so no activity starts with negative float)",
+     "activity_id": "A2100", "mode": "shift", "slip_working_days": 8, "event_date": "2026-10-09"},
+    {"id": "TC5", "title": "Multi-path merge: A1100 slips exactly its 7d float", "intent": "multi-path; latest of multiple predecessors drives A3000 (tie, no slip)",
+     "activity_id": "A1100", "mode": "shift", "slip_working_days": 7, "event_date": "2026-10-09"},
+    {"id": "TC6", "title": "Holiday spanning: A2200 slips 10 working days across Thanksgiving (Nov 26-27)", "intent": "holiday spanning",
+     "activity_id": "A2200", "mode": "shift", "slip_working_days": 10, "event_date": "2026-10-09"},
+    {"id": "TC7", "title": "Shutdown period: A3000 slips 20 working days across Dec 25 and Jan 1", "intent": "calendar non-work periods",
+     "activity_id": "A3000", "mode": "shift", "slip_working_days": 20, "event_date": "2026-10-09"},
+    {"id": "TC8", "title": "In-progress: A1000 (remaining 6d from data date Oct 8) slips 5 working days", "intent": "in-progress, remaining duration from data date",
+     "activity_id": "A1000", "mode": "extend", "slip_working_days": 5, "event_date": "2026-10-09"},
+    {"id": "TC9", "title": "Lag: A1100 slips 9 working days; FS+2 to A3000 is preserved", "intent": "lag (without the +2 lag the slip would be absorbed)",
+     "activity_id": "A1100", "mode": "shift", "slip_working_days": 9, "event_date": "2026-10-09"},
+    {"id": "TC10", "title": "SS logic: A2000 slips 4 working days; A2100 follows via SS+5", "intent": "SS",
+     "activity_id": "A2000", "mode": "shift", "slip_working_days": 4, "event_date": "2026-10-09"},
+    {"id": "TC11", "title": "FF logic: A2100 finish extends 3 working days; A2200 follows via FF+2", "intent": "FF (start fixed, finish moves; successor start back-calculated)",
+     "activity_id": "A2100", "mode": "extend", "slip_working_days": 3, "event_date": "2026-10-09"},
+    {"id": "TC12", "title": "SF logic: A2200->A3000 treated as SF, A2200 slips 2 working days", "intent": "SF treated as FS and flagged",
+     "activity_id": "A2200", "mode": "shift", "slip_working_days": 2, "event_date": "2026-10-09",
+     "override": {"relationship_type": {"A2200->A3000": "SF"}}},
+    {"id": "TC13", "title": "Daily delay cost not set: TC1 with daily delay cost = null", "intent": "no default delay cost",
+     "activity_id": "A3000", "mode": "shift", "slip_working_days": 10, "event_date": "2026-10-09",
+     "override": {"daily_delay_cost_usd": null}},
+    {"id": "TC14", "title": "Notice triggered: A2100 slips 5 working days, event Nov 19 (deadline spans Thanksgiving)", "intent": "notice deadline in business days skipping holidays",
+     "activity_id": "A2100", "mode": "shift", "slip_working_days": 5, "event_date": "2026-11-19"},
+    {"id": "TC15", "title": "Notice deadline passed: A3000 slips 3 working days, event Sep 28, as of Oct 9", "intent": "passed deadline wording",
+     "activity_id": "A3000", "mode": "shift", "slip_working_days": 3, "event_date": "2026-09-28"},
+    {"id": "TC16", "title": "No successors: A1200 (open end, 19d float) slips 10 working days", "intent": "no successors",
+     "activity_id": "A1200", "mode": "shift", "slip_working_days": 10, "event_date": "2026-10-09"},
+    {"id": "TC17", "title": "Accelerate: A2100 finish 10 working days earlier", "intent": "acceleration: days recovered only, no $; limited when another path takes over",
+     "activity_id": "A2100", "mode": "extend", "slip_working_days": -10, "event_date": "2026-10-09"}
   ]
 }
