@@ -40,7 +40,7 @@
 - RFI due date exists and is past
 - Linked activity exists and is not complete
 - Ball-in-court party and contact exist
-- **OPEN:** How to handle an RFI linked to multiple activities (take the nearest start date?)
+- **If linked to multiple activities:** urgency is determined by the earliest-starting linked activity; $ impact computed from the activity with the least float; card lists the other linked activities ("also blocks A2340")
 
 **Output:**
 - Draft email (read-only, plain text + HTML)
@@ -92,7 +92,7 @@
 - Submittal status = in review (past due) or returned & resubmit (not yet resubmitted)
 - Linked activity exists and is not complete
 - Ball-in-court party and contact exist
-- **OPEN:** Default lead time if not specified per activity (30 days? 45 days?)
+- **Lead time:** use the submittal's lead time field; if not set, use per-project lead time by spec division (configured at onboarding); if neither exists, card shows "Confirm lead time" and no $ impact
 
 **Output:**
 - Draft email
@@ -133,13 +133,14 @@
 - ASI number, title, issue date, description
 - Sub/vendor contact
 - What changed (extracted from ASI text or manually specified)
-- **OPEN:** How to detect that an ASI affects an approved submittal (keyword match? manual link? Procore relationship?)
+- Shared spec section or sheet number (deterministic link between ASI/drawing revision and submittal), or email naming both
 
 **Preconditions:**
 - Submittal status = approved
 - ASI issue date > submittal approval date
-- ASI affects the submittal scope (detection rule **OPEN**)
+- **Deterministic link exists:** shared spec section or sheet number between the ASI/drawing revision and the submittal, OR one email naming both. No keyword-only matching. Weak link triggers Confirm chip.
 - Sub/vendor contact exists
+- **Note:** This action is off unless drawing sets are mapped or the ASI arrives by email with clear linkage
 
 **Output:**
 - Draft email
@@ -159,10 +160,11 @@
 - Revised submittal received: timestamp
 
 **Eval cases needed:**
-- Positive: approved submittal, later ASI clearly affecting scope → valid draft
-- Negative: ASI unrelated to submittal → no action
+- Positive: approved submittal, later ASI with shared spec section/sheet number → valid draft
+- Positive: approved submittal, email naming both the ASI and submittal → valid draft
+- Negative: ASI unrelated to submittal (no shared spec section/sheet, no linking email) → no action
 - Negative: ASI issued before submittal approval → no action
-- **OPEN:** What constitutes "clearly affecting scope"?
+- Edge: weak link (ambiguous spec section) → Confirm chip before drafting
 
 ---
 
@@ -176,37 +178,42 @@
 
 **Required inputs:**
 - Source: email (sender, date, subject, body excerpt) or meeting (meeting id, date, attendee, transcript quote)
-- Closed RFI (if applicable): RFI number, question, answer, closed date
+- Closed RFI (if applicable): RFI number, question, answer, closed date, cost/schedule impact field
 - Existing change events on the project (to check for duplicates)
 - Procore connection status
-- **OPEN:** ROM (rough order of magnitude) $ – from model estimate, user input, or code heuristic?
+- ROM $ (only if an amount is stated in a source document: email, RFI, quote, meeting transcript; never from model estimate or heuristic)
 
 **Preconditions:**
 - Source is from owner or owner's representative (verified by project parties list from settings)
+- **For closed RFIs:** fire only if the RFI's cost/schedule impact field = yes, OR the answer contains wording from a fixed cost-adding list (add, provide additional, revise to include, relocate, upgrade), AND no CE is already linked or title-matched. Clarification RFIs do not fire this action.
 - No existing change event already linked to this source (checked against Procore CE records by description match or manual link)
 - **Procore connection check:** If Procore is not connected, show: "Procore not connected, confirm there's no existing change event" rather than drafting
-- **OPEN:** For closed RFIs, how to detect "adds scope" vs. clarification (keyword-based? manual flag?)
+- **Email redaction:** Stored email body, subject, and preview replace addresses with `[email-<domain>]` placeholders. Quotes in the draft are matched against the redacted body.
 
 **Output:**
 - Pre-filled change event (read-only draft for paste into Procore)
 - Title (1 line summary of the change)
 - Description: source quote (email excerpt or meeting transcript), date, why it's a change
-- Reason code: **OPEN** – does Procore have standard reason codes (owner directive, differing site condition, etc.)? Or project-specific?
+- Reason code: project-specific, determined through per-client source mapping; unmapped = blank for PM to fill
 - Linked RFI or email reference
-- ROM $ (if known; else "TBD – requires estimate")
+- ROM $ (if stated in source; else "Add ROM")
 - Deep link to create CE in Procore + copy block for paste
 - **Banned wording:** waived, liable, breach, entitled
 
 **Approval tier:** PM
 
 **Scoring:**
-- **Change dollars captured:** If CE is created in Procore within 30 days and traces to this action (via outcome log), log the CE amount
-- **OPEN:** Should "captured" require the CE to be approved, or just created?
+- **Change dollars captured:** tracked in three separate stages, never summed together:
+  1. **Raised:** PM approved the card (timestamp, card id)
+  2. **Submitted:** CE appears in Procore OR a change proposal to the owner is detected in the project mailbox, traced back to this card (timestamp, CE/proposal id, amount from CE or proposal, never from our estimate). **This is the pilot headline metric.**
+  3. **Approved:** Owner executed the change order (timestamp, final CO amount). Reported separately, not added to Submitted.
+- Dollar amounts come from the CE or proposal amount, never from our ROM estimate. A ROM amount is used only when it is stated in a source document.
 
 **Outcome event:**
-- Created, approved/dismissed
-- CE created in Procore: timestamp, CE number, amount (if entered)
-- CE approved: timestamp, final amount
+- Created: timestamp, action id, source reference
+- Raised: PM approved the card (timestamp, user id)
+- Submitted: CE created in Procore or change proposal detected in mailbox (timestamp, CE/proposal id, amount)
+- Approved: Owner executed CO (timestamp, final amount)
 
 **Eval cases needed:**
 - Positive: owner email directive, no existing CE → valid draft
@@ -238,12 +245,12 @@
 - Activity is not yet complete
 - Slip > 0 days
 - Responsible party is a vendor or sub (not GC or owner)
-- **OPEN:** Minimum slip threshold to trigger action (e.g., ≥ 3 days)?
+- **Slip threshold:** fire when the slip leaves ≤ 5 working days of float or hits the critical path (0 float). Per-project setting can change the 5-day threshold.
 
 **Output:**
 - Recovery options card (read-only, shows 3 options):
   1. **Expedite ask to vendor:** draft email to vendor/sub requesting expedited delivery, shows float consumed and $ at risk
-  2. **Resequence suggestion:** guidance (not a draft) naming the next unblocked activities that could proceed, computed from P6 logic, shows which activities can start while waiting for the slipped activity
+  2. **Resequence suggestion:** guidance (not a draft) naming the next unblocked activities that could proceed (activities whose P6 predecessors are complete or unaffected), computed from P6 logic. Labeled **"guidance, check in P6"**. Shows which activities can start while waiting for the slipped activity.
   3. **Notify owner:** draft email to owner's rep explaining the slip, impact on completion date, and $ impact
 - Each option shows: float impact, $ impact (days on critical path × daily delay cost), and deadline (if applicable)
 - **Banned wording:** waived, liable, breach, entitled
@@ -260,11 +267,11 @@
 - Slip resolved: timestamp, float impact (if measured)
 
 **Eval cases needed:**
-- Positive: vendor slip, float available → shows expedite + resequence + notify
-- Positive: slip consumes all float → shows only expedite + notify (no resequence)
-- Negative: slip ≤ threshold → no action
+- Positive: vendor slip leaving ≤ 5 days float → shows expedite + resequence + notify
+- Positive: slip consumes all float (hits critical path) → shows only expedite + notify (no resequence if no float)
+- Negative: slip leaves > 5 days float and not on critical path → no action
 - Edge: slip on critical path (zero float) → $ impact immediate
-- **OPEN:** How to verify resequence logic correctness?
+- Edge: resequence shows only activities whose predecessors are complete/unaffected (verify against P6 logic)
 
 ---
 
@@ -337,12 +344,13 @@
 - Days from blocking date to impact on schedule (lead time or float)
 - $/day impact after blocking date (from daily delay cost)
 - Owner's representative contact
-- **OPEN:** Source of open owner decisions – manual entry, extracted from meetings, inferred from schedule/submittals?
+- **Sources of open owner decisions:** meeting decisions marked open (from A8/A9 extraction), emails asking the owner/OR a question, and RFIs/submittals with ball-in-court on the owner
 
 **Preconditions:**
 - Decision is open (not resolved)
-- Blocking date is ≤ 30 days out (**OPEN:** threshold?)
+- **Blocking:** linked procurement activity start minus lead time ≤ 21 days
 - Owner contact exists
+- **Resolution detection:** decision is resolved when an owner reply is detected AND the PM confirms in one tap, OR minutes mark it closed
 
 **Output:**
 - Draft email to owner's representative
@@ -361,11 +369,12 @@
 - Decision received: timestamp, on-time (Y/N), float days preserved
 
 **Eval cases needed:**
-- Positive: open decision, blocking date ≤ 30 days → valid draft
-- Negative: decision already resolved → no action
-- Negative: blocking date > threshold → no action
+- Positive: open decision, procurement blocking date ≤ 21 days → valid draft
+- Positive: decision from meeting marked open, owner needs to decide → valid draft
+- Negative: decision already resolved (owner replied + PM confirmed, or minutes marked closed) → no action
+- Negative: blocking date > 21 days → no action
 - Edge: blocking date is past → shows overdue message
-- **OPEN:** How to detect decision resolution (manual mark-complete? email parsing?)
+- Edge: owner reply detected but PM hasn't confirmed → decision still open, action remains
 
 ---
 
@@ -374,7 +383,7 @@
 **id:** `meeting-commitment-followup`  
 **version:** 1  
 **object:** Meeting commitment (from Granola transcript or manual entry)  
-**owner role:** PE/PM (depends on commitment type)  
+**owner role:** Determined by linked object: RFI/submittal → PE; cost, schedule, owner-related → PM; notice → PX; unlinked → PM  
 **trigger:** Commitment made in a meeting with owner + due date; due date passes without completion  
 
 **Required inputs:**
@@ -390,6 +399,11 @@
 - **If owner is unclear (speaker not identified):** action shows "confirm owner" rather than guessing – this is a **hard rule**
 - Due date exists and is past
 - Commitment is not marked complete
+- **Date parsing rules:**
+  - "end of week" = Friday 5pm project time
+  - "next Tuesday" = Tuesday of the following week
+  - Ambiguous dates = "Confirm date"
+  - No date stated = "none stated" and no chase is drafted
 
 **Output:**
 - Draft chase email to owner (if owner is known)
@@ -398,7 +412,7 @@
 - **If owner is unclear:** card shows "confirm owner" prompt, no draft until owner is manually assigned
 - **Banned wording:** waived, liable, breach, entitled
 
-**Approval tier:** PE or PM (depends on commitment type; routing **OPEN**)
+**Approval tier:** Determined by linked object: RFI/submittal → PE; cost, schedule, owner-related → PM; notice → PX; unlinked → PM
 
 **Scoring:**
 - **Commitment completion rate:** % of commitments completed on time
@@ -411,11 +425,13 @@
 
 **Eval cases needed:**
 - Positive: clear commitment, known owner, due date past → valid draft
-- Positive: commitment to answer RFI, known owner, overdue → draft links to RFI
+- Positive: commitment to answer RFI, known owner, overdue → draft links to RFI, routed to PE
 - Negative: commitment completed before due date → no action
 - Negative: speaker not identified → shows "confirm owner", no draft
-- Edge: "by Friday" commitment in a Tuesday meeting → interprets as the upcoming Friday
-- **OPEN:** Natural language date parsing rules ("by end of week", "next Tuesday")
+- Edge: "by Friday" commitment in a Tuesday meeting → interprets as the upcoming Friday 5pm
+- Edge: "by end of week" → Friday 5pm project time
+- Edge: "next Tuesday" in a Friday meeting → Tuesday of the following week
+- Edge: ambiguous date ("soon", "in a few days") → shows "Confirm date", no chase until date confirmed
 
 ---
 
@@ -438,13 +454,14 @@
 
 **Preconditions:**
 - Decision is from owner or owner's representative (verified against project parties)
-- Decision has cost or schedule impact (stated or inferred)
+- Decision has cost or schedule impact (stated in the meeting transcript)
+- **Never infer cost impact:** If owner directs added work with no $ stated, card fires with "Add ROM". If there is no directive, no card is created.
 - No existing CE linked to this decision
 - **Procore connection check:** same as A4
 
 **Output:**
 - Pre-filled change event (same format as A4)
-- Title, description (quoting transcript), source (meeting + date), ROM $ (if stated; else TBD), deep link to Procore CE creation
+- Title, description (quoting transcript), source (meeting + date), ROM $ (if stated in meeting; else "Add ROM"), deep link to Procore CE creation
 - **Banned wording:** waived, liable, breach, entitled
 
 **Approval tier:** PM
@@ -457,11 +474,11 @@
 - CE created, CE approved: same as A4
 
 **Eval cases needed:**
-- Positive: owner decision in meeting, cost stated, no existing CE → valid draft
-- Positive: owner decision implied from discussion, cost inferable → valid draft with ROM
+- Positive: owner decision in meeting, cost stated, no existing CE → valid draft with ROM
+- Positive: owner directive for added work, no $ stated → card fires with "Add ROM"
 - Negative: decision from sub/vendor (not owner) → no action
 - Negative: existing CE already covers this decision → no action
-- **OPEN:** How to infer cost impact when not explicitly stated (model confidence threshold?)
+- Negative: no directive from owner (just discussion, no decision) → no action
 
 ---
 
@@ -483,18 +500,20 @@
 
 **Preconditions:**
 - Meeting type = OAC (or similar owner/architect/contractor coordination meeting)
-- Transcript quality sufficient for item extraction (**OPEN:** quality threshold?)
+- **No transcript quality threshold:** process all transcripts. Unlabeled speakers → ball-in-court "confirm owner".
 - PM approves before distribution (always)
 
 **Output:**
 - Draft minutes in SiteTech OAC template (docs/product/oac-minutes-template.md)
 - Header: project, meeting type, meeting #, date/time/zone, location, attendees, distribution, next meeting
 - Categories (fixed order): Safety, Schedule, RFIs, Submittals, Procurement, Changes, Owner decisions, Field/quality/inspections, Old business, New business
-- Every item: item # (category.sequence), title, discussion (1-3 sentences), status (open/closed/on hold), ball in court (company + person, or "confirm owner"), due date (stated or "none stated"), linked record, days/$ at risk (from code, same rules as actions; else blank), source (transcript quote + timestamp), commitment flag (yes = becomes A8 tracked action)
+- **Category mapping:** Model tags categories, PM reviews during approval; untagged items → New business
+- Every item: item # (category.sequence), title, discussion (1-3 sentences), status (open/closed/on hold), ball in court (company + person, or "confirm owner" if speaker unlabeled), due date (stated or "none stated"), linked record, days/$ at risk (from code, same rules as actions; else blank), source (transcript quote + timestamp), commitment flag (yes = becomes A8 tracked action)
 - Open items from prior meeting carry forward with original item #
 - Owner decision with cost + no CE → becomes A9 (change event draft)
 - Missed commitment → becomes A8 (chase draft)
 - Distribution note: "Please send corrections within 5 business days."
+- **Distribution tracking:** by sent-item detection in the project mailbox, else one-tap confirm
 - **Banned wording:** waived, liable, breach, entitled, any legal conclusion
 - **Ready for paste into Procore Meetings** (M2) or write-back via API (M3)
 
@@ -503,7 +522,7 @@
 **Scoring:**
 - Minutes prepared (count)
 - Time saved vs. manual minutes (user-reported or timed)
-- **OPEN:** Track whether minutes are actually distributed? (sent-item detection or manual confirm?)
+- Distribution tracked by sent-item detection or one-tap confirm
 
 **Outcome event:**
 - Created, approved/dismissed
@@ -517,7 +536,7 @@
 - Negative: non-OAC meeting → no minutes (or different template)
 - Edge: speaker not identified → "confirm owner" for ball-in-court
 - Edge: multiple topics in one discussion → split into separate items
-- **OPEN:** How to map freeform discussion to the 10 fixed categories?
+- Edge: freeform discussion → model tags category, PM reviews; untagged → New business
 
 ---
 
@@ -541,6 +560,9 @@ Every action requiring these inputs must check that they exist in project settin
 - **Project parties:** required for owner/sub/vendor identification
 - **Holidays + time zone:** required for deadline computation
 - **Working calendar:** required for business-day calculations (linked to schedule, or project default)
+
+### Email redaction and quote matching
+**Stored email body, subject, and preview replace addresses with `[email-<domain>]` placeholders.** When an action quotes from email, quotes are matched against the redacted body. This protects PII while preserving the ability to cite and verify sources.
 
 ### Float and $ computation
 All float and $ values are computed by **deterministic code** (see docs/what-if-math.md), never estimated by the model:
@@ -570,18 +592,38 @@ This audit trail is used for:
 
 ## Open questions
 
-1. **A1 (RFI overdue):** How to handle an RFI linked to multiple activities? (Take the nearest start date? Show all? Priority rule?)
-2. **A2 (Submittal chase):** Default lead time if not specified per activity (30 days? 45 days? Project-wide setting?)
-3. **A3 (Fabrication hold):** How to detect that an ASI affects an approved submittal? (Keyword match? Manual link? Procore relationship field?) What constitutes "clearly affecting scope"?
-4. **A4 (Change event draft):** For closed RFIs, how to detect "adds scope" vs. clarification? (Keyword-based? Manual flag? Cost delta in RFI?) Should "change dollars captured" require CE approval, or just CE creation? Does Procore have standard reason codes, or are they project-specific?
-5. **A4 (Change event draft):** ROM $ – from model estimate, user input, or code heuristic? (e.g., cost per day × duration)
-6. **A5 (Schedule slip recovery):** Minimum slip threshold to trigger action (≥ 3 days? Configurable?)? How to verify resequence logic correctness (vs. P6 what-if)?
-7. **A7 (Owner decision request):** Source of open owner decisions – manual entry, extracted from meetings, inferred from schedule/submittals? Threshold for "blocking date ≤ X days"? How to detect decision resolution (manual mark-complete? Email parsing? Meeting follow-up?)
-8. **A8 (Meeting commitment):** Routing rule for PE vs. PM approval (by commitment type? By linked object? Manual?)? Natural language date parsing rules for "by end of week", "next Tuesday", etc.
-9. **A9 (Meeting change event):** How to infer cost impact when not explicitly stated in the meeting? (Model confidence threshold? Manual confirmation required?)
-10. **A10 (OAC minutes):** Transcript quality threshold for item extraction (speaker identification %, audio clarity)? How to map freeform discussion to the 10 fixed categories (model tags + PM review)? Should we track whether minutes are actually distributed (sent-item detection or manual confirm)?
-11. **All actions:** Should there be a project-wide setting for "minimum $ threshold" to show an action (e.g., don't show actions < $5k)? Or always show if float is consumed?
-12. **Routing escalation:** If an action is not acted on by its due date, it moves up one level (PE → PM → PX). What is the due date for each action type (e.g., RFI escalation due = activity start - 3 days)? Escalation message wording?
+**All major OPEN items have been resolved as of Oct 9, 2026 (PM answers in PR #17 comments).** The following have been answered and incorporated into the spec above:
+
+1. ✅ **A1 (RFI multiple activities):** Urgency from earliest-starting linked activity; $ from activity with least float; card lists others
+2. ✅ **A2 (Lead time):** Use submittal's lead time, else per-project setting by division, else "Confirm lead time"
+3. ✅ **A3 (ASI detection):** Deterministic link via shared spec section/sheet number or email naming both; weak link = Confirm chip
+4. ✅ **A4 (RFI adds scope):** Fire if cost/schedule impact field = yes OR answer contains fixed cost-adding wording, AND no CE linked
+5. ✅ **A4 (Change $ captured):** Three stages (Raised, Submitted, Approved), never summed; dollars from CE/proposal amount, not estimate
+6. ✅ **A4 (Reason codes):** Project-specific via source mapping; unmapped = blank
+7. ✅ **A4 (ROM $):** Only when stated in source; never model estimate
+8. ✅ **A5 (Slip threshold):** Fire when slip leaves ≤ 5 working days of float (configurable per-project)
+9. ✅ **A5 (Resequence verification):** Only suggest activities whose P6 predecessors are complete/unaffected; labeled "guidance, check in P6"
+10. ✅ **A7 (Owner decision sources):** Meeting decisions marked open, emails to owner, RFIs/submittals with owner ball-in-court
+11. ✅ **A7 (Blocking threshold):** Procurement activity start minus lead time ≤ 21 days
+12. ✅ **A7 (Resolution detection):** Owner reply + PM one-tap confirm, OR minutes mark closed
+13. ✅ **A8 (Routing):** By linked object (RFI/submittal→PE, cost/schedule/owner→PM, notice→PX, unlinked→PM)
+14. ✅ **A8 (Date parsing):** "end of week" = Friday 5pm, "next Tuesday" = following week Tuesday, ambiguous = "Confirm date", no date = "none stated" no chase
+15. ✅ **A9 (Cost inference):** Never infer; no $ stated = "Add ROM"; no directive = no card
+16. ✅ **A10 (Transcript quality):** No threshold; process all; unlabeled speakers → "confirm owner"
+17. ✅ **A10 (Category mapping):** Model tags + PM reviews; untagged → New business
+18. ✅ **A10 (Distribution tracking):** Sent-item detection or one-tap confirm
+19. ✅ **Minimum $ threshold:** None by default; rank by $; always show if float ≤ 5 days or notice deadline involved; optional per-project setting
+20. ✅ **Due dates / escalation:** Defined per action:
+    - **A1:** answer-by = activity start − 5 working days
+    - **A2:** release-by date (activity start − lead time)
+    - **A4:** directive date + 5 working days
+    - **A5:** 2 working days after slip detected
+    - **A6:** deadline − 2 business days (escalates to PX same day if not acted)
+    - **A7:** blocking date
+    - **A8:** commitment due date + 1 day
+    - **Not approved by due date** → moves up one level (PE → PM → PX) with wording: "Moved up from PE: not acted on by Oct 8 (RFI 112 answer-by Oct 9)."
+
+**No remaining OPEN items for M2.** All action rules are now deterministic and testable.
 
 ---
 

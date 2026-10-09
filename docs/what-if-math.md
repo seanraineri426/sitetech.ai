@@ -47,7 +47,9 @@ The model parses the user's plain-English question into a structured JSON scenar
 
 ### Confidence and confirmation rules
 
-| Confidence | UI behavior |
+**The confidence enum (`high`, `medium`, `low`) is internal.** The user only sees the Confirm chip or picker, never the confidence score itself.
+
+| Internal confidence | UI behavior |
 |---|---|
 | **high** | Proceed immediately with computation; show activity name + confirm chip ("Is this the right activity? Yes / No") |
 | **medium** | Show top match + alternatives (up to 3) in a picker; user selects before computation |
@@ -57,7 +59,7 @@ The model parses the user's plain-English question into a structured JSON scenar
 
 **If no activity matches:** "I couldn't find an activity matching '[user's query]'. Try searching by activity ID or a more specific name."
 
-**OPEN:** Should we support fuzzy matching with edit distance, or require exact substring match? (E.g., "curtainwall" vs. "curtain wall")
+**Activity matching rules:** Normalize case, spaces, and hyphens before matching ("curtainwall" = "curtain wall" = "curtain-wall"). Support both activity name substring match and exact ID match. Always confirm the matched activity with a Confirm chip or picker.
 
 ---
 
@@ -65,36 +67,49 @@ The model parses the user's plain-English question into a structured JSON scenar
 
 All computation is deterministic code over the latest schedule snapshot (P6 XER or Procore schedule). No model estimates.
 
-### 1. CPM float walk (Critical Path Method)
+### 1. Schedule impact walk (NOT a full CPM recalculation)
+
+**CTO guardrail: We are NOT building a schedule engine.** In v1, float and dates come straight from the P6 XER file (or Procore schedule). What-if pushes a slip forward through successor activities using P6's dependencies (FS, SS, FF), lags, and calendars. The result is labeled **"estimate, confirm in P6"**. Constraints (must-start, must-finish) and resource leveling stay in P6.
 
 **Goal:** Compute the impact of slipping an activity by N days on:
-- The activity's finish date (accounting for working calendar + holidays)
-- Float consumed
-- Successor activities' start/finish dates (cascade)
-- Project completion date
+- The activity's finish date (accounting for working calendar + holidays from P6)
+- Float consumed (from P6's calculated float values)
+- Successor activities' start/finish dates (cascade via P6 logic)
+- Project completion date (if critical path is impacted)
 
-**Algorithm (simplified, see implementation for full details):**
+**Algorithm (forward slip propagation, NOT full CPM):**
 
-1. **Load the latest schedule:** P6 XER or Procore schedule snapshot (most recent successful import)
+1. **Load the latest schedule:** P6 XER or Procore schedule snapshot (most recent successful import). Use P6's calculated float values, not recalculated.
 2. **Identify the activity:** by `activityId` from the scenario input
 3. **Apply the slip:**
-   - New finish date = original finish date + `slipDays` (accounting for **working calendar**: skip weekends, project holidays, shutdown periods)
+   - New finish date = original finish date + `slipDays` (accounting for **working calendar from P6**: skip weekends, project holidays, shutdown periods defined in P6 calendars)
    - If the activity is in progress, slip from today (actual finish date); if not started, slip from planned finish date
-4. **Walk successors:** for each successor linked by finish-to-start (FS) logic:
-   - If successor's early start ≤ activity's new finish + lag, successor is delayed
-   - Compute successor's new early start/finish (accounting for successor duration + working calendar)
-   - If successor has multiple predecessors, take the latest driving predecessor (critical path logic)
+4. **Walk successors:** for each successor linked by finish-to-start (FS), start-to-start (SS), or finish-to-finish (FF) logic:
+   - **FS (finish-to-start):** If successor's early start ≤ activity's new finish + lag, successor is delayed. Successor's new early start = activity's new finish + lag + 1 (working days).
+   - **SS (start-to-start):** If successor's early start ≤ activity's new start + lag, successor is delayed. Successor's new early start = activity's new start + lag.
+   - **FF (finish-to-finish):** If successor's early finish ≤ activity's new finish + lag, successor is delayed. Successor's new early finish = activity's new finish + lag; back-calculate new early start from duration.
+   - **SF (start-to-finish, rare):** Treat as FS and flag "check in P6" (SF logic is uncommon and complex; verify in P6).
+   - Compute successor's new early start/finish (accounting for successor duration + working calendar from P6)
+   - If successor has multiple predecessors, take the latest driving predecessor (the one that pushes successor's start the latest)
    - Recurse through the successor chain until no more activities are delayed
 5. **Compute float consumed:**
-   - Original float = late finish - early finish (from the baseline or current schedule)
-   - Float consumed = min(slipDays, original float) for each impacted activity
+   - **Use P6's calculated float values** (total float = late finish - early finish from the P6 XER)
+   - Float consumed = min(slipDays propagated to this activity, original float from P6)
    - Negative float = days past the late finish (critical path slip, impacts project completion)
-6. **Project completion impact:** if any activity on the critical path (float ≤ 0) is delayed, project completion slips by the same amount
+6. **Project completion impact:** if any activity on the critical path (float ≤ 0 in P6) is delayed, project completion slips by the propagated delay amount
 7. **Working calendar rules:**
-   - Skip non-working days (weekends, holidays) when computing new finish dates
-   - Holidays from project settings (observed holidays list)
+   - Use P6's calendars from the XER (they include non-working days, weekends, holidays, shutdown periods)
+   - Add project holidays from project settings (union with P6 calendars)
    - Project time zone (from project settings) for date/time calculations
-   - **OPEN:** How to handle shutdown periods (e.g., 2-week winter shutdown)? Manual calendar in settings, or inferred from schedule?
+   - Skip non-working days when computing new finish dates
+8. **Label the result:** All what-if results are labeled **"estimate, confirm in P6"** because this is NOT a full schedule recalculation. Constraints (must-start-on, must-finish-on, start-no-earlier-than, etc.) and resource leveling are NOT applied.
+
+**What this does NOT do (stays in P6):**
+- Constraint checking (must-start, must-finish, SNET, SNLT, FNET, FNLT)
+- Resource leveling
+- Baseline comparisons (except using P6's stored baseline dates)
+- Activity splitting or calendar exceptions beyond what P6 provides
+- Recalculating total float (we use P6's calculated values)
 
 **Output (per activity impacted):**
 
@@ -116,11 +131,13 @@ All computation is deterministic code over the latest schedule snapshot (P6 XER 
 2. **Positive float:** slip absorbed by float, no critical path impact (until float is exhausted)
 3. **Negative float:** activity already late; additional slip makes it later
 4. **Multi-path:** activity has multiple successors on different paths; only the critical path matters for $
-5. **Holiday spanning:** slip that spans a holiday period (e.g., Thanksgiving week) correctly skips non-working days
-6. **Shutdown period:** slip that spans a 2-week shutdown (e.g., winter break) adds 2 weeks to the finish date
+5. **Holiday spanning:** slip that spans a holiday period (e.g., Thanksgiving week) correctly skips non-working days using P6 calendar
+6. **Shutdown period:** slip that spans a shutdown (e.g., winter break) correctly uses P6 calendar non-work periods
 7. **In-progress activity:** slip from today (actual finish) vs. not-started activity (slip from planned)
 8. **FS lag:** successor with finish-to-start + lag (e.g., FS+3 days) correctly accounts for lag
-9. **SS/FF logic:** **OPEN** – do we support start-to-start (SS) and finish-to-finish (FF) logic, or FS only for M2?
+9. **SS logic:** start-to-start relationship correctly propagates slip to successor start
+10. **FF logic:** finish-to-finish relationship correctly propagates slip to successor finish
+11. **SF logic:** start-to-finish (rare) treated as FS with "check in P6" flag
 
 ---
 
@@ -193,8 +210,7 @@ All computation is deterministic code over the latest schedule snapshot (P6 XER 
 - **Deadline falls on weekend/holiday (business days):** advance to next business day
 - **Deadline falls on weekend/holiday (calendar days):** deadline is that day (no adjustment)
 - **Notice period not configured:** `noticeDeadline = null`, `deadlineSource = "not_configured"`
-
-**OPEN:** Should we warn if a notice deadline is < 3 days out (urgent)? Or is that handled by action routing?
+- **Urgent notice (< 3 days):** handled by action routing (A6 escalates to PX same day if deadline is < 2 business days from response requirement)
 
 ---
 
@@ -274,7 +290,8 @@ The computation returns a structured result that the model uses to generate a pl
     "scheduleSnapshot": "P6_XER_2026-10-08_05-12",
     "projectSettings": "project_12345_settings_v3",
     "computedAt": "2026-10-09T17:38:42Z"
-  }
+  },
+  "estimateLabel": "estimate, confirm in P6"
 }
 ```
 
@@ -284,14 +301,13 @@ The computation returns a structured result that the model uses to generate a pl
 - `scenario` (object): echoes the input scenario (activityId, activityName, slipDays)
 - `impacts` (object): computation results
   - `primaryActivity` (object): the activity the user asked about
-  - `successors` (array of objects): impacted successor activities (up to 10 shown; more available on request)
+  - `successors` (array of objects): impacted successor activities (up to 10 shown by default; more available on request)
   - `projectCompletion` (object): project finish date impact (if any)
 - `dollars` (object): $ impact breakdown
 - `notices` (array of objects): triggered notice requirements (from contract notice periods)
 - `suggestedActions` (array of objects): registered actions that would be triggered by this scenario (for drafting)
 - `sourceData` (object): audit trail (schedule snapshot id, settings version, timestamp)
-
-**OPEN:** Should we limit `successors` to only critical path activities, or show all impacted activities? (Risk: too much detail overwhelms the user)
+- **`estimateLabel`** (string): Always "estimate, confirm in P6" to remind users this is NOT a full schedule recalculation
 
 ---
 
@@ -321,8 +337,9 @@ The what-if result is displayed as:
 **Labels:**
 - Each bar: activity name, slip days (if > 0), remaining float
 - Hover: full activity details (id, original dates, new dates, float consumed, $ impact if on critical path)
+- **Result labeled:** All charts and outputs include the label **"estimate, confirm in P6"** to remind users this is NOT a full schedule recalculation
 
-**OPEN:** Should we show the full critical path (all activities from primary to project completion), or just the primary + immediate successors? (Full critical path can be 50+ activities)
+**Successor display:** Show the primary activity + up to 10 immediate successors by default. User can expand to see full critical path if needed. (Full critical path can be 50+ activities; showing all by default risks overwhelming the UI.)
 
 ---
 
@@ -359,24 +376,27 @@ The model generates a plain-English explanation of the what-if result, constrain
 ## Citation rules (every number on screen must cite its source)
 
 Every number displayed in the what-if result must include a citation (tap to see source):
-- **Float days consumed:** cites the schedule snapshot + CPM walk computation log (shows original float, slip, remaining float)
-- **$ impact:** cites the daily delay cost (from project settings, line item) + critical path slip days (from CPM walk)
+- **Float days consumed:** cites the schedule snapshot + P6's calculated float values (shows original float from P6, slip propagated, remaining float)
+- **$ impact:** cites the daily delay cost (from project settings, line item) + critical path slip days (from schedule impact walk)
 - **Notice deadline:** cites the contract notice period (from project settings, contract section) + event date + business day calculation log
-- **Project completion date:** cites the schedule snapshot + critical path slip
-- **Successor impacts:** cites the successor logic (from schedule: predecessor, lag, relationship type) + CPM walk
+- **Project completion date:** cites the schedule snapshot + critical path slip propagation
+- **Successor impacts:** cites the successor logic (from schedule: predecessor, lag, relationship type FS/SS/FF) + slip propagation
+
+**All citations include the reminder:** "estimate, confirm in P6"
 
 **Example citation card (shown on tap):**
 
 > **$ impact: $312,000**
 >
 > **Source:**  
-> - Critical path slip: 26 days (from CPM walk, schedule snapshot P6_XER_2026-10-08_05-12)
+> - Critical path slip: 26 days (from schedule impact walk, P6 XER snapshot P6_XER_2026-10-08_05-12)
 > - Daily delay cost: $12,000 (from project settings, entered by PX on Oct 1, 2026)
 > - Computation: 26 days × $12,000/day = $312,000
+> - **Note:** This is an estimate. Confirm in P6 (constraints and resource leveling not applied).
 >
 > [View schedule snapshot] [View project settings]
 
-**OPEN:** Should citations link directly to the Procore activity or P6 row, or just to the schedule snapshot summary?
+**Citation links:** Link to the schedule snapshot summary for M2. Direct deep-links to Procore activities or P6 web UI rows are desirable for M3 but require deep-link support from those tools.
 
 ---
 
@@ -396,17 +416,17 @@ Each test case includes:
 | **TC3: Float exhausted** | Slip an activity with 10 days of float by 15 days | Float consumed = 10; critical path slip = 5; project completion slips 5 days; $ impact = 5 × daily delay cost |
 | **TC4: Negative float** | Slip an activity already 5 days late (negative float) by 10 days | Float consumed = 0 (already exhausted); critical path slip = 10; project completion slips 10 days (from current late date); $ impact = 10 × daily delay cost |
 | **TC5: Multi-path** | Slip an activity with 2 successors: one on critical path (float = 0), one with float = 15 days | Only the critical path successor impacts project completion; $ impact based on critical path slip only |
-| **TC6: Holiday spanning** | Slip an activity by 10 days, where days 3-5 fall on Thanksgiving (Thu-Fri) + weekend (Sat-Sun) | New finish date accounts for 4 non-working days (Thu-Sun); actual calendar slip = 14 days; work days slip = 10 days |
-| **TC7: Shutdown period** | Slip an activity by 10 days, where days 5-19 fall in a 2-week winter shutdown (Dec 24 - Jan 4) | New finish date accounts for 14 shutdown days; actual calendar slip = 24 days; work days slip = 10 days |
+| **TC6: Holiday spanning** | Slip an activity by 10 days, where days 3-5 fall on Thanksgiving (Thu-Fri) + weekend (Sat-Sun) | New finish date accounts for 4 non-working days (Thu-Sun) per P6 calendar; actual calendar slip = 14 days; work days slip = 10 days |
+| **TC7: Shutdown period** | Slip an activity by 10 days, where days 5-19 fall in a 2-week winter shutdown (Dec 24 - Jan 4) per P6 calendar | New finish date accounts for shutdown days per P6 calendar non-work periods; work days slip = 10 days |
 | **TC8: In-progress activity** | Slip an in-progress activity (50% complete, planned finish = Oct 15, today = Oct 10) by 5 days | New finish = Oct 20 (slip from today, not from original finish); successors slip accordingly |
 | **TC9: FS lag** | Slip an activity with a successor linked by FS+5 (finish-to-start + 5 day lag) by 10 days | Successor start slips by 10 days (lag is preserved); project completion slips if successor is on critical path |
-| **TC10: SS/FF logic** | **OPEN:** Slip an activity with start-to-start (SS) or finish-to-finish (FF) successor logic | **OPEN:** Do we support SS/FF in M2, or only FS? If supported, define expected behavior. |
-| **TC11: Daily delay cost not set** | Slip a critical path activity by 10 days, but daily delay cost is null in project settings | Project completion slips 10 days; $ impact = null; UI shows "Set delay cost to see $ impact" |
-| **TC12: Notice triggered** | Slip causes project completion to slip by 15 days (> 10 day threshold for delay notice) | `notices` array includes delay_time_extension notice with correct deadline (event date + notice period, accounting for business days + holidays) |
-| **TC13: No successors** | Slip an activity with no successors (end of a path, not on critical path) | Activity finish slips; float consumed; no impact on project completion; $ impact = $0 |
-| **TC14: Accelerate (negative slip)** | Slip an activity by -5 days (acceleration) | Activity finish moves earlier; successors' early start may move earlier if this is the driving predecessor; no float consumed (float increases); $ impact = $0 (savings not computed) |
-
-**OPEN:** Should we compute $ savings for acceleration (negative slip)? Or only $ impact for delays?
+| **TC10: SS logic** | Slip an activity with start-to-start (SS) successor logic by 10 days | Successor start slips by 10 days (or slip + lag if SS+lag); verify propagation |
+| **TC11: FF logic** | Slip an activity with finish-to-finish (FF) successor logic by 10 days | Successor finish slips by 10 days (or slip + lag if FF+lag); verify back-calculation of start |
+| **TC12: SF logic** | Slip an activity with start-to-finish (SF) successor logic | Treated as FS; result flagged "check in P6" |
+| **TC13: Daily delay cost not set** | Slip a critical path activity by 10 days, but daily delay cost is null in project settings | Project completion slips 10 days; $ impact = null; UI shows "Set delay cost to see $ impact" |
+| **TC14: Notice triggered** | Slip causes project completion to slip by 15 days (> 10 day threshold for delay notice) | `notices` array includes delay_time_extension notice with correct deadline (event date + notice period, accounting for business days + holidays) |
+| **TC15: No successors** | Slip an activity with no successors (end of a path, not on critical path) | Activity finish slips; float consumed; no impact on project completion; $ impact = $0 |
+| **TC16: Accelerate (negative slip)** | Slip an activity by -5 days (acceleration) | Activity finish moves earlier; successors' early start may move earlier if this is the driving predecessor; no float consumed (float increases); $ impact = $0 (savings not computed) |
 
 ---
 
@@ -416,23 +436,28 @@ Each test case includes:
 - **Successor depth:** walk up to 100 levels deep (typical max for construction schedules)
 - **UI render time:** < 1s to show the summary card + chart after computation completes
 - **Concurrent requests:** support 10 concurrent what-if scenarios per project (users exploring different options)
-
-**OPEN:** Should we cache CPM walk results for common scenarios (e.g., "what if X slips 1 week" computed multiple times)? Or is 500ms fast enough that caching isn't needed?
+- **Caching:** Not needed for M2; 500ms is fast enough. May revisit for M3 if performance requires it.
 
 ---
 
 ## Open questions
 
-1. **CPM float walk:** Do we support start-to-start (SS) and finish-to-finish (FF) logic, or FS only for M2? (FS+lag is supported; SS/FF is **OPEN**)
-2. **Shutdown periods:** How to handle shutdown periods (e.g., 2-week winter shutdown)? Manual calendar in settings, or inferred from schedule non-working periods? (Manual calendar is safer; inference risks missing contractor-specific shutdowns)
-3. **Fuzzy activity matching:** Should we support fuzzy matching with edit distance (e.g., "curtainwall" vs. "curtain wall"), or require exact substring match? (Fuzzy matching risks false positives; exact match is safer but may frustrate users)
-4. **Successor display:** Should we limit `successors` output to only critical path activities, or show all impacted activities? (All activities can be 50+; critical path is clearer but may hide important near-critical activities)
-5. **Chart detail:** Should we show the full critical path (all activities from primary to project completion), or just the primary + immediate successors? (Full path can be 50+ activities; UX trade-off between detail and clarity)
-6. **Citation links:** Should citations link directly to the Procore activity or P6 row, or just to the schedule snapshot summary? (Direct link is more useful but requires deep-link support from Procore/P6 web UI)
-7. **Acceleration savings:** Should we compute $ savings for acceleration (negative slip days), or only $ impact for delays? (Savings are less common and harder to justify; delay impact is the primary use case)
-8. **Cache CPM results:** Should we cache CPM walk results for common scenarios, or is 500ms fast enough? (Caching adds complexity; 500ms is likely acceptable for M2)
-9. **Notice threshold:** Should we warn if a notice deadline is < 3 days out (urgent), or is that handled by action routing? (Action routing may be sufficient; adding a "urgent" flag is **OPEN**)
-10. **Default lead time (submittal):** Related to A2 action – should what-if scenarios use a default lead time if not specified per activity, or always require explicit lead time? (Always require is safer; default risks incorrect assumptions)
+**Most OPEN items have been resolved as of Oct 9, 2026 (PM answers in PR #17 comments + CTO guardrail).** The following have been answered and incorporated into the spec above:
+
+1. ✅ **CPM float walk / Relationship types:** Support FS, SS, FF with lags in M2 (from P6 XER). SF (start-to-finish, rare) is treated as FS with "check in P6" flag.
+2. ✅ **Shutdown periods:** Use P6 calendars in the XER (they carry non-work periods) plus project holidays from settings. No separate manual calendar for M2.
+3. ✅ **Activity matching:** Normalize case, spaces, and hyphens ("curtainwall" = "curtain wall"). Confidence enum stays internal; user only sees Confirm chip or picker.
+4. ✅ **Successor display:** Show primary + up to 10 immediate successors by default; user can expand for full critical path. (All impacted activities can be 50+; showing a limited set by default avoids overwhelming the UI.)
+5. ✅ **Citation links:** Link to schedule snapshot summary for M2. Direct deep-links to Procore/P6 desirable for M3 but require tool support.
+6. ✅ **Acceleration savings:** Do not compute $ savings for acceleration (negative slip). Delay impact only. (Savings are less common and harder to justify; delay impact is the primary use case.)
+7. ✅ **Cache CPM results:** Not needed for M2; 500ms is fast enough. May revisit for M3.
+8. ✅ **Notice threshold:** Handled by action routing. A6 escalates to PX same day if deadline < 2 business days.
+9. ✅ **CTO guardrail applied:** We are NOT building a schedule engine. Float and dates come from P6 file; what-if pushes slips forward using P6 dependencies, lags, and calendars. Constraints and resource leveling stay in P6. Result labeled "estimate, confirm in P6".
+
+**One remaining consideration for M3 (not blocking M2):**
+- **Default lead time for what-if scenarios:** Related to A2 action – should what-if scenarios use a default lead time if not specified per activity, or always require explicit lead time? (Always require is safer for M2; default may be useful for M3 exploration.)
+
+**No blocking OPEN items for M2.** All computation rules are deterministic and testable.
 
 ---
 
