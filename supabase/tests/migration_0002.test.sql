@@ -733,7 +733,7 @@ select throws_ok(
   'Cannot link Org A RFI to Org B raw_record (composite FK prevents)'
 );
 select throws_ok(
-  $$insert into public.submittals (org_id, project_id, raw_record_id, external_id, number, title, status, schedule_activity_id, schedule_match_method, schedule_match_confidence) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-aaaa-aaaa-aaaa-333333333333', '11111111-1111-1111-1111-000000001111', 'sub-cross-act', 'S998', 'Cross Act', 'pending', '88888888-8888-8888-8888-888888888888', 'title_match', 0.8)$$,
+  $$insert into public.submittals (org_id, project_id, raw_record_id, external_id, number, title, status, schedule_activity_id, schedule_match_method, schedule_match_confidence) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-aaaa-aaaa-aaaa-333333333333', '11111111-1111-1111-1111-000000001111', 'sub-cross-act', 'S998', 'Cross Act', 'pending', '88888888-8888-8888-8888-888888888888', 'manual', 0.8)$$,
   '23503',
   null,
   'Cannot link Org A submittal to Org B schedule_activity (composite FK prevents)'
