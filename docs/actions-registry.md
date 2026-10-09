@@ -67,7 +67,7 @@
 **Eval cases needed:**
 - Positive: overdue RFI, near-term activity, known ball-in-court → valid draft
 - Negative: RFI not overdue → no action
-- Negative: activity > 14 days out → no action
+- Negative: activity > 14 working days out → no action
 - Negative: RFI already closed → no action
 - Edge: RFI due on a weekend/holiday → correct business-day calculation
 
@@ -79,7 +79,7 @@
 **version:** 1  
 **object:** Submittal (Procore submittal record)  
 **owner role:** PE  
-**trigger:** Submittal in review past due, or R&R not resubmitted, + linked activity ≤ 45 days  
+**trigger:** Submittal in review past due, or R&R not resubmitted, + linked activity ≤ 45 working days  
 
 **Required inputs:**
 - Submittal number, title, status, ball-in-court (from Procore)
@@ -117,7 +117,7 @@
 - Positive: overdue review, near-term activity → valid draft
 - Positive: R&R not resubmitted, activity approaching → valid draft
 - Negative: submittal approved → no action
-- Negative: activity > 45 days out → no action
+- Negative: activity > 45 working days out → no action
 - Edge: lead time spans a shutdown period or holidays
 
 ---

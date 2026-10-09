@@ -295,58 +295,86 @@ The computation returns a structured result that the model uses to generate a pl
   "scenario": {
     "activityId": "A2310",
     "activityName": "L3 shaft framing",
-    "slipDays": 21
+    "slipWorkingDays": 21
   },
   "impacts": {
     "primaryActivity": {
       "activityId": "A2310",
       "activityName": "L3 shaft framing",
       "originalEarlyFinish": "2026-10-15",
-      "newEarlyFinish": "2026-11-05",
-      "slipDays": 21,
-      "floatConsumed": 21,
-      "remainingFloat": 3,
+      "newEarlyFinish": "2026-11-13",
+      "slipWorkingDays": 21,
+      "floatConsumed": 3.0,
+      "remainingFloat": -18.0,
       "onCriticalPath": false
     },
     "successors": [
       {
         "activityId": "A2320",
         "activityName": "L3 MEP rough-in",
-        "originalEarlyStart": "2026-10-16",
-        "newEarlyStart": "2026-11-06",
-        "slipDays": 21,
-        "floatConsumed": 5,
-        "remainingFloat": 0,
+        "propagatedDelay": 18.0,
+        "p6TotalFloat": 3.0,
+        "resultingFloat": -15.0,
+        "onCriticalPath": true
+      },
+      {
+        "activityId": "A3000",
+        "activityName": "Exterior envelope closeout",
+        "propagatedDelay": 15.0,
+        "p6TotalFloat": 0.0,
+        "resultingFloat": -15.0,
         "onCriticalPath": true
       }
     ],
     "projectCompletion": {
       "originalDate": "2027-06-30",
       "newDate": "2027-07-26",
-      "slipDays": 26
+      "slipWorkingDays": 18,
+      "slipCalendarDays": 26
     }
   },
   "dollars": {
     "dollarImpact": 312000,
-    "criticalPathSlipDays": 26,
-    "floatConsumedDays": 21,
+    "completionSlipWorkingDays": 18,
+    "completionSlipCalendarDays": 26,
     "dailyDelayCost": 12000,
+    "dailyDelayCostUnit": "calendar_day",
     "dailyDelayCostSource": "project_settings"
   },
   "notices": [
     {
       "noticeType": "delay_time_extension",
-      "triggerReason": "Project completion slips by 26 days (> 10 day threshold)",
-      "eventDate": "2026-11-05",
+      "noticeInfo": "If this happens: notice period per settings is 7 business days (§8.3), deadline Nov 16. Confirm with PX.",
+      "eventDate": "2026-11-13",
       "noticePeriodDays": 7,
       "calendarOrBusiness": "business",
-      "noticeDeadline": "2026-11-14",
+      "noticeDeadline": "2026-11-24",
       "deadlineSource": "project_settings_contract_section_8.3"
     }
   ],
   "suggestedActions": [
     {
       "actionId": "schedule-slip-recovery",
+      "actionName": "Vendor slip recovery options",
+      "targetActivityId": "A2310",
+      "reason": "Activity slips and consumes float"
+    },
+    {
+      "actionId": "outgoing-delay-notice",
+      "actionName": "Outgoing delay notice to owner (A11)",
+      "targetActivityId": null,
+      "reason": "Project completion slips by 26 calendar days, triggering delay notice requirement"
+    }
+  ],
+  "sourceData": {
+    "scheduleSnapshot": "P6_XER_2026-10-08_05-12",
+    "scheduleDataDate": "2026-10-08",
+    "projectSettings": "project_12345_settings_v3",
+    "computedAt": "2026-10-09T18:27:42Z"
+  },
+  "estimateLabel": "estimate, confirm in P6"
+}
+```
       "actionName": "Vendor slip recovery options",
       "targetActivityId": "A2310",
       "reason": "Activity slips and consumes float"
@@ -371,12 +399,12 @@ The computation returns a structured result that the model uses to generate a pl
 ### JSON schema summary
 
 **Top-level:**
-- `scenario` (object): echoes the input scenario (activityId, activityName, slipDays)
+- `scenario` (object): echoes the input scenario (activityId, activityName, slipWorkingDays)
 - `impacts` (object): computation results
   - `primaryActivity` (object): the activity the user asked about
-  - `successors` (array of objects): impacted successor activities (up to 10 shown by default; more available on request). **Ordering:** critical-path activities (remaining float ≤ 0) first, then rest ordered by least float.
-  - `projectCompletion` (object): project finish date impact (if any)
-- `dollars` (object): $ impact breakdown
+  - `successors` (array of objects): impacted successor activities. **Ordering:** critical-path activities (remaining float ≤ 0) first, then rest ordered by least float (ascending).
+  - `projectCompletion` (object): project finish date impact (slipWorkingDays and slipCalendarDays)
+- `dollars` (object): $ impact breakdown (completionSlipWorkingDays, completionSlipCalendarDays, dollarImpact)
 - `notices` (array of objects): triggered notice requirements (from contract notice periods)
 - `suggestedActions` (array of objects): registered actions that would be triggered by this scenario (for drafting)
 - `sourceData` (object): audit trail (schedule snapshot id, **schedule data date**, settings version, timestamp)
@@ -412,7 +440,7 @@ The what-if result is displayed as:
 - Hover: full activity details (id, original dates, new dates, float consumed, $ impact if on critical path)
 - **Result labeled:** All charts and outputs include the label **"estimate, confirm in P6"** to remind users this is NOT a full schedule recalculation
 
-**Successor display (PM):** Show the primary activity + up to 10 immediate successors by default. User can expand to see full critical path if needed. **Ordering:** critical-path activities (remaining float ≤ 0) first, then rest ordered by least float. (Full critical path can be 50+ activities; showing all by default risks overwhelming the UI.)
+**Successor display:** Show the impacted activities. **Ordering:** critical-path activities (remaining float ≤ 0) first, then rest ordered by least float (ascending). Display all impacted successors in the propagation chain; if there are many, the UI can collapse/expand.
 
 ---
 
@@ -427,19 +455,20 @@ The model generates a plain-English explanation of the what-if result, constrain
 
 **Example explanation (model-generated, but citing code):**
 
-> If **L3 shaft framing** slips **3 weeks** (21 days), here's what happens:
+> If **L3 shaft framing** slips **3 weeks** (21 working days), here's what happens:
 >
-> - The activity finishes **Nov 5** instead of **Oct 15**, consuming **21 days of float** (3 days remain).
-> - **L3 MEP rough-in** starts **Nov 6** (was Oct 16), consuming its **5 days of float** and putting it on the critical path.
-> - **Project completion** slips **26 days** (Jul 26 instead of Jun 30), because MEP rough-in drives the exterior envelope closeout.
-> - **$ impact: $312,000** (26 days on the critical path × $12,000/day delay cost).
+> - The activity finishes **Nov 13** instead of **Oct 15**, consuming its **3 days of float**. Remaining float: **-18 days** (now critical).
+> - **L3 MEP rough-in** receives **18 working days** of propagated delay, consuming its **3 days of float**. Resulting float: **-15 days** (critical).
+> - **Exterior envelope closeout** (already critical) receives **15 working days** of delay.
+> - **Project completion** slips **18 working days = 26 calendar days** (from Jun 30 to Jul 26).
+> - **$ impact: $312,000** (26 calendar days × $12,000/calendar day delay cost).
 >
-> You'll need to send a **delay notice to the owner** by **Nov 14** (7 business days from the slip date, per contract section 8.3).
+> **If this happens:** notice period per settings is 7 business days (§8.3), deadline Nov 24. Confirm with PX.
 >
 > **What would you like to do?**
-> - Draft the delay notice
+> - Review outgoing delay notice requirements (A11)
 > - See recovery options for L3 shaft framing
-> - Show me the full critical path
+> - Show me the propagation chain
 
 **Confirmation prompt (always included):**
 > Is **L3 shaft framing** (activity A2310) the right activity? [Yes] [No, show alternatives]
@@ -492,18 +521,18 @@ Each test case includes:
 | **TC3: Float exhausted** | Slip an activity with 10 days of float by 15 days | Float consumed = 10; critical path slip = 5; project completion slips 5 days; $ impact = 5 × daily delay cost |
 | **TC4: Negative float** | Slip an activity already 5 days late (negative float) by 10 days | Float consumed = 0 (already exhausted); critical path slip = 10; project completion slips 10 days (from current late date); $ impact = 10 × daily delay cost |
 | **TC5: Multi-path** | Slip an activity with 2 successors: one on critical path (float = 0), one with float = 15 days | Only the critical path successor impacts project completion; $ impact based on critical path slip only |
-| **TC6: Holiday spanning** | Slip an activity by 10 days, where days 3-5 fall on Thanksgiving (Thu-Fri) + weekend (Sat-Sun) | New finish date accounts for 4 non-working days (Thu-Sun) per P6 calendar; actual calendar slip = 14 days; work days slip = 10 days |
-| **TC7: Shutdown period** | Slip an activity by 10 days, where days 5-19 fall in a 2-week winter shutdown (Dec 24 - Jan 4) per P6 calendar | New finish date accounts for shutdown days per P6 calendar non-work periods; work days slip = 10 days |
-| **TC8: In-progress activity** | Slip an in-progress activity (50% complete, planned finish = Oct 15, today = Oct 10) by 5 days | New finish = Oct 20 (slip from today, not from original finish); successors slip accordingly |
-| **TC9: FS lag** | Slip an activity with a successor linked by FS+5 (finish-to-start + 5 day lag) by 10 days | Successor start slips by 10 days (lag is preserved); project completion slips if successor is on critical path |
-| **TC10: SS logic** | Slip an activity with start-to-start (SS) successor logic by 10 days | Successor start slips by 10 days (or slip + lag if SS+lag); verify propagation |
-| **TC11: FF logic** | Slip an activity with finish-to-finish (FF) successor logic by 10 days | Successor finish slips by 10 days (or slip + lag if FF+lag); verify back-calculation of start |
-| **TC12: SF logic** | Slip an activity with start-to-finish (SF) successor logic | Treated as FS; result flagged "check in P6" |
-| **TC13: Daily delay cost not set** | Slip a critical path activity by 10 days, but daily delay cost is null in project settings | Project completion slips 10 days; $ impact = null; UI shows "Set delay cost to see $ impact" |
-| **TC14: Notice triggered** | Slip causes project completion to slip by 15 days (> 10 day threshold for delay notice) | `notices` array includes delay_time_extension notice with correct deadline (event date + notice period, accounting for business days + holidays) |
+| **TC6: Holiday spanning** | Slip Nov 18 by 10 working days, spanning Thanksgiving holidays (Nov 26-27) | New finish = Dec 4 (16 calendar days from Nov 18). Working days: Nov 18(W), 19(Th), 20(F), 23(M), 24(T), 25(W), [26-27 holidays], 30(M), Dec 1(T), 2(W) = 10 working days; 16 calendar days. |
+| **TC7: Shutdown period** | Slip an activity by 10 working days spanning winter shutdown (Dec 24-25, Dec 31-Jan 1) per P6 calendar | New finish accounts for shutdown days per P6 calendar; 10 working days = more calendar days due to holidays |
+| **TC8: In-progress activity** | Slip an in-progress activity (data date Oct 8, remaining duration 7 days from P6, planned finish Oct 15) by 5 days | Uses P6 remaining_duration from data date (Oct 8 + 7 days = Oct 15); new finish = Oct 22 (5 working days from Oct 15); successors slip accordingly |
+| **TC9: FS lag** | Slip an activity by 10 working days; **FS+5 is the driving relationship** to successor | Successor start slips by 10 days (FS+5 lag is preserved, FS+5 is driving); project completion slips if successor is on critical path |
+| **TC10: SS logic** | Slip an activity with start-to-start (SS) successor logic by 10 working days | Successor start slips by 10 days (or slip + lag if SS+lag); verify propagation |
+| **TC11: FF logic** | Slip an activity with finish-to-finish (FF) successor logic by 10 working days | Successor finish slips by 10 days (or slip + lag if FF+lag); verify back-calculation of start |
+| **TC12: SF logic** | Slip an activity with start-to-finish (SF) successor logic | ⚠️ Treated as FS; result flagged "SF relationship detected, check in P6" |
+| **TC13: Daily delay cost not set** | Slip a critical path activity by 10 working days, but daily delay cost is null in project settings | Project completion slips 10 working days; $ impact = null; UI shows "Set delay cost to see $ impact" |
+| **TC14: Notice triggered** | Slip causes project completion to slip, triggering delay notice requirement per contract settings | `notices` array includes delay_time_extension with noticeInfo: "If this happens: notice period per settings is 7 business days (§8.3), deadline [date]. Confirm with PX." |
 | **TC15: Notice deadline passed** | Slip causes project completion to slip, and notice deadline (computed from settings) has already passed (deadline < today) | Card text exactly: "Deadline per project settings was \<date\>; confirm with PX". No legal conclusions (no "waived", "defaulted", etc.). |
 | **TC16: No successors** | Slip an activity with no successors (end of a path, not on critical path) | Activity finish slips; float consumed; no impact on project completion; $ impact = $0 |
-| **TC17: Accelerate (negative slip)** | Slip an activity by -5 days (acceleration) | Activity finish moves earlier; successors' early start may move earlier if this is the driving predecessor; no float consumed (float increases); $ impact = $0 (savings not computed) |
+| **TC17: Accelerate (negative slip)** | Slip an activity by -5 working days (acceleration) | Activity finish moves earlier; successors' early start may move earlier if this is the driving predecessor; float increases; **days recovered reported** (no $ savings computed) |
 
 ---
 

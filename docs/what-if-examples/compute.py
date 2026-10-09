@@ -43,10 +43,14 @@ def add_business_days(start_date: datetime, days: int, holidays: List[str]) -> d
             remaining -= 1
     return current
 
+def count_calendar_days(start: datetime, end: datetime) -> int:
+    """Count calendar days between two dates (inclusive of end, exclusive of start)."""
+    return (end - start).days
+
 def propagate_slip(fixture: Dict, activity_id: str, slip_working_days: int) -> Dict:
     """
     Propagate a slip forward through successors using P6 data.
-    Returns impact summary.
+    Returns impact summary with proper calendar day conversion.
     """
     calendar = fixture['calendar']
     holidays = calendar['holidays']
@@ -62,59 +66,64 @@ def propagate_slip(fixture: Dict, activity_id: str, slip_working_days: int) -> D
     # Float consumed (capped at available float)
     float_days = activity['total_float_hours'] / hours_per_day
     float_consumed = min(slip_working_days, float_days)
-    remaining_float = max(0, float_days - slip_working_days)
+    remaining_float = float_days - slip_working_days
     
-    # Track impacted activities
+    # Track impacted activities with propagation chain
     impacted = [{
         'id': activity_id,
         'name': activity['name'],
         'original_finish': activity['early_finish'],
         'new_finish': new_finish.strftime('%Y-%m-%d'),
-        'slip_working_days': slip_working_days,
-        'float_consumed': float_consumed,
-        'remaining_float': remaining_float,
-        'critical': activity['total_float_hours'] <= 0
+        'propagated_delay_working_days': slip_working_days,
+        'p6_total_float_days': float_days,
+        'resulting_float_days': remaining_float,
+        'completion_slip_contribution': max(0, slip_working_days - float_days)
     }]
     
-    # Propagate to successors (simplified: assumes chain)
-    propagated_delay = max(0, slip_working_days - float_days)
+    # Propagate to successors recursively
+    current_delay = max(0, slip_working_days - float_days)
+    current_activity = activity_id
     
-    for rel in fixture['relationships']:
-        if rel['predecessor_id'] == activity_id:
-            succ = next(a for a in fixture['activities'] if a['id'] == rel['successor_id'])
-            if propagated_delay > 0:
-                succ_float_days = succ['total_float_hours'] / hours_per_day
-                succ_float_consumed = min(propagated_delay, succ_float_days)
-                succ_remaining_float = max(0, succ_float_days - propagated_delay)
-                
-                impacted.append({
-                    'id': succ['id'],
-                    'name': succ['name'],
-                    'slip_working_days': propagated_delay,
-                    'float_consumed': succ_float_consumed,
-                    'remaining_float': succ_remaining_float,
-                    'critical': succ['total_float_hours'] <= 0 or succ_remaining_float <= 0
-                })
-                
-                # Continue propagation if successor becomes critical
-                if succ_remaining_float <= 0:
-                    propagated_delay = max(0, propagated_delay - succ_float_days)
+    while current_delay > 0:
+        # Find next successor
+        next_rel = next((r for r in fixture['relationships'] if r['predecessor_id'] == current_activity), None)
+        if not next_rel:
+            break
+        
+        succ = next(a for a in fixture['activities'] if a['id'] == next_rel['successor_id'])
+        succ_float_days = succ['total_float_hours'] / hours_per_day
+        succ_remaining_float = succ_float_days - current_delay
+        
+        impacted.append({
+            'id': succ['id'],
+            'name': succ['name'],
+            'propagated_delay_working_days': current_delay,
+            'p6_total_float_days': succ_float_days,
+            'resulting_float_days': succ_remaining_float,
+            'completion_slip_contribution': max(0, current_delay - succ_float_days)
+        })
+        
+        # Continue propagation
+        current_delay = max(0, current_delay - succ_float_days)
+        current_activity = succ['id']
     
-    # Compute project completion slip (max over impacted)
-    completion_slip_days = max(
-        max(0, imp['slip_working_days'] - (imp['float_consumed'] if not imp['critical'] else 0))
-        for imp in impacted
-    )
+    # Compute project completion slip (max over impacted activities)
+    completion_slip_working_days = max(imp['completion_slip_contribution'] for imp in impacted)
     
-    # Convert to calendar days for $ computation if delay cost is per calendar day
-    # For now, assume slip converts 1:1 for critical path days
-    calendar_days_slip = completion_slip_days  # Simplified
+    # Convert to calendar days: find original and new completion dates
+    # Original completion from last activity in chain
+    last_activity = next(a for a in fixture['activities'] if a['id'] == 'A3000')
+    original_completion = datetime.strptime(last_activity['early_finish'], '%Y-%m-%d')
+    
+    # New completion = original + completion slip in working days
+    new_completion = add_working_days(original_completion, int(completion_slip_working_days), calendar, holidays)
+    completion_slip_calendar_days = count_calendar_days(original_completion, new_completion)
     
     return {
         'impacted': impacted,
-        'completion_slip_working_days': completion_slip_days,
-        'completion_slip_calendar_days': calendar_days_slip,
-        'dollar_impact': completion_slip_days * fixture['project']['daily_delay_cost_usd'] if completion_slip_days > 0 else 0
+        'completion_slip_working_days': completion_slip_working_days,
+        'completion_slip_calendar_days': completion_slip_calendar_days,
+        'dollar_impact': completion_slip_calendar_days * fixture['project']['daily_delay_cost_usd'] if completion_slip_calendar_days > 0 else 0
     }
 
 def main():
@@ -155,12 +164,20 @@ def main():
         if imp['id'] == 'A2310':
             print(f"  Original finish: {imp['original_finish']}")
             print(f"  New finish: {imp['new_finish']}")
-            print(f"  Slip: {imp['slip_working_days']} working days")
-            print(f"  Float consumed: {imp['float_consumed']} days")
-            print(f"  Remaining float: {imp['remaining_float']} days")
+            print(f"  Slip: {imp['propagated_delay_working_days']} working days")
+            print(f"  P6 total float: {imp['p6_total_float_days']} days")
+            print(f"  Resulting float: {imp['resulting_float_days']} days")
     print()
-    print(f"Completion slip: {result['completion_slip_working_days']} working days")
-    print(f"Dollar impact: ${result['dollar_impact']:,}")
+    print("PROPAGATION CHAIN:")
+    for imp in result['impacted']:
+        print(f"  {imp['id']}: {imp['name']}")
+        print(f"    Propagated delay: {imp['propagated_delay_working_days']} working days")
+        print(f"    P6 total float: {imp['p6_total_float_days']} days")
+        print(f"    Resulting float: {imp['resulting_float_days']} days")
+        print(f"    Completion slip contribution: {imp['completion_slip_contribution']} days")
+    print()
+    print(f"Completion slip: {result['completion_slip_working_days']} working days = {result['completion_slip_calendar_days']} calendar days")
+    print(f"Dollar impact: {result['completion_slip_working_days']} working days → {result['completion_slip_calendar_days']} calendar days × ${fixture['project']['daily_delay_cost_usd']:,}/calendar day = ${result['dollar_impact']:,}")
     print()
     
     # Compute date math examples
@@ -183,14 +200,14 @@ def main():
     
     print()
     
-    print("TC6: Holiday spanning (Thanksgiving week)")
+    print("TC6: Holiday spanning (Thanksgiving Nov 26-27)")
     print("-" * 80)
-    # Slip by 10 working days where days 3-5 fall on Thu-Fri + weekend
-    # Starting Oct 15, working days: Oct 15(W), 16(Th), 17(F), 20(M), 21(T), 22(W), 23(Th), 24(F), 27(M), 28(T)
-    # But if we hit Nov 26-27 (Thanksgiving), those are skipped
-    result_tc6 = add_working_days(oct15, 10, fixture['calendar'], fixture['calendar']['holidays'])
-    calendar_days = (result_tc6 - oct15).days
-    print(f"Oct 15 + 10 working days = {result_tc6.strftime('%b %d')} ({calendar_days} calendar days)")
+    # Slip by 10 working days starting Nov 18 to span Thanksgiving
+    nov18 = datetime.strptime('2026-11-18', '%Y-%m-%d')
+    result_tc6 = add_working_days(nov18, 10, fixture['calendar'], fixture['calendar']['holidays'])
+    calendar_days = (result_tc6 - nov18).days
+    print(f"Nov 18 + 10 working days = {result_tc6.strftime('%b %d')} ({calendar_days} calendar days)")
+    print(f"  Working days: Nov 18(W), 19(Th), 20(F), 23(M), 24(T), 25(W), [26-27 holidays], 30(M), Dec 1(T), 2(W)")
     print()
 
 if __name__ == '__main__':
