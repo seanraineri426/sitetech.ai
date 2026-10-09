@@ -30,12 +30,10 @@ The model parses the user's plain-English question into a structured JSON scenar
 
 ```json
 {
-  "activityId": "A2310",
-  "activityName": "L3 shaft framing",
-  "slipDays": 21,
-  "confidence": "high",
-  "matchReason": "Exact match on activity name 'shaft framing' and location 'L3'",
-  "alternativeMatches": []
+  "activityId": "A1000",
+  "slipWorkingDays": 15,
+  "mode": "extend",
+  "eventDate": "2026-10-09"
 }
 ```
 
@@ -197,14 +195,18 @@ All computation is deterministic code over the latest successful P6 XER snapshot
 
 ```json
 {
-  "activityId": "A2310",
-  "activityName": "L3 shaft framing",
-  "originalEarlyFinish": "2026-10-15",
-  "newEarlyFinish": "2026-11-13",
-  "slipWorkingDays": 21,
-  "floatConsumed": 3.0,
-  "remainingFloat": 0,
-  "onCriticalPath": false
+  "primaryActivity": {
+    "activityId": "A1000",
+    "activityName": "L3 shaft framing",
+    "newEarlyFinish": "2026-11-06",
+    "floatConsumed": 7,
+    "remainingFloat": -8
+  },
+  "projectCompletion": {
+    "newDate": "2026-12-17",
+    "slipCalendarDays": 10
+  },
+  "dollarImpact": 120000
 }
 ```
 
@@ -242,19 +244,19 @@ All computation is deterministic code over the latest successful P6 XER snapshot
 - Both working days and calendar days are reported in the result
 
 **Example (from computed fixture):**
-- Activity A2310 slips 8 working days
-- Float on A2310: 3 days
-- Propagated delay to completion activity A3000: 2 working days (after absorbing float along the chain)
-- Completion slip: 2 working days = 4 calendar days (counting calendar days between original Nov 19 and new Nov 23)
-- $ impact: 4 calendar days × $12,000/calendar day = **$48,000**
+- Activity A1100 (L3 MEP rough-in) slips 12 working days
+- Float on A1100: 7 days
+- Slip beyond float: 5 working days
+- Completion slip: 5 working days = 7 calendar days (counting calendar days between original Dec 7 and new Dec 14)
+- $ impact: 7 calendar days × $12,000/calendar day = **$84,000**
 
 **Output:**
 
 ```json
 {
-  "dollarImpact": 48000,
-  "completionSlipWorkingDays": 2,
-  "completionSlipCalendarDays": 4,
+  "dollarImpact": 84000,
+  "completionSlipWorkingDays": 5,
+  "completionSlipCalendarDays": 7,
   "dailyDelayCost": 12000,
   "dailyDelayCostUnit": "calendar_day",
   "dailyDelayCostSource": "project_settings"
@@ -310,50 +312,58 @@ The computation returns a structured result that the model uses to generate a pl
 ```json
 {
   "scenario": {
-    "activityId": "A2310",
+    "activityId": "A1000",
     "activityName": "L3 shaft framing",
-    "slipWorkingDays": 21
+    "slipWorkingDays": 15
   },
   "impacts": {
     "primaryActivity": {
-      "activityId": "A2310",
+      "activityId": "A1000",
       "activityName": "L3 shaft framing",
-      "originalEarlyFinish": "2026-10-22",
-      "newEarlyFinish": "2026-11-20",
-      "slipWorkingDays": 21,
-      "floatConsumed": 3.0,
-      "remainingFloat": -18.0,
+      "originalEarlyFinish": "2026-10-16",
+      "newEarlyFinish": "2026-11-06",
+      "slipWorkingDays": 15,
+      "floatConsumed": 7,
+      "remainingFloat": -8,
       "onCriticalPath": true
     },
     "successors": [
       {
-        "activityId": "A2320",
+        "activityId": "A1100",
         "activityName": "L3 MEP rough-in",
-        "propagatedDelay": 18.0,
-        "p6TotalFloat": 3.0,
-        "resultingFloat": -15.0,
+        "propagatedDelay": 15,
+        "p6TotalFloat": 7,
+        "resultingFloat": -8,
         "onCriticalPath": true
       },
       {
         "activityId": "A3000",
-        "activityName": "Exterior envelope closeout",
-        "propagatedDelay": 15.0,
-        "p6TotalFloat": 0.0,
-        "resultingFloat": -15.0,
+        "activityName": "Interior finishes and closeout (completion)",
+        "propagatedDelay": 8,
+        "p6TotalFloat": 0,
+        "resultingFloat": -8,
         "onCriticalPath": true
+      },
+      {
+        "activityId": "A1200",
+        "activityName": "L3 corridor ceiling close-in",
+        "propagatedDelay": 15,
+        "p6TotalFloat": 19,
+        "resultingFloat": 4,
+        "onCriticalPath": false
       }
     ],
     "projectCompletion": {
-      "originalDate": "2026-11-19",
-      "newDate": "2026-12-14",
-      "slipWorkingDays": 15,
-      "slipCalendarDays": 25
+      "originalDate": "2026-12-07",
+      "newDate": "2026-12-17",
+      "slipWorkingDays": 8,
+      "slipCalendarDays": 10
     }
   },
   "dollars": {
-    "dollarImpact": 300000,
-    "completionSlipWorkingDays": 15,
-    "completionSlipCalendarDays": 25,
+    "dollarImpact": 120000,
+    "completionSlipWorkingDays": 8,
+    "completionSlipCalendarDays": 10,
     "dailyDelayCost": 12000,
     "dailyDelayCostUnit": "calendar_day",
     "dailyDelayCostSource": "project_settings"
@@ -361,11 +371,11 @@ The computation returns a structured result that the model uses to generate a pl
   "notices": [
     {
       "noticeType": "delay_time_extension",
-      "noticeInfo": "If this happens: notice period per settings is 7 business days (§8.3), deadline Dec 3. Confirm with PX.",
-      "eventDate": "2026-11-20",
+      "noticeInfo": "If this happens: notice period per settings is 7 business days (§8.3), deadline Oct 20. Confirm with PX.",
+      "eventDate": "2026-10-09",
       "noticePeriodDays": 7,
       "calendarOrBusiness": "business",
-      "noticeDeadline": "2026-12-03",
+      "noticeDeadline": "2026-10-20",
       "deadlineSource": "project_settings_contract_section_8.3"
     }
   ],
@@ -373,10 +383,24 @@ The computation returns a structured result that the model uses to generate a pl
     {
       "actionId": "schedule-slip-recovery",
       "actionName": "Vendor slip recovery options",
-      "targetActivityId": "A2310",
+      "targetActivityId": "A1000",
       "reason": "Activity slips and consumes float"
     },
     {
+      "actionId": "outgoing-delay-notice",
+      "actionName": "Outgoing delay notice to owner (A11)",
+      "targetActivityId": null,
+      "reason": "Project completion slips by 10 calendar days, triggering delay notice requirement"
+    }
+  ],
+  "sourceData": {
+    "scheduleSnapshot": "P6_XER_2026-10-08_05-12",
+    "scheduleDataDate": "2026-10-08",
+    "projectSettings": "project_12345_settings_v3",
+    "computedAt": "2026-10-09T18:27:42Z"
+  },
+  "estimateLabel": "estimate, confirm in P6"
+}
       "actionId": "outgoing-delay-notice",
       "actionName": "Outgoing delay notice to owner (A11)",
       "targetActivityId": null,
@@ -454,13 +478,13 @@ The model generates a plain-English explanation of the what-if result, constrain
 
 > If **L3 shaft framing** slips **15 working days** (3 weeks), here's what happens:
 >
-> - The activity finishes **Nov 12** instead of **Oct 22**, consuming its **3 days of float**. Resulting float: **-12 days** (now critical).
-> - **L3 MEP rough-in** receives **12 working days** of propagated delay, consuming its **3 days of float**. Resulting float: **-9 days** (critical).
-> - **Exterior envelope closeout** (already critical) receives **9 working days** of delay.
-> - **Project completion** slips **9 working days = 15 calendar days** (from Nov 19 to Dec 4).
-> - **$ impact: $180,000** (15 calendar days × $12,000/calendar day delay cost).
+> - The activity finishes **Nov 6** instead of **Oct 16**, consuming its **7 days of float**. Resulting float: **-8 days** (now critical).
+> - **L3 MEP rough-in** receives **15 working days** of propagated delay, consuming its **7 days of float**. Resulting float: **-8 days** (critical).
+> - **Interior finishes and closeout (completion)** (already critical) receives **8 working days** of delay.
+> - **Project completion** slips **8 working days = 10 calendar days** (from Dec 7 to Dec 17).
+> - **$ impact: $120,000** (10 calendar days × $12,000/calendar day delay cost).
 >
-> **If this happens:** notice period per settings is 7 business days (§8.3), deadline Dec 1. Confirm with PX.
+> **If this happens:** notice period per settings is 7 business days (§8.3), deadline Oct 20. Confirm with PX.
 >
 > **What would you like to do?**
 > - Review outgoing delay notice requirements (A11)
@@ -468,7 +492,20 @@ The model generates a plain-English explanation of the what-if result, constrain
 > - Show me the propagation chain
 
 **Confirmation prompt (always included):**
-> Is **L3 shaft framing** (activity A2310) the right activity? [Yes] [No, show alternatives]
+> Is **L3 shaft framing** (activity A1000) the right activity? [Yes] [No, show alternatives]
+
+**Example 2 (critical activity, no float):**
+
+> If **Curtain wall install** slips **15 working days** (3 weeks), here's what happens:
+>
+> - The activity finishes **Nov 30** instead of **Nov 5**, consuming its **0 days of float** (already critical). Resulting float: **-15 days**.
+> - **Perimeter sealant and flashing** receives **15 working days** of propagated delay, consuming **0 days of float** (critical). Resulting float: **-15 days**.
+> - **Envelope water testing** receives **15 working days** of propagated delay.
+> - **Interior finishes and closeout (completion)** receives **15 working days** of propagated delay.
+> - **Project completion** slips **15 working days = 22 calendar days** (from Dec 7 to Dec 29).
+> - **$ impact: $264,000** (22 calendar days × $12,000/calendar day delay cost).
+>
+> **If this happens:** notice period per settings is 7 business days (§8.3), deadline Oct 20. Confirm with PX.
 
 ---
 
@@ -487,13 +524,13 @@ Every number displayed in the what-if result must include a citation (tap to see
 
 **Example citation card (shown on tap):**
 
-> **$ impact: $312,000**
+> **$ impact: $120,000**
 >
 > **Source:**  
-> - Critical path slip: 26 days (from schedule impact walk, P6 XER snapshot P6_XER_2026-10-08_05-12)
+> - Critical path slip: 10 calendar days (from schedule impact walk, P6 XER snapshot P6_XER_2026-10-08_05-12)
 > - Schedule data date: Oct 8, 2026
 > - Daily delay cost: $12,000/calendar day (from project settings)
-> - Computation: 26 days × $12,000/day = $312,000
+> - Computation: 10 calendar days × $12,000/day = $120,000
 > - **Note:** This is an estimate. Confirm in P6 (constraints and resource leveling not applied).
 >
 > [View schedule snapshot] [View project settings]
