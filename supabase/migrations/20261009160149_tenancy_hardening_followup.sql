@@ -8,27 +8,54 @@
 do $$
 declare
   mismatch_count int;
+  mismatch_ids text;
 begin
   -- Check for cross-org connection references in project_sources
-  select count(*) into mismatch_count
-  from public.project_sources ps
-  left join public.integration_connections ic 
-    on ps.connection_id = ic.id and ps.org_id = ic.org_id
-  where ic.id is null;
+  with mismatches as (
+    select ps.id
+    from public.project_sources ps
+    left join public.integration_connections ic 
+      on ps.connection_id = ic.id and ps.org_id = ic.org_id
+    where ic.id is null
+    limit 5
+  )
+  select count(*), string_agg(id::text, ', ')
+  into mismatch_count, mismatch_ids
+  from (
+    select count(*)::int from public.project_sources ps
+    left join public.integration_connections ic 
+      on ps.connection_id = ic.id and ps.org_id = ic.org_id
+    where ic.id is null
+  ) c
+  cross join mismatches;
   
   if mismatch_count > 0 then
-    raise exception 'Found % project_sources with cross-org connection_id references', mismatch_count;
+    raise exception 'Found % project_sources with cross-org connection_id references (sample ids: %)', 
+      mismatch_count, coalesce(mismatch_ids, 'none');
   end if;
   
   -- Check for cross-org project_source references in sync_runs
-  select count(*) into mismatch_count
-  from public.sync_runs sr
-  left join public.project_sources ps 
-    on sr.project_source_id = ps.id and sr.org_id = ps.org_id and sr.project_id = ps.project_id
-  where ps.id is null;
+  with mismatches as (
+    select sr.id
+    from public.sync_runs sr
+    left join public.project_sources ps 
+      on sr.project_source_id = ps.id and sr.org_id = ps.org_id and sr.project_id = ps.project_id
+    where ps.id is null
+    limit 5
+  )
+  select count(*), string_agg(id::text, ', ')
+  into mismatch_count, mismatch_ids
+  from (
+    select count(*)::int from public.sync_runs sr
+    left join public.project_sources ps 
+      on sr.project_source_id = ps.id and sr.org_id = ps.org_id and sr.project_id = ps.project_id
+    where ps.id is null
+  ) c
+  cross join mismatches;
   
   if mismatch_count > 0 then
-    raise exception 'Found % sync_runs with cross-org project_source_id references', mismatch_count;
+    raise exception 'Found % sync_runs with cross-org project_source_id references (sample ids: %)', 
+      mismatch_count, coalesce(mismatch_ids, 'none');
   end if;
 end;
 $$;
@@ -74,6 +101,10 @@ alter table public.audit_log add constraint audit_log_actor_user_id_fkey
 -- 4. ADD MISSING audit_log org FK with CASCADE
 -- ============================================================================
 
+-- Drop the conflicting FK from 0001 (SET NULL) before adding CASCADE
+-- Decision: audit rows are deleted with org (match purge-on-disconnect)
+alter table public.audit_log drop constraint audit_log_org_id_fkey;
+
 alter table public.audit_log add constraint audit_log_org_fk 
   foreign key (org_id) references public.orgs(id) on delete cascade;
 
@@ -92,3 +123,6 @@ alter default privileges for role postgres in schema public revoke all on functi
 
 -- Alter default privileges: authenticated cannot truncate
 alter default privileges for role postgres in schema public revoke truncate on tables from authenticated;
+
+-- Revoke execute on functions from PUBLIC (prevents anon access via PUBLIC role)
+alter default privileges for role postgres in schema public revoke execute on functions from public;

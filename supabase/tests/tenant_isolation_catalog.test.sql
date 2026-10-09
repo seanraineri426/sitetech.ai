@@ -1,17 +1,12 @@
 -- pgTAP: Generic tenant isolation test via catalog introspection
 -- Dynamically tests ALL tables with org_id column
 -- Tests: (a) RLS enabled, (b) anon has no privileges, (c) authenticated lacks TRUNCATE, 
---        (d) FK constraints include org_id, (e) org FK cascade, (f) NOT NULL + SET NULL check
+--        (d) FK constraints include org_id, (e) org FK cascade, (f) SET NULL checks, (g) conflicting FKs
 
 begin;
 set local role postgres;
 
-select plan(5);
-
--- Note: Test 6 (checking for NOT NULL columns with whole-row SET NULL) was removed
--- because PostgreSQL's catalog doesn't distinguish between whole-row and column-specific
--- SET NULL. Both use confdeltype='n', so the check produces false positives for
--- column-specific SET NULL like "on delete set null (raw_record_id)".
+select plan(8);
 
 -- ============================================================================
 -- Test 1: Assert we found >= 14 tables with org_id
@@ -147,6 +142,59 @@ select is_empty(
     having not ('org_id' = any(array_agg(sa.attname)))
   $$,
   'Every FK to another org_id table includes org_id in column list'
+);
+
+-- ============================================================================
+-- Test 6: No ON DELETE SET NULL/DEFAULT FK touches a NOT NULL column
+-- ============================================================================
+
+select is_empty(
+  $$
+    select con.conrelid::regclass as table_name, con.conname, a.attname as not_null_column
+    from pg_constraint con
+    join lateral unnest(coalesce(con.confdelsetcols, con.conkey)) k(attnum) on true
+    join pg_attribute a on a.attrelid = con.conrelid and a.attnum = k.attnum
+    where con.contype = 'f' and con.confdeltype in ('n','d')
+      and con.connamespace = 'public'::regnamespace and a.attnotnull
+  $$,
+  'No ON DELETE SET NULL/DEFAULT FK touches a NOT NULL column'
+);
+
+-- ============================================================================
+-- Test 7: No two FKs on the same column disagree on ON DELETE
+-- ============================================================================
+
+select is_empty(
+  $$
+    select c1.conrelid::regclass, a.attname, c1.conname, c2.conname
+    from pg_constraint c1
+    join pg_constraint c2 on c2.conrelid = c1.conrelid and c2.contype = 'f'
+         and c1.conname < c2.conname and c1.confrelid = c2.confrelid
+         and c1.confdeltype <> c2.confdeltype
+    join pg_attribute a on a.attrelid = c1.conrelid
+         and a.attnum = any(c1.conkey) and a.attnum = any(c2.conkey)
+    where c1.contype = 'f' and c1.connamespace = 'public'::regnamespace
+  $$,
+  'No two FKs on the same column disagree on ON DELETE'
+);
+
+-- ============================================================================
+-- Test 8: authenticated cannot TRUNCATE any tenant table
+-- ============================================================================
+
+select is_empty(
+  $$
+    select c.relname
+    from pg_class c
+    join pg_namespace n on n.oid = c.relnamespace
+    join pg_attribute a on a.attrelid = c.oid
+    where n.nspname = 'public'
+      and c.relkind = 'r'
+      and a.attname = 'org_id'
+      and not a.attisdropped
+      and has_table_privilege('authenticated', c.oid, 'truncate')
+  $$,
+  'authenticated cannot TRUNCATE any tenant table'
 );
 
 select * from finish();

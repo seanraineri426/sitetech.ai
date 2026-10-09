@@ -2,7 +2,7 @@
 -- Tests: cross-org isolation, RLS policies, constraints, service role writes
 
 begin;
-select plan(125);
+select plan(126);
 
 -- Setup test data
 set role postgres;
@@ -354,7 +354,7 @@ reset role;
 -- ANON ROLE TESTS
 -- ============================================================================
 
--- Test 35-45: Anon has no access to any tables (permission denied)
+-- Test 37-47: Anon has no access to any tables (permission denied)
 set role anon;
 select throws_ok($$select count(*) from public.integration_connections$$, '42501', null, 'Anon cannot access integration_connections');
 select throws_ok($$select count(*) from public.project_sources$$, '42501', null, 'Anon cannot access project_sources');
@@ -964,6 +964,7 @@ insert into public.rfis (org_id, project_id, raw_record_id, external_id, number,
 insert into public.submittals (org_id, project_id, raw_record_id, external_id, number, title, status) values ('88888888-8888-8888-8888-888888888888', '88888888-8888-8888-8888-888888888881', '88888888-8888-8888-8888-888888888881', 'test-sub', 'S999', 'Test', 'pending');
 insert into public.emails (org_id, project_id, raw_record_id, external_id, subject, from_address, received_at, received_at_source) values ('88888888-8888-8888-8888-888888888888', '88888888-8888-8888-8888-888888888881', '88888888-8888-8888-8888-888888888881', 'test-email', 'Test', 'test@example.com', now(), 'graph');
 insert into public.schedule_activities (org_id, project_id, external_id, task_code, name) values ('88888888-8888-8888-8888-888888888888', '88888888-8888-8888-8888-888888888881', 'CASCADE:ACT', 'ACT', 'Test');
+insert into public.audit_log (id, org_id, actor_type, action, target_table, target_id) values (88888888, '88888888-8888-8888-8888-888888888888', 'system', 'create_org', 'orgs', '88888888-8888-8888-8888-888888888888');
 delete from public.orgs where id = '88888888-8888-8888-8888-888888888888';
 select is((select count(*)::int from public.rfis where org_id = '88888888-8888-8888-8888-888888888888'), 0, 'Org delete cascades: rfis');
 select is((select count(*)::int from public.submittals where org_id = '88888888-8888-8888-8888-888888888888'), 0, 'Org delete cascades: submittals');
@@ -971,7 +972,7 @@ select is((select count(*)::int from public.raw_records where org_id = '88888888
 select is((select count(*)::int from public.schedule_activities where org_id = '88888888-8888-8888-8888-888888888888'), 0, 'Org delete cascades: schedule_activities');
 select is((select count(*)::int from public.emails where org_id = '88888888-8888-8888-8888-888888888888'), 0, 'Org delete cascades: emails');
 select is((select count(*)::int from public.sync_runs where org_id = '88888888-8888-8888-8888-888888888888'), 0, 'Org delete cascades: sync_runs');
-select is((select count(*)::int from public.audit_log where org_id = '88888888-8888-8888-8888-888888888888'), 0, 'Org delete cascades: audit_log');
+select is((select count(*)::int from public.audit_log where id = 88888888), 0, 'Org delete cascades: audit_log');
 reset role;
 
 -- Test 123: Connection-leak attack as Org A admin (authenticated + JWT)
@@ -1001,6 +1002,24 @@ select is(
   0,
   'Admin CAN delete from own org'
 );
+reset role;
+
+-- Test 126: Anon cannot execute new functions (via PUBLIC revoke)
+set role postgres;
+create function public.test_probe_function() returns text language sql as $$ select 'probe'::text $$;
+reset role;
+
+set role anon;
+select throws_ok(
+  $$select public.test_probe_function()$$,
+  '42501',
+  null,
+  'Anon cannot execute functions (PUBLIC revoke works)'
+);
+reset role;
+
+set role postgres;
+drop function public.test_probe_function();
 reset role;
 
 select * from finish();
