@@ -115,6 +115,7 @@ alter table public.audit_log add constraint audit_log_org_fk
 -- Revoke ALL from anon on all tables and sequences
 revoke all on all tables in schema public from anon;
 revoke all on all sequences in schema public from anon;
+revoke all on all functions in schema public from anon;
 
 -- Alter default privileges: anon gets nothing
 alter default privileges for role postgres in schema public revoke all on tables from anon;
@@ -125,4 +126,5 @@ alter default privileges for role postgres in schema public revoke all on functi
 alter default privileges for role postgres in schema public revoke truncate on tables from authenticated;
 
 -- Revoke execute on functions from PUBLIC (prevents anon access via PUBLIC role)
+revoke execute on all functions in schema public from public;
 alter default privileges for role postgres in schema public revoke execute on functions from public;
