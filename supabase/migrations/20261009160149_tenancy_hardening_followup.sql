@@ -118,7 +118,27 @@ alter default privileges for role postgres in schema public revoke all on functi
 alter default privileges for role postgres in schema public revoke truncate on tables from authenticated;
 
 -- Revoke execute on functions from PUBLIC (prevents anon access via PUBLIC role)
-revoke execute on all functions in schema public from public;
+-- Exception: keep PUBLIC execute on extension functions (e.g., pgTAP)
+do $$
+declare
+  func record;
+begin
+  for func in 
+    select p.oid::regprocedure as func_sig
+    from pg_proc p
+    join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public'
+      and not exists (
+        select 1 from pg_depend d 
+        where d.classid = 'pg_proc'::regclass 
+          and d.objid = p.oid 
+          and d.deptype = 'e'
+      )
+  loop
+    execute format('revoke execute on function %s from public', func.func_sig);
+  end loop;
+end;
+$$;
 
 -- Revoke default PUBLIC execute privilege for functions created by postgres
 -- This overrides PostgreSQL's system default that grants EXECUTE to PUBLIC
