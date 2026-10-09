@@ -46,7 +46,7 @@
 - Draft email (read-only, plain text + HTML)
 - To: ball-in-court contact
 - Subject: "RFI [number] overdue – [activity name] starts [date]"
-- Body: RFI number, question summary (1 line), days overdue, activity name, activity start date, days to start, float and $ at risk, specific answer-by date (computed: activity start - lead time buffer), request for response
+- Body: RFI number, question summary (1 line), days overdue, activity name, activity start date, days to start, float and $ at risk, specific answer-by date (computed: activity start − 5 working days), request for response
 - Citations: RFI record link, schedule activity link
 - **Banned wording:** waived, liable, breach, entitled, any legal conclusion
 
@@ -54,8 +54,9 @@
 - PE approves always (human click required)
 
 **Scoring:**
-- **Float days protected:** If RFI is answered before activity start, log float days that would have been consumed (= days overdue capped at activity float)
-- **$ impact:** Float days protected × daily delay cost
+- **Float days protected:** If RFI is answered before activity start, log float days that would have been consumed. Counted as "confirmed" only when the RFI answer shows up in synced Procore data and the activity starts on or before its planned date.
+- **Critical-path days avoided:** If the activity is on the critical path (total float ≤ 0), days saved before activity start.
+- **$ impact:** Critical-path days avoided × daily delay cost (float days are not converted to $)
 
 **Outcome event:**
 - Created: timestamp, action id, RFI id, activity id, drafted-by (model or template)
@@ -104,8 +105,9 @@
 **Approval tier:** PE
 
 **Scoring:**
-- **Float days protected:** Submittal returned before activity start → float days preserved
-- **$ impact:** Float days × daily delay cost
+- **Float days protected:** Submittal returned before activity start → float days preserved. Counted as "confirmed" when submittal approval shows in synced Procore data and activity starts on or before planned date.
+- **Critical-path days avoided:** If activity is on critical path, days saved.
+- **$ impact:** Critical-path days avoided × daily delay cost (float days are not converted to $)
 
 **Outcome event:**
 - Created, approved/dismissed, sent (same structure as A1)
@@ -151,12 +153,16 @@
 
 **Approval tier:** PM (escalated from PE queue)
 
+**Due / escalation:** ASI issue date + 2 working days. Not approved by due → moves up one level (PE → PM → PX).
+
 **Scoring:**
-- **$ impact:** **OPEN** – rework cost avoided? No direct float metric unless linked to an activity slip.
+- **Fabrication holds (count):** Actions approved, sent, and confirmed by user or revised submittal received
+- **Confirmed holds:** Holds where the sub confirmed they stopped work (user-confirmed flag or revised submittal with ASI reference)
+- **$ impact:** Only if a source document states a rework cost amount. Otherwise, counted by hold only, no $.
 
 **Outcome event:**
 - Created, approved/dismissed, sent
-- Fabrication held (user-confirmed): timestamp
+- Fabrication held (user-confirmed flag): timestamp
 - Revised submittal received: timestamp
 
 **Eval cases needed:**
@@ -258,8 +264,9 @@
 **Approval tier:** PM
 
 **Scoring:**
-- **Float days protected:** If expedite succeeds or resequence absorbs the slip without critical path impact, log the float days saved
-- **$ impact:** Float days × daily delay cost
+- **Float days protected:** If expedite succeeds or resequence absorbs the slip without critical path impact, log the float days saved. Counted as "confirmed" when updated schedule data shows the activity completed without slipping project completion.
+- **Critical-path days avoided:** Days the project completion would have slipped if the action wasn't taken.
+- **$ impact:** Critical-path days avoided × daily delay cost (float days are not converted to $)
 
 **Outcome event:**
 - Created, approved/dismissed
@@ -285,29 +292,28 @@
 
 **Required inputs:**
 - Notice source: email or letter
-- Notice type (from project settings contract notice periods): delay/time extension, cost/change claim, differing site condition, change directive dispute, cure/default, injury/property damage
-- Sender party, date received
-- Notice period: days, calendar vs. business days, contract section (from project settings)
-- Response deadline (computed: date received + notice period, accounting for calendar vs. business and holidays)
-- Owner pass-through requirement (if notice is from sub and contract requires pass-through to owner)
+- Notice type: delay/time extension, cost/change claim, differing site condition, change directive dispute, **cure notice**, injury/property damage
+- Sender party (counterparty), date received
+- **Notice period lookup:** keyed on `contract_kind` (from sender's party role: owner_gc, gc_sub, gc_vendor) + `counterparty_name` + `notice_type`. Returns days, calendar vs. business days, contract section.
+- Owner pass-through requirement: determined by `owner_gc` contract row (if notice is from sub/vendor and owner_gc contract requires pass-through)
 - Project time zone, holidays (from project settings)
 
 **Preconditions:**
 - Sender is a contract party (verified against project parties from settings)
-- Notice type is configured in project settings (notice period exists)
-- **If notice period is not configured:** action shows "Notice period not configured for [type], confirm deadline" and does not compute a deadline
-- **Never default** a notice period – this is a contract compliance matter
+- **Action always drafts acknowledgment**, even if notice period is not configured. If notice period missing, shows "Confirm deadline with PX" for the response deadline.
 
 **Output:**
-- Draft acknowledgment/response email to sender
+- Draft acknowledgment/response email to sender (always drafted)
 - Subject: "Acknowledgment: [notice type] notice dated [date]"
-- Body: acknowledgment of receipt, notice type, date received, response deadline (if known), next steps
-- **If owner pass-through required:** separate draft email to owner with notice attached and pass-through deadline
+- Body: acknowledgment of receipt, notice type, date received, response deadline (if known; else "Confirm deadline with PX"), next steps
+- **If owner pass-through required:** separate draft email to owner with notice attached and pass-through deadline (from owner_gc contract row)
 - **If deadline has already passed (deadline < today):** card text must be exactly: "Deadline per project settings was \<date\>; confirm with PX". Must not draw any legal conclusion.
-- Calendar hold (.ics file) on the response deadline (if not passed)
+- Calendar hold (.ics file) on the response deadline (if not passed and known)
 - **Banned wording:** waived, liable, breach, entitled, defaulted, forfeited (especially critical for notices)
 
 **Approval tier:** PX (PM prepares, PX approves)
+
+**Due / escalation:** Response deadline − 2 business days. If not approved by due, escalates from PM to PX on the same day (urgent notice handling).
 
 **Scoring:**
 - **Notices answered on time:** count and % (answered before deadline)
@@ -320,9 +326,9 @@
 - Owner pass-through sent: timestamp, on-time (Y/N)
 
 **Eval cases needed:**
-- Positive: notice received, type configured → valid draft + deadline
-- Positive: sub notice requiring owner pass-through → two drafts (ack + pass-through)
-- Negative: notice type not configured → shows "confirm deadline" message, no draft
+- Positive: notice received, type configured → valid draft + computed deadline
+- Positive: notice received, type not configured → valid draft with "Confirm deadline with PX" (no computed deadline)
+- Positive: sub notice requiring owner pass-through → two drafts (ack + pass-through), using owner_gc contract row
 - Negative: email from party not in project parties → no action (not recognized as notice)
 - Edge: deadline falls on weekend/holiday → adjusted to next business day (if business days)
 - Edge: calendar vs. business days calculation
@@ -350,7 +356,7 @@
 
 **Preconditions:**
 - Decision is open (not resolved)
-- **Blocking:** linked procurement activity start minus lead time ≤ 21 days
+- **Blocking:** linked procurement activity start minus lead time ≤ 21 days. If lead time is missing, use A2's "Confirm lead time" rule (per-project setting by division, else show "Confirm lead time").
 - Owner contact exists
 - **Resolution detection:** decision is resolved when an owner reply is detected AND the PM confirms in one tap, OR minutes mark it closed
 
@@ -363,8 +369,9 @@
 **Approval tier:** PM
 
 **Scoring:**
-- **Float days protected:** If decision is received before blocking date, log the float days preserved (= days between decision received and blocking date)
-- **$ impact:** Float days × daily delay cost
+- **Float days protected:** If decision is received before blocking date, log the float days preserved. Counted as "confirmed" when decision shows in synced data (email reply or meeting minutes) and procurement/activity proceeds on schedule.
+- **Critical-path days avoided:** If blocked activity is on critical path, days saved.
+- **$ impact:** Critical-path days avoided × daily delay cost (float days are not converted to $)
 
 **Outcome event:**
 - Created, approved/dismissed, sent
@@ -450,7 +457,7 @@
 - Transcript quote + timestamp (source of decision)
 - Decision summary (1-2 sentences)
 - Owner representative who made the decision (if identifiable from speaker)
-- Cost/schedule impact (stated in meeting or inferred from context)
+- Cost/schedule impact (only if stated in the meeting transcript)
 - Existing change events (to check for duplicates)
 - Procore connection status
 
@@ -468,8 +475,10 @@
 
 **Approval tier:** PM
 
+**Due / escalation:** Directive date + 5 working days. Not approved by due → moves up one level (PM → PX).
+
 **Scoring:**
-- **Change dollars captured:** same as A4
+- **Change dollars:** tracked in three separate stages (same as A4): Raised (PM approved card), Submitted (CE in Procore or proposal in mailbox, traced to card), Approved (owner executed CO). Dollars from CE/proposal amount, not our estimate.
 
 **Outcome event:**
 - Created, approved/dismissed
@@ -521,9 +530,11 @@
 
 **Approval tier:** PM (always; never auto-distributed)
 
+**Due / escalation:** Meeting date + 2 working days. Not approved by due → moves up one level (PM → PX).
+
 **Scoring:**
 - Minutes prepared (count)
-- Time saved vs. manual minutes (user-reported or timed)
+- Estimated hours saved vs. manual minutes (approved × week-1 timed minutes per PM)
 - Distribution tracked by sent-item detection or one-tap confirm
 
 **Outcome event:**
@@ -539,6 +550,57 @@
 - Edge: speaker not identified → "confirm owner" for ball-in-court
 - Edge: multiple topics in one discussion → split into separate items
 - Edge: freeform discussion → model tags category, PM reviews; untagged → New business
+
+---
+
+### A11: Outgoing delay notice to owner
+
+**id:** `outgoing-delay-notice`  
+**version:** 1  
+**object:** Project completion slip (from what-if scenario or actual schedule update)  
+**owner role:** PX  
+**trigger:** Project completion slips (from what-if scenario user accepts, or schedule update shows slip), triggering contractual notice requirement  
+
+**Required inputs:**
+- Slip event: what-if scenario result or schedule update showing completion slip
+- Slip duration (working days and calendar days)
+- Notice period: from project settings, keyed on `contract_kind: owner_gc` + `counterparty_name: [owner]` + `notice_type: delay_time_extension`
+- Response deadline (computed: event date + notice period, business days + holidays)
+- Owner representative contact
+- Project time zone, holidays
+
+**Preconditions:**
+- Completion slip meets contractual threshold (if specified; else any slip that triggers notice period)
+- Notice period is configured for owner_gc contract
+- Owner contact exists
+
+**Output:**
+- **Notice information card (not a draft):** "If this happens: notice period per settings is [X] business days (§[section]), deadline [date]. Confirm with PX."
+- **What-if creates cards only when user taps.** Those cards go through PX approvals before any notice is sent.
+- If user proceeds, draft delay notice email to owner:
+  - Subject: "Notice of delay: [project name]"
+  - Body: notice per contract (§[section]), event causing delay, completion slip duration, new completion date, request for time extension or acknowledgment
+  - No legal conclusions
+- **Banned wording:** waived, liable, breach, entitled, defaulted
+
+**Approval tier:** PX (always)
+
+**Due / escalation:** Event date + notice period − 2 business days. If not approved by due, escalates to CEO.
+
+**Scoring:**
+- **Notices sent before deadline:** count and % (on-time compliance)
+- No $ metric; compliance-driven
+
+**Outcome event:**
+- Created (from what-if or schedule update), timestamp
+- Approved/dismissed
+- Sent: timestamp, on-time (Y/N)
+
+**Eval cases needed:**
+- Positive: completion slip from what-if, notice period configured → valid info card, PX can proceed to draft
+- Positive: completion slip from schedule update, notice period configured → card fires automatically
+- Negative: notice period not configured → shows "Confirm notice period with PX"
+- Edge: deadline < 2 days → urgent flag, immediate PX notification
 
 ---
 
@@ -568,8 +630,9 @@ Every action requiring these inputs must check that they exist in project settin
 
 ### Float and $ computation
 All float and $ values are computed by **deterministic code** (see docs/what-if-math.md), never estimated by the model:
-- **Float days:** from CPM float walk over latest P6/Procore schedule
-- **$ impact:** float days × daily delay cost (only when both are known)
+- **Float days:** from P6's total float field in the latest schedule snapshot. Float is reported in days only and is **never converted to dollars**.
+- **$ impact:** critical-path days avoided × daily delay cost. Only days that would have slipped project completion count toward $.
+- **Float days protected (scoring):** When an action prevents a delay, the float days that would have been consumed are logged for ROI reporting, but not converted to dollars.
 - **Notice deadline:** event date + notice period (accounting for calendar vs. business days + holidays)
 
 If the code cannot compute a value (e.g., no schedule link, no delay cost), the action shows "unknown" or prompts for the missing input rather than guessing.
@@ -589,6 +652,63 @@ This audit trail is used for:
 2. Model drift detection (verifier pass rate over time)
 3. Template vs. model sentence ratio (proves read-only compliance)
 4. Dismiss-rate analysis by reason ("wrong" must stay < 5%)
+
+### Scorecard outcomes (ROI reporting)
+
+Aggregated metrics for the PX after 30 days:
+- **Float days protected:** Sum of confirmed float days preserved (A1, A2, A5, A7). "Confirmed" requires synced data showing the predicted outcome occurred.
+- **Critical-path days avoided:** Sum of confirmed critical-path days avoided × daily delay cost.
+- **Change dollars:** reported in three stages separately (never summed):
+  - **Raised:** Count and total $ of CEs where PM approved the card (A4, A9)
+  - **Submitted:** Count and total $ of CEs in Procore or proposals in mailbox, traced to cards (pilot headline metric)
+  - **Approved:** Count and total $ of owner-executed COs, traced to cards
+- **Confirmed catches ≥ $25k:** Count of change-dollar Submitted events where amount ≥ $25,000
+- **Share approved:** % of actions shown that were approved (not dismissed)
+- **"Wrong" dismiss rate:** % of dismissals with reason "wrong" (must stay < 5%)
+- **Estimated hours saved per PM/PE:** (actions approved × week-1 timed minutes-per-action) / 60. Minutes-per-action timed with pilot PM/PE during week 1.
+- **Notices sent before deadline:** Count and % of A6 actions sent before the response deadline (on-time compliance)
+- **Fabrication holds (A3):** Count approved, count confirmed (user-confirmed flag or revised submittal received)
+
+**Data sources:**
+- Raised/Submitted/Approved amounts: `change_dollars` table with stage enum and card_id trace
+- Confirmed flag: `action_outcomes.confirmed` boolean (set when synced data shows predicted outcome)
+- Dismiss reasons: `action_outcomes.dismiss_reason` enum
+- Minutes-per-action: `project_settings.minutes_per_action_pe` and `minutes_per_action_pm` (timed in week 1)
+
+### Write-path and approvals
+
+Every outgoing write or send is an `approvals` row with a tier enum per action:
+- **Tier:** `PE`, `PM`, `PX` (from action's approval tier field)
+- **Timeout:** action's due date (from Due/escalation field). `step.waitForEvent` times out at due date, then escalates one level.
+- **Escalation:** If not approved by due date, action moves up one level (PE → PM → PX → CEO if needed). Escalation message: "Moved up from [tier]: not acted on by [date] ([action context])."
+
+**M2 (read-only):**
+- **"Approve & open"** only opens Outlook (with draft email pre-filled) or shows a paste block (for Procore CE). Nothing is sent server-side.
+- **A6 .ics file:** downloaded locally, not a Graph API write.
+- **GET-only clients:** All M2 data clients are GET-only. No write methods.
+
+**M3 (write-back, future):**
+- Separate write client behind approvals tier system
+- Write-back to Procore (create CE, add meeting items), Graph (send email, create calendar event)
+- GET-only clients never gain write methods; write client is a separate module
+
+### Model receives redacted text; code fills recipients
+
+The model receives only redacted email body/subject/preview (addresses → `[email-<domain>]` placeholders). It drafts without specific email addresses. When the draft opens in Outlook or shows in a card, **code fills in the actual recipient addresses** from the ball-in-court or owner contact fields. Cards show company name and role (e.g., "To: Architect (via Outlook)"), not specific email addresses.
+
+### Procore dependencies and email mode
+
+**Requires Procore field:** Each action has a `requires_procore` boolean. Set to `true` for:
+- **A1** (RFI overdue escalation) - requires Procore RFI data
+- **A2** (Submittal chase) - requires Procore submittal data
+- **A3** (Fabrication hold) - requires Procore submittal + ASI data
+
+**A4 email mode:** A4 (change event draft) works in email-only mode when Procore is not connected. Instead of checking for existing CEs in Procore, the draft shows a **"Confirm no existing change event"** chip that the PM must tap before approval. The draft includes source quotes and ROM $ (if stated), ready for the PM to create the CE manually.
+
+**Submitted tracing (change dollars):** A CE or proposal is traced back to an A4 or A9 card when:
+1. Created after the card was approved (timestamp check)
+2. AND matched by source reference (email message-id, meeting id, RFI number in CE description) OR manual link (user taps "link to card")
+3. Amount comes from the CE or proposal, never from our ROM estimate
 
 ---
 
@@ -625,10 +745,17 @@ This audit trail is used for:
     - **A8:** commitment due date + 1 day
     - **Not approved by due date** → moves up one level (PE → PM → PX) with wording: "Moved up from PE: not acted on by Oct 8 (RFI 112 answer-by Oct 9)."
 
-**No remaining OPEN items for M2.** All action rules are now deterministic and testable.
+**Remaining OPEN questions for M2:**
+
+1. **🔶 A5 resequence (for PM):** When an activity has no float remaining (≤ 0), should A5 omit the resequence suggestion entirely, or show it with a note that float is exhausted?
+2. **🔶 Delay cost definition (for PX):** Confirm delay-cost definition. Current: "GC general conditions + owner carry cost per day." Concern: owner carry cost mixes in owner-side cost, which may not be appropriate for internal GC ROI. Should it be GC general conditions only, or full project delay cost?
+
+**No other blocking OPEN items for M2.** All action rules are now deterministic and testable.
 
 ---
 
 ## Version history
 
-- **v1 (Oct 9, 2026):** Initial registry draft for M2 (A1–A10). Open questions noted inline.
+- **v1.0 (Oct 9, 2026, 14:00 UTC):** Initial registry draft for M2 (A1–A10). Open questions noted inline.
+- **v1.1 (Oct 9, 2026, 18:07 UTC):** PM resolved all 20 OPEN questions. Applied 4 decisions (change $ tracking, slip threshold, CTO guardrail, email redaction).
+- **v1.2 (Oct 9, 2026, 18:14 UTC):** Lead review at 1966299. Added A11 (outgoing delay notice). Fixed $ calculation (critical-path days × delay cost; float days not converted to $). Added Data requirements, write-path approvals, scorecard outcomes, Procore dependencies. Rebuilt all examples from fixture (docs/what-if-examples/). Added 2 OPEN questions for PM/PX. All action rules deterministic and testable.

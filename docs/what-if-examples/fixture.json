@@ -1,0 +1,87 @@
+{
+  "project": {
+    "name": "Linden Yard",
+    "timezone": "America/Los_Angeles",
+    "hours_per_day": 8,
+    "daily_delay_cost_usd": 12000,
+    "delay_cost_unit": "calendar_day"
+  },
+  "data_date": "2026-10-08",
+  "calendar": {
+    "id": "STD",
+    "name": "Standard 5-day week",
+    "work_days": [1, 2, 3, 4, 5],
+    "holidays": [
+      "2026-11-26",
+      "2026-11-27",
+      "2026-12-24",
+      "2026-12-25",
+      "2026-12-31",
+      "2027-01-01"
+    ]
+  },
+  "activities": [
+    {
+      "id": "A2310",
+      "name": "L3 shaft framing",
+      "calendar_id": "STD",
+      "early_start": "2026-10-01",
+      "early_finish": "2026-10-15",
+      "late_start": "2026-10-04",
+      "late_finish": "2026-10-18",
+      "total_float_hours": 24,
+      "original_duration_days": 10,
+      "remaining_duration_days": 10,
+      "status": "not_started",
+      "actual_start": null,
+      "actual_finish": null,
+      "driving_path": false
+    },
+    {
+      "id": "A2320",
+      "name": "L3 MEP rough-in",
+      "calendar_id": "STD",
+      "early_start": "2026-10-16",
+      "early_finish": "2026-10-30",
+      "late_start": "2026-10-19",
+      "late_finish": "2026-11-03",
+      "total_float_hours": 24,
+      "original_duration_days": 10,
+      "remaining_duration_days": 10,
+      "status": "not_started",
+      "actual_start": null,
+      "actual_finish": null,
+      "driving_path": false
+    },
+    {
+      "id": "A3000",
+      "name": "Exterior envelope closeout",
+      "calendar_id": "STD",
+      "early_start": "2027-06-15",
+      "early_finish": "2027-06-30",
+      "late_start": "2027-06-15",
+      "late_finish": "2027-06-30",
+      "total_float_hours": 0,
+      "original_duration_days": 10,
+      "remaining_duration_days": 10,
+      "status": "not_started",
+      "actual_start": null,
+      "actual_finish": null,
+      "driving_path": true
+    }
+  ],
+  "relationships": [
+    {
+      "predecessor_id": "A2310",
+      "successor_id": "A2320",
+      "type": "FS",
+      "lag_hours": 0
+    },
+    {
+      "predecessor_id": "A2320",
+      "successor_id": "A3000",
+      "type": "FS",
+      "lag_hours": 0
+    }
+  ]
+}

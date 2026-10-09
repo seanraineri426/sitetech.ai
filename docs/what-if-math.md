@@ -14,11 +14,13 @@ The "what if" feature lets users ask plain-English schedule questions:
 
 The system:
 1. **Parses** the question into a structured scenario (activity id, slip days) using the model, with confirmation of the matched activity
-2. **Computes** the impact using deterministic code: CPM/float walk, dollars, notice deadlines
+2. **Computes** the impact using deterministic code: slip propagation through P6 dependencies, dollars, notice deadlines
 3. **Explains** the result in plain language (model-generated, but constrained to cite code outputs)
-4. **Drafts** any registered actions triggered by the scenario (e.g., notice to owner, expedite request)
+4. **Drafts** any registered actions triggered by the scenario (e.g., outgoing delay notice, expedite request)
 
 **Core principle:** The model only parses the question and explains the numbers. All numbers come from code.
+
+**Slip unit:** Working days on the activity's P6 calendar. "Weeks" convert to 5 working days per week (Mon-Fri standard calendar).
 
 ---
 
@@ -63,53 +65,122 @@ The model parses the user's plain-English question into a structured JSON scenar
 
 ---
 
-## Computation: CPM float walk + dollars + notice deadline
+## Data requirements
 
-All computation is deterministic code over the latest schedule snapshot (P6 XER or Procore schedule). No model estimates.
+**Current state (on main branch):**
+- `schedule_activities.predecessors` is `text[]`, which cannot hold relationship type or lag
+- No `calendars` table, no `calendar_id` on activities
+- No `remaining_duration_hrs`, `original_duration_hrs`, `actual_start`, `actual_finish` fields
+- P6 float is stored in hours in `total_float_hours`; converting to days requires `hours_per_day` (typically 8)
 
-### 1. Schedule impact walk (NOT a full CPM recalculation)
+**Proposed schema changes for M2:**
 
-**CTO guardrail: We are NOT building a schedule engine.** In v1, float and dates come straight from the P6 XER file (or Procore schedule). What-if pushes a slip forward through successor activities using P6's dependencies (FS, SS, FF), lags, and calendars. The result is labeled **"estimate, confirm in P6"**. Constraints (must-start, must-finish) and resource leveling stay in P6.
+### schedule_relationships table (new)
+```sql
+CREATE TABLE schedule_relationships (
+  id UUID PRIMARY KEY,
+  schedule_snapshot_id UUID REFERENCES schedule_snapshots(id),
+  predecessor_id TEXT REFERENCES schedule_activities(activity_id),
+  successor_id TEXT REFERENCES schedule_activities(activity_id),
+  type TEXT CHECK (type IN ('FS', 'SS', 'FF', 'SF')),
+  lag_hours INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
 
-**Goal:** Compute the impact of slipping an activity by N days on:
-- The activity's finish date (accounting for working calendar + holidays from P6)
-- Float consumed (from P6's calculated float values)
-- Successor activities' start/finish dates (cascade via P6 logic)
-- Project completion date (if critical path is impacted)
+**Alternative:** store as `jsonb` in schedule_activities:
+```sql
+ALTER TABLE schedule_activities ADD COLUMN relationships jsonb;
+-- Format: [{"pred_id": "A100", "type": "FS", "lag_hrs": 0}, ...]
+```
 
-**Algorithm (forward slip propagation, NOT full CPM):**
+### schedule_calendars table (new)
+```sql
+CREATE TABLE schedule_calendars (
+  id UUID PRIMARY KEY,
+  schedule_snapshot_id UUID REFERENCES schedule_snapshots(id),
+  calendar_id TEXT,
+  calendar_name TEXT,
+  work_days INTEGER[] CHECK (ALL(work_days BETWEEN 1 AND 7)), -- 1=Mon, 7=Sun
+  holidays DATE[],
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
 
-1. **Load the latest schedule:** P6 XER or Procore schedule snapshot (most recent successful import). Use P6's calculated float values, not recalculated.
+### schedule_activities additional fields
+```sql
+ALTER TABLE schedule_activities
+  ADD COLUMN calendar_id TEXT,
+  ADD COLUMN remaining_duration_hrs INTEGER,
+  ADD COLUMN original_duration_hrs INTEGER,
+  ADD COLUMN actual_start DATE,
+  ADD COLUMN actual_finish DATE,
+  ADD COLUMN driving_path BOOLEAN DEFAULT FALSE;
+```
+
+### Delay cost configuration
+**Current:** `projects.daily_delay_cost_usd` (assumed per calendar day)
+
+**Proposed:** Add `delay_cost_unit` to clarify:
+```sql
+ALTER TABLE projects ADD COLUMN delay_cost_unit TEXT DEFAULT 'calendar_day' CHECK (delay_cost_unit IN ('calendar_day', 'working_day'));
+```
+
+**If delay cost is per calendar day:** slip propagation (in working days) must be converted to calendar days for $ computation. Conversion: count calendar days between original completion and new completion, accounting for non-working days.
+
+**Source tables:**
+- `delay_costs` or `project_settings` (future; today it's `projects.daily_delay_cost_usd`)
+- Notice periods: `contract_notice_periods` keyed on `(contract_kind, counterparty_name, notice_type)`
+
+---
+
+## Computation: slip propagation + dollars + notice deadline
+
+All computation is deterministic code over the latest successful P6 XER snapshot. No model estimates. **V1 is P6 XER only.**
+
+### 1. Slip propagation (NOT a schedule engine)
+
+**CTO guardrail: We are NOT building a schedule engine.** Float and dates come straight from the P6 XER file. What-if pushes a slip forward through successor activities using P6's dependencies (FS, SS, FF), lags, and calendars. The result is labeled **"estimate, confirm in P6"**. Constraints and resource leveling stay in P6.
+
+**Critical status:** Taken from P6 XER (total_float ≤ 0, or the XER's driving/longest-path flag if present).
+
+**Completion slip:** `max over impacted activities of max(0, propagated delay − P6 total float in days)`
+
+**Goal:** Compute the impact of slipping an activity by N working days on:
+- The activity's finish date (accounting for P6 working calendar + holidays)
+- Float consumed (from P6's total_float field, converted from hours using hours_per_day)
+- Successor activities' start/finish dates (propagated via P6 relationships)
+- Project completion date (if slip exceeds available float on any path to completion)
+
+**Algorithm (forward slip propagation):**
+
+1. **Load the latest successful P6 XER snapshot:** Use P6's calculated float values (total_float in hours), calendars, and relationships. Convert float to days using project's hours_per_day setting.
 2. **Identify the activity:** by `activityId` from the scenario input
 3. **Apply the slip:**
-   - New finish date = original finish date + `slipDays` (accounting for **working calendar from P6**: skip weekends, project holidays, shutdown periods defined in P6 calendars)
-   - If the activity is in progress, slip from today (actual finish date); if not started, slip from planned finish date
-4. **Walk successors:** for each successor linked by finish-to-start (FS), start-to-start (SS), or finish-to-finish (FF) logic:
-   - **FS (finish-to-start):** If successor's early start ≤ activity's new finish + lag, successor is delayed. Successor's new early start = activity's new finish + lag + 1 (working days).
-   - **SS (start-to-start):** If successor's early start ≤ activity's new start + lag, successor is delayed. Successor's new early start = activity's new start + lag.
-   - **FF (finish-to-finish):** If successor's early finish ≤ activity's new finish + lag, successor is delayed. Successor's new early finish = activity's new finish + lag; back-calculate new early start from duration.
-   - **SF (start-to-finish, rare):** Treat as FS and flag "check in P6" (SF logic is uncommon and complex; verify in P6).
-   - Compute successor's new early start/finish (accounting for successor duration + working calendar from P6)
-   - If successor has multiple predecessors, take the latest driving predecessor (the one that pushes successor's start the latest)
-   - Recurse through the successor chain until no more activities are delayed
+   - New finish date = original early finish + `slipDays` working days (per activity's P6 calendar: skip non-working days, project holidays)
+   - **For in-progress activities:** use P6's remaining_duration from the data date, not original finish
+4. **Propagate to successors:** for each P6 relationship:
+   - **FS (finish-to-start):** Successor's new early start = max(successor's original early start, activity's new finish + lag + 1 working day). **Note:** The +1 working day is the FS convention (activity finishes Friday → successor starts Monday).
+   - **SS (start-to-start):** Successor's new early start = max(original, activity's new start + lag)
+   - **FF (finish-to-finish):** Successor's new early finish = max(original, activity's new finish + lag); back-calculate start from duration
+   - **SF (start-to-finish, rare):** ⚠️ **Treat as FS and flag result "SF relationship detected, check in P6".** SF logic is complex; verify manually in P6.
+   - If successor has multiple predecessors, take the latest (driving) constraint
+   - Recurse through successors until no more delays propagate
 5. **Compute float consumed:**
-   - **Use P6's calculated float values** (total float = late finish - early finish from the P6 XER)
-   - Float consumed = min(slipDays propagated to this activity, original float from P6)
-   - Negative float = days past the late finish (critical path slip, impacts project completion)
-6. **Project completion impact:** if any activity on the critical path (float ≤ 0 in P6) is delayed, project completion slips by the propagated delay amount
-7. **Working calendar rules:**
-   - Use P6's calendars from the XER (they include non-working days, weekends, holidays, shutdown periods)
-   - Add project holidays from project settings (union with P6 calendars)
-   - Project time zone (from project settings) for date/time calculations
-   - Skip non-working days when computing new finish dates
-8. **Label the result:** All what-if results are labeled **"estimate, confirm in P6"** because this is NOT a full schedule recalculation. Constraints (must-start-on, must-finish-on, start-no-earlier-than, etc.) and resource leveling are NOT applied.
+   - Float from P6's total_float (hours → days via hours_per_day)
+   - Float consumed = min(propagated delay to this activity, P6 float)
+   - Remaining float = max(0, P6 float − propagated delay)
+   - Negative float (< 0 remaining) = activity slipped past its late finish, impacts completion
+6. **Completion slip:** For all impacted activities, compute `max(0, propagated delay − P6 float)`. The maximum across all impacted activities is the project completion slip.
+7. **Working calendar:** Use P6 calendar from XER + project holidays from settings. Skip non-working days when computing new dates.
+8. **Label:** All results labeled **"estimate, confirm in P6"** (not a full recalculation).
 
 **What this does NOT do (stays in P6):**
-- Constraint checking (must-start, must-finish, SNET, SNLT, FNET, FNLT)
+- Constraint checking (must-start, must-finish, SNET, FNLT, etc.)
 - Resource leveling
-- Baseline comparisons (except using P6's stored baseline dates)
-- Activity splitting or calendar exceptions beyond what P6 provides
-- Recalculating total float (we use P6's calculated values)
+- Baseline comparisons
+- Activity splitting
+- Recalculating total float (we use P6's values)
 
 **Output (per activity impacted):**
 
@@ -118,26 +189,26 @@ All computation is deterministic code over the latest schedule snapshot (P6 XER 
   "activityId": "A2310",
   "activityName": "L3 shaft framing",
   "originalEarlyFinish": "2026-10-15",
-  "newEarlyFinish": "2026-11-05",
-  "slipDays": 21,
-  "floatConsumed": 21,
-  "remainingFloat": 3,
+  "newEarlyFinish": "2026-11-13",
+  "slipWorkingDays": 21,
+  "floatConsumed": 3.0,
+  "remainingFloat": 0,
   "onCriticalPath": false
 }
 ```
 
 **Test cases required:**
-1. **Zero float (critical path activity):** slip directly impacts project completion, $ impact is immediate
-2. **Positive float:** slip absorbed by float, no critical path impact (until float is exhausted)
-3. **Negative float:** activity already late; additional slip makes it later
-4. **Multi-path:** activity has multiple successors on different paths; only the critical path matters for $
-5. **Holiday spanning:** slip that spans a holiday period (e.g., Thanksgiving week) correctly skips non-working days using P6 calendar
-6. **Shutdown period:** slip that spans a shutdown (e.g., winter break) correctly uses P6 calendar non-work periods
-7. **In-progress activity:** slip from today (actual finish) vs. not-started activity (slip from planned)
-8. **FS lag:** successor with finish-to-start + lag (e.g., FS+3 days) correctly accounts for lag
-9. **SS logic:** start-to-start relationship correctly propagates slip to successor start
-10. **FF logic:** finish-to-finish relationship correctly propagates slip to successor finish
-11. **SF logic:** start-to-finish (rare) treated as FS with "check in P6" flag
+1. **Zero float (critical):** slip directly impacts completion
+2. **Positive float:** slip absorbed by float, no completion impact
+3. **Negative float:** activity already late; additional slip extends lateness
+4. **Multi-path:** multiple successors; only critical path matters for completion
+5. **Holiday spanning:** slip correctly skips non-working days per P6 calendar
+6. **Shutdown period:** slip correctly uses P6 calendar non-work periods
+7. **In-progress activity:** uses P6 remaining_duration from data date
+8. **FS lag:** FS+5 is the driving relationship, lag preserved
+9. **SS logic:** start-to-start propagation
+10. **FF logic:** finish-to-finish propagation
+11. **SF logic:** ⚠️ start-to-finish flagged "check in P6"
 
 ---
 
@@ -186,7 +257,7 @@ All computation is deterministic code over the latest schedule snapshot (P6 XER 
 `Notice deadline = event date + notice period`
 
 **Rules:**
-- **Notice period** comes from project settings (configured per notice type: delay/time, cost/change claim, differing site condition, change directive dispute, cure/default, injury/property damage)
+- **Notice period** comes from project settings (configured per notice type: delay/time, cost/change claim, differing site condition, change directive dispute, cure notice, injury/property damage)
 - **Calendar vs. business days:** project setting per notice type
   - Calendar days: count every day including weekends/holidays
   - Business days: skip weekends + observed holidays (from project settings)
@@ -201,7 +272,7 @@ All computation is deterministic code over the latest schedule snapshot (P6 XER 
   "eventDate": "2026-10-15",
   "noticePeriodDays": 7,
   "calendarOrBusiness": "business",
-  "noticeDeadline": "2026-10-24",
+  "noticeDeadline": "2026-10-26",
   "deadlineSource": "project_settings_contract_section_8.3"
 }
 ```
@@ -210,7 +281,7 @@ All computation is deterministic code over the latest schedule snapshot (P6 XER 
 - **Deadline falls on weekend/holiday (business days):** advance to next business day
 - **Deadline falls on weekend/holiday (calendar days):** deadline is that day (no adjustment)
 - **Notice period not configured:** `noticeDeadline = null`, `deadlineSource = "not_configured"`
-- **Urgent notice (< 3 days):** handled by action routing (A6 escalates to PX same day if deadline is < 2 business days from response requirement)
+- **Urgent notice (< 2 business days):** handled by action routing (A6 escalates from PM to PX same day if deadline < 2 business days from response requirement)
 - **Deadline has already passed:** Card text must be exactly: "Deadline per project settings was \<date\>; confirm with PX". Must not draw any legal conclusion (no "waived", "defaulted", "forfeited", etc.).
 
 ---
@@ -469,4 +540,6 @@ Each test case includes:
 
 ## Version history
 
-- **v1 (Oct 9, 2026):** Initial spec for M2. Open questions noted inline.
+- **v1.0 (Oct 9, 2026, 14:00 UTC):** Initial spec for M2. Open questions noted inline.
+- **v1.1 (Oct 9, 2026, 18:07 UTC):** PM resolved 9 OPEN questions. Applied CTO guardrail (NOT building schedule engine).
+- **v1.2 (Oct 9, 2026, 18:14 UTC, partial):** Lead review at 1966299. IN PROGRESS: Renamed "CPM float walk" to "slip propagation". Added Data requirements section (blocker #4). P6 XER only (removed Procore). Fixed FS+1 convention, SF flag. Fixed notice deadline dates (Oct 15 + 7 business = Oct 26). Changed "cure/default" to "cure notice". Changed urgent threshold to "< 2 business days". Created fixture and compute script (docs/what-if-examples/). **REMAINING:** Fix all example numbers throughout doc, update test cases TC1-TC17 with computed numbers, fix successor wording, update suggested actions to use A11 not A6, add nits (A1/A2 windows), complete all blocker #2 fixes.
