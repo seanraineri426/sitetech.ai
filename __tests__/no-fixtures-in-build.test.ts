@@ -72,8 +72,9 @@ describe('Production build fixture check', () => {
     try {
       execSync('rg "Linden Yard" .next/static .next/server', { encoding: 'utf-8' });
       expect.fail('Found test fixture data in production build');
-    } catch (error: any) {
-      if (error.status === 1) {
+    } catch (error: unknown) {
+      const execError = error as { status?: number };
+      if (execError.status === 1) {
         expect(true).toBe(true);
       } else {
         throw error;
