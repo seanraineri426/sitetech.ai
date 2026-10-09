@@ -174,4 +174,4 @@ python3 examples/render_brief.py examples/brief_linden_yard_2026-10-06.json exam
 /tmp/stvenv/bin/python tools/build_tool_schemas.py    # build + validate tool contracts
 python3 evals/score_brief.py examples/brief_linden_yard_2026-10-06.json   # score a brief (exit 1 on gate fail)
 ```
-`jsonschema` is the only third-party dependency (`python3 -m venv /tmp/stvenv && /tmp/stvenv/bin/pip install jsonschema`).
+Third-party dependencies: `jsonschema` and `pyyaml` (`python3 -m venv /tmp/stvenv && /tmp/stvenv/bin/pip install jsonschema pyyaml`).

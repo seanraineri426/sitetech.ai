@@ -61,7 +61,7 @@ All status, ranking, impact calculations, and action decisions are made by **det
 
 Email sender identification is done by **domain matching** against the project's configured parties (owner, GC, architect, subs). The model never decides who sent an email or what role they have.
 
-- Email from `user@larkspur-development.example` (configured owner domain) → owner party
+- Email from `user@larkspurdev.example` (configured owner domain) → owner party
 - Email from `attacker@unknown-domain.example` → no party (external/unknown)
 
 **Result**: An email from an unknown domain cannot claim to be an owner directive. The system will extract what the email *says*, but will attribute it to "unknown external sender" and will never treat it as authoritative.
@@ -112,44 +112,33 @@ The system maintains an audit log of:
 
 ## What the Tests Prove
 
-**Test coverage**: 19 checks across 9 hostile email cases, executing the actual pipeline:
+**Test coverage**: 11 checks across 10 hostile emails (including spoofed domain), executing the actual pipeline:
 
 1. **Baseline Pipeline** (3 checks)  
    ✓ Pipeline completes without hostile input  
    ✓ Produces valid brief with findings  
    ✓ No fabricated refs in baseline
 
-2. **Fact Rules & Impact** (2 checks)  
-   ✓ fact_rules produces deterministic findings  
-   ✓ Hostile facts don't affect baseline finding count
+2. **Deterministic Code** (1 check)  
+   ✓ fact_rules deterministic (ignores hostile emails)
 
-3. **Rank Stage** (2 checks)  
-   ✓ Rank produces insights from fixture  
-   ✓ Top items are code-generated refs (not hostile)
+3. **Party Resolution** (2 checks)  
+   ✓ Hostile emails from unknown domains → 'unknown party'  
+   ✓ Spoofed domain (larkspur-dev.example) → 'unknown party'
 
-4. **Verify Stage** (3 checks)  
-   ✓ Verify produces verified insights  
-   ✓ Drops unverifiable claims  
-   ✓ All refs exist in fixture index
+4. **Pipeline with Hostile Emails** (1 check)  
+   ✓ Pipeline completes with hostile emails present
 
-5. **Deliver Stage** (2 checks)  
-   ✓ Deliver produces valid brief structure  
-   ✓ No fabricated refs in delivered output
+5. **Status & Value Protection** (3 checks)  
+   ✓ RFI/CE statuses unchanged (hostile facts ignored)  
+   ✓ No hostile recipients in brief  
+   ✓ No hostile instruction phrases in brief
 
-6. **Domain Party Resolution** (2 checks)  
-   ✓ Unknown domains identified  
-   ✓ Not treated as project parties
+6. **Mutation Check** (2 checks)  
+   ✓ Injected instruction would appear in mutated brief  
+   ✓ Actual brief has no injected instructions
 
-7. **Pipeline Safety** (3 checks)  
-   ✓ Brief word count reasonable  
-   ✓ No hostile instruction phrases verbatim in output  
-   ✓ RFI/CE statuses unchanged from fixture
-
-8. **Cross-Stage Integration** (2 checks)  
-   ✓ Hostile facts flow through fact_rules → impact → rank → verify → deliver  
-   ✓ Output brief grounded in fixture records only
-
-**Result**: 19/19 checks pass. Tests execute real pipeline code (no stubs, no `assert True`). Suite runs in CI on every commit with OS-level network namespace isolation (`sudo unshare -n`) as the guarantee. Python-level patches (sitecustomize.py) provide best-effort blocking for local dev; known bypasses exist but are blocked by the OS namespace in CI.
+**Result**: 11/11 checks pass. Hostile emails added to fixture but content doesn't affect code-only stages (read, rules, verify). Comms, clusters, writer stages call llm_contract stub and fall back to code. Tests execute real pipeline logic. Suite runs in CI on every commit with OS-level network namespace isolation (`sudo unshare -n`) as the guarantee. Python-level patches (sitecustomize.py) provide best-effort blocking for local dev; known bypasses exist but are blocked by the OS namespace in CI.
 
 ## Residual Risks
 
@@ -236,7 +225,7 @@ The SiteTech Daily Project Brief system is architected to resist prompt injectio
 - No auto-execute actions (human approval required)
 - Full citation and audit trail
 
-Our test suite validates these defenses with 34 hostile email test cases. All checks pass.
+Our test suite validates these defenses with 10 hostile email cases (including spoofed domain). All 11 checks pass.
 
 **Residual risks** exist (social engineering, model errors, upstream compromise) and are mitigated through confidence labels, citation visibility, and PM review. The system is designed to assist, not replace, human judgment.
 
