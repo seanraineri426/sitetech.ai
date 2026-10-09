@@ -91,8 +91,71 @@ pnpm start
 - `pnpm lint` — Run ESLint
 - `pnpm test` — Run tests
 - `pnpm test:watch` — Run tests in watch mode
+- `pnpm test:db:nodocker` — Run database tests against local Supabase (no Docker needed)
+- `pnpm supabase start` — Start local Supabase (requires Docker)
+- `pnpm supabase stop` — Stop local Supabase
 
 ## Environment Variables
+
+Copy `.env.example` to `.env.local` and fill in your values:
+
+```bash
+cp .env.example .env.local
+```
+
+### Supabase Configuration
+
+**Local development (with Supabase CLI):**
+
+1. Start local Supabase:
+   ```bash
+   pnpm supabase start
+   ```
+
+2. Copy the API URL and anon key from the output to your `.env.local`:
+   ```
+   NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-local-anon-key>
+   SUPABASE_SERVICE_ROLE_KEY=<your-local-service-role-key>
+   ```
+
+3. For local magic-link testing, emails are caught by Inbucket (included in Supabase local stack):
+   - Open [http://127.0.0.1:54324](http://127.0.0.1:54324) to view test emails
+   - Click the magic link in the email to sign in
+
+**Hosted Supabase:**
+
+1. Get your project credentials from [Supabase Dashboard](https://app.supabase.com):
+   - Project Settings → API
+   - Copy `Project URL` and `anon/public` key
+
+2. Add to `.env.local`:
+   ```
+   NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key>
+   SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
+   ```
+
+3. Configure Auth redirect URLs in Supabase Dashboard:
+   - Authentication → URL Configuration
+   - Add to "Redirect URLs":
+     - Local: `http://127.0.0.1:54321/auth/v1/callback`
+     - Production: `https://<project-ref>.supabase.co/auth/v1/callback`
+     - Your app domain: `https://yourdomain.com/auth/callback`
+
+### Microsoft (Azure AD) Sign-In (Optional)
+
+To enable Microsoft sign-in:
+
+1. Set the environment variable:
+   ```
+   NEXT_PUBLIC_AUTH_MICROSOFT_ENABLED=true
+   ```
+
+2. Configure Azure AD OAuth in Supabase:
+   - Follow [Supabase Azure AD guide](https://supabase.com/docs/guides/auth/social-login/auth-azure)
+   - Add Azure AD application credentials to your Supabase project
+   - No additional environment variables needed in the app (handled by Supabase)
 
 See `.env.example` for all required environment variables.
 
@@ -102,15 +165,17 @@ See `.env.example` for all required environment variables.
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Supabase anonymous key (from `supabase start`)
 - `SUPABASE_SERVICE_ROLE_KEY` — Supabase service role key for admin operations (from `supabase start`)
 
-### Future Integrations (Tasks 3+):
+### Future Integrations (Tasks 4+):
 
-- Procore API keys (Task 3+)
-- Inngest event key (Task 4+)
-- LLM provider keys (Task 5+)
+- Procore API keys (Task 4+)
+- Microsoft Graph credentials (Task 4+)
+- Inngest event key (Task 5+)
+- LLM provider keys (Task 6+)
 
 ## API Endpoints
 
 - `GET /api/health` — Health check endpoint (returns `{ ok: true, supabase: { configured: boolean } }`)
+- `POST /auth/callback` — OAuth callback handler for authentication
 
 ## Stack
 
@@ -121,6 +186,8 @@ See `.env.example` for all required environment variables.
 - **Linting:** ESLint
 - **Package Manager:** pnpm
 - **Environment Validation:** Zod
+- **Database & Auth:** Supabase (PostgreSQL + Auth)
+- **Auth Methods:** Magic link (email OTP), Microsoft (Azure AD, optional)
 - **Database:** Supabase (PostgreSQL + Auth)
 - **Multi-tenancy:** Row Level Security (RLS)
 
@@ -128,11 +195,17 @@ See `.env.example` for all required environment variables.
 
 ```
 app/
+  (app)/
+    app/               # Protected app pages
   api/health/          # Health check endpoint
+  auth/callback/       # Auth callback handler
+  login/               # Login page
   layout.tsx           # Root layout
   page.tsx             # Homepage
   globals.css          # Global styles
 lib/
+  auth/                # Auth utilities
+  connectors/          # External service connectors
   env.ts               # Environment variable validation
   supabase/            # Supabase client configurations
     client.ts          # Browser client
@@ -245,7 +318,6 @@ GitHub Actions workflow runs on push and PR:
 
 ## What's Next
 
-- Task 3: Authentication UI and flows
 - Task 4: Inngest event handling
 - Task 5: Procore integration
 - Task 6+: LLM features
