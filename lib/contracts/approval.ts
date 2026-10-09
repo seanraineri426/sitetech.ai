@@ -23,7 +23,7 @@ export const ApprovalSchema = z.object({
   edit_summary: z.string().optional(),
   decided_at: z.string().datetime(),
   sent_at: z.string().datetime().optional(),
-  audit_event_ids: z.array(z.string())
+  audit_log_ids: z.array(z.number().int()) // References audit_log.id (bigint)
 });
 
 export type Approval = z.infer<typeof ApprovalSchema>;

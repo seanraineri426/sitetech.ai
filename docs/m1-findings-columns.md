@@ -1,141 +1,73 @@
-# M1 Findings Columns
-**Owner:** Engineering  
-**Status:** Draft, Oct 9 2026  
-**Purpose:** Document the `findings` table structure for AI-detected issues. Written only by service role, read by org members via RLS.
+# M1 findings table — column contract (Lead-aligned 2026-10-06)
 
----
+**Context:** CTO 2026-10-06 — M1 ships without the brief 10/11 gate. M1 = deterministic findings from RFIs and submittals, findings page, citations. PM acceptance: a PE opens the findings page, sees overdue/blocking RFIs and submittals with citations, and trusts every item maps to a real record.
 
-## Note
+**Sources of truth for shapes:** Linden fixture `m1/*/findings.json` row keys; intelligence `rule_id`s already emitting RFI/submittal findings. Email/schedule correlation stays M2 brief layer (not required for this table).
 
-**As of Oct 9 2026:** This table does not yet exist in `supabase/migrations`. This document describes the planned schema. Once the migration is created, reconcile this doc against actual DDL (main wins).
+**Status:** Lead reviewed the proposal; this file matches their migration conventions. Findings is its own migration after 0002 (rfis/submittals + connector tables). Does not block PR #2 / Task 3.
 
----
+**Note:** This version in `docs/` replaces `tools/brief-reference/docs/m1-findings-columns.md` from PR #7 as the single source of truth.
 
-## Table: `findings`
+## Columns (v1 — Lead-aligned)
 
-Service-role-written findings detected by AI rules, with citations and evidence.
+| Column | Type / notes | Required |
+|--------|----------------|----------|
+| `id` | uuid | yes |
+| `org_id` | uuid FK → `orgs` ON DELETE CASCADE | yes |
+| `project_id` | uuid FK → `projects` ON DELETE CASCADE | yes |
+| `entity_type` | `rfi` \| `submittal` | yes |
+| `rfi_id` | uuid nullable; composite FK `(rfi_id, org_id, project_id)` → `rfis(id, org_id, project_id)`; exactly one of `rfi_id` / `submittal_id` set per `entity_type` (check constraint) | when `entity_type=rfi` |
+| `submittal_id` | uuid nullable; composite FK `(submittal_id, org_id, project_id)` → `submittals(id, org_id, project_id)`; same exclusivity check | when `entity_type=submittal` |
+| `external_id` | Procore id (string/int as stored) | yes |
+| `source` | e.g. `procore` | yes |
+| `rule_id` | e.g. `RFI-OVERDUE`, `SUB-REVIEW-OVERDUE`, `SUB-RR-NOT-RESUBMITTED`, `SUB-ROS-RISK`, `SUB-SUBMIT-BY-MISSED`, `RFI-CLOSED-IMPACT-NO-CE` | yes |
+| `rule_version` | string | yes |
+| `fingerprint` | stable dedupe key for carry-forward | yes |
+| `title` | short PE-facing title | yes |
+| `record_label` | e.g. `RFI 42`, `Submittal 12` | yes |
+| `status` | `open` \| `resolved` \| `suppressed` (lifecycle) | yes |
+| `severity` | `critical` \| `high` \| `medium` \| `low` | yes |
+| `days_overdue` | int ≥ 0 | when applicable |
+| `governing_date` | date | when applicable |
+| `governing_date_kind` | e.g. `due` \| `responsible` \| `ros` \| `install_start` (not Procore ball_in_court) | when applicable |
+| `responsible_party` | text PE-facing label only (assignee / responsible contractor name); **never** an email | optional |
+| `spec_section` | text | optional |
+| `citations` | jsonb array of `{ source, entity_type, external_id, label? }` — **API rejects any citation that does not resolve to a synced row** | yes |
+| `evidence` | jsonb (computed fields used by the rule; PE may see a subset) | yes |
+| `change_since_prior_run` | `new` \| `worsened` \| `unchanged` \| `improved` \| `resolved` | yes |
+| `first_detected_on` | date | yes |
+| `last_seen_on` | date | yes |
+| `resolved_on` | date nullable | no |
+| `run_date` | date of the deterministic pass that wrote/updated the row | yes |
+| `cost_exposure_usd` | numeric nullable — **only** from RFI/submittal impact fields and/or completion slip × `daily_delay_cost_usd` (no budget lines in M1/M2) | no |
 
-### Schema
+**Dropped vs first proposal:** denormalized `location` (join `rfis.location` on the page); polymorphic `entity_id` (replaced by typed FKs); `ball_in_court` (renamed `responsible_party`, no email).
 
-```sql
-CREATE TABLE public.findings (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  org_id UUID NOT NULL,
-  project_id UUID NOT NULL,
-  entity_type TEXT NOT NULL, -- 'rfi', 'submittal', 'email', 'meeting', etc.
-  
-  -- Nullable FKs: exactly one must be set for the entity_type (enforced by CHECK)
-  rfi_id UUID REFERENCES public.rfis(id) ON DELETE CASCADE,
-  submittal_id UUID REFERENCES public.submittals(id) ON DELETE CASCADE,
-  
-  source TEXT NOT NULL, -- 'procore', 'msgraph_mail', 'p6_xer', 'granola'
-  external_id TEXT NOT NULL,
-  rule_id TEXT NOT NULL, -- e.g. 'rfi_overdue', 'submittal_chase'
-  rule_version TEXT NOT NULL,
-  fingerprint TEXT NOT NULL, -- Deterministic hash for deduplication
-  
-  title TEXT NOT NULL,
-  record_label TEXT NOT NULL, -- Human-readable label, e.g. "RFI 112: Shaft wall fire rating"
-  status TEXT NOT NULL CHECK (status IN ('open', 'resolved', 'suppressed')),
-  severity TEXT NOT NULL, -- OPEN: enum values
-  
-  days_overdue INT,
-  governing_date DATE, -- Due date, start date, or other controlling date
-  governing_date_kind TEXT, -- 'due_date', 'start_date', 'deadline', etc.
-  spec_section TEXT,
-  responsible_party TEXT, -- Company name or role, NEVER an email address
-  
-  citations JSONB NOT NULL DEFAULT '[]', -- [{source, entity_type, external_id, label?}]
-  evidence JSONB NOT NULL DEFAULT '{}',
-  
-  change_since_prior_run TEXT, -- 'new', 'updated', 'unchanged'
-  first_detected_on DATE NOT NULL,
-  last_seen_on DATE NOT NULL,
-  resolved_on DATE,
-  run_date DATE NOT NULL, -- Detection run date
-  
-  cost_exposure_usd NUMERIC,
-  
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  
-  -- Composite FK to projects for cross-org integrity
-  CONSTRAINT findings_org_project_fk 
-    FOREIGN KEY (project_id, org_id) 
-    REFERENCES public.projects(id, org_id),
-  
-  -- Exactly one entity FK must be set for the entity_type
-  CONSTRAINT findings_one_entity_fk CHECK (
-    (entity_type = 'rfi' AND rfi_id IS NOT NULL AND submittal_id IS NULL) OR
-    (entity_type = 'submittal' AND submittal_id IS NOT NULL AND rfi_id IS NULL) OR
-    (entity_type NOT IN ('rfi', 'submittal') AND rfi_id IS NULL AND submittal_id IS NULL)
-  ),
-  
-  -- Unique per fingerprint within project
-  CONSTRAINT findings_unique_fingerprint 
-    UNIQUE (org_id, project_id, fingerprint)
-);
-```
+## Indexes / constraints
 
-### Indexes
+- **CTO 2026-10-09:** every cross-table link is a composite FK on `(org_id, id)` (plus `project_id` where both sides are project-scoped) — so `rfi_id`/`submittal_id` FKs are `(rfi_id, org_id, project_id)` → rfis, etc. Covered by Lead's standing catalog-driven isolation test.
+- **Required unique indexes on target tables** (main currently lacks these; must be added):
+  - `rfis`: unique `(id, org_id, project_id)`
+  - `submittals`: unique `(id, org_id, project_id)`
+- Unique `(org_id, project_id, fingerprint)` — `org_id` on every unique constraint (same as rfis/submittals). Partial unique while `status=open` is fine if reopen history is needed; otherwise fingerprint alone across the project + soft-resolve old rows.
+- Indexes: `(org_id, project_id, status, severity)`, `(org_id, project_id, entity_type)`, `(org_id, project_id, run_date)`
+- RLS: `is_org_member` / `has_org_role`. Writes only from the service-role job that runs the rules pass.
+- **Citations validation:** API layer rejects any citation whose `(source, entity_type, external_id)` does not resolve to a synced row.
+- **Check constraint:** `(entity_type = 'rfi' AND rfi_id IS NOT NULL AND submittal_id IS NULL) OR (entity_type = 'submittal' AND submittal_id IS NOT NULL AND rfi_id IS NULL)` — no both-null branch allowed
 
-```sql
-CREATE INDEX idx_findings_org_project_status_severity 
-  ON public.findings(org_id, project_id, status, severity);
+## Out of M1 findings table
 
-CREATE INDEX idx_findings_org_project_entity_type 
-  ON public.findings(org_id, project_id, entity_type);
+- Email-only findings, notices, owner directives, schedule-slip from mail (M2 brief)
+- Daily logs, inspections, budget/contingency (M3)
+- Raw email addresses (never); party labels via `project_parties` when M2 needs them
+- Procore `ball_in_court` / emails (Integrations allowlist dropped them)
 
-CREATE INDEX idx_findings_org_project_run_date 
-  ON public.findings(org_id, project_id, run_date);
-```
+## API / page behavior (Product + Lead)
 
-### RLS Policies
+- List: open findings for a project, default sort severity then days_overdue desc
+- Each row links to the underlying RFI/submittal record (deep link or drawer); RFI location from join, not denormalized
+- Resolved findings available behind a filter, not on the default PE view
 
-```sql
-ALTER TABLE public.findings ENABLE ROW LEVEL SECURITY;
+## Emitter handoff
 
--- Org members can view findings
-CREATE POLICY "Org members can view findings"
-  ON public.findings FOR SELECT
-  TO authenticated
-  USING (public.is_org_member(org_id));
-
--- No insert/update/delete policies for authenticated - service role only
-```
-
----
-
-## Citations Structure
-
-```typescript
-type FindingCitation = {
-  source: 'procore' | 'msgraph_mail' | 'p6_xer' | 'granola' | 'project_settings' | 'manual';
-  entity_type: string;
-  external_id: string;
-  label?: string;
-};
-```
-
-Stored as JSONB array in `findings.citations`. Does NOT include `connection_id`, `data_date`, or `quote` (those are in the UI Citation type for client-side enrichment).
-
----
-
-## Evidence Structure
-
-OPEN: evidence schema not yet defined. Will include excerpts, computed values, and provenance.
-
----
-
-## Notes
-
-- **No `location` column**: Join `rfis.location` or `submittals.spec_section` instead when location is needed
-- **Composite FKs**: All FKs to projects carry both `org_id` and `project_id` for cross-org integrity
-- **Service role writes only**: Findings are written by the detection service, never by authenticated users
-- **Fingerprint deduplication**: Deterministic hash prevents duplicate findings across runs
-
----
-
-## Differences from Original Spec
-
-None yet - table does not exist in migrations. When migration is created, note differences here (main wins).
+No extra columns needed from current M1 `rule_id`s beyond this list. When Lead opens the findings migration after 0002, Agent Engineer maps emitters → columns from this contract.

@@ -13,16 +13,16 @@
 
 ## Table: `email_facts`
 
-Per-email facts extracted by the model with exact quotes from the redacted body, then judged by code. Code performs activity joins, float math, dollar calculations, and ranking.
+Per-email facts extracted by the model with exact quotes from the redacted body, then judged by code. Code performs activity joins, float math, dollar calculations (completion slip × daily_delay_cost_usd), and ranking.
 
 ### Schema
 
 ```sql
 CREATE TABLE public.email_facts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  org_id UUID NOT NULL,
-  project_id UUID NOT NULL,
-  email_id UUID NOT NULL REFERENCES public.emails(id) ON DELETE CASCADE,
+  org_id UUID NOT NULL REFERENCES public.orgs(id) ON DELETE CASCADE,
+  project_id UUID NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
+  email_id UUID NOT NULL,
   
   item TEXT NOT NULL, -- Type of fact: 'delay', 'cost_change', 'scope_addition', etc.
   
@@ -33,10 +33,11 @@ CREATE TABLE public.email_facts (
   -- Cost/budget information
   amount_usd NUMERIC,
   
-  -- Notice type (can be multiple)
+  -- Notice type (can be multiple) - uses DB enum with all 7 values
   notice_type TEXT[] DEFAULT '{}', 
   -- Values: 'delay_time_extension', 'cost_change_claim', 'cure_default', 
-  --         'differing_site_condition', 'other'
+  --         'differing_site_condition', 'change_directive_dispute',
+  --         'injury_property_damage', 'other'
   
   -- Party identification (ALWAYS overwritten by code via project_parties lookup)
   sender_party TEXT, -- Company name from project_parties, never email address
@@ -54,12 +55,15 @@ CREATE TABLE public.email_facts (
     FOREIGN KEY (project_id, org_id) 
     REFERENCES public.projects(id, org_id),
   
-  -- Composite FK to emails
+  -- Composite FK to emails (requires unique index on emails)
   CONSTRAINT email_facts_email_fk
     FOREIGN KEY (email_id, org_id, project_id)
     REFERENCES public.emails(id, org_id, project_id)
 );
 ```
+
+**Required unique index on target table** (main currently lacks this; must be added):
+- `emails`: unique `(id, org_id, project_id)`
 
 ### Indexes
 
@@ -97,9 +101,9 @@ RFI facts follow the same structure as email facts:
 ```sql
 CREATE TABLE public.rfi_facts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  org_id UUID NOT NULL,
-  project_id UUID NOT NULL,
-  rfi_id UUID NOT NULL REFERENCES public.rfis(id) ON DELETE CASCADE,
+  org_id UUID NOT NULL REFERENCES public.orgs(id) ON DELETE CASCADE,
+  project_id UUID NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
+  rfi_id UUID NOT NULL,
   
   item TEXT NOT NULL,
   old_date DATE,
@@ -122,6 +126,9 @@ CREATE TABLE public.rfi_facts (
 );
 ```
 
+**Required unique index on target table** (main currently lacks this; must be added):
+- `rfis`: unique `(id, org_id, project_id)`
+
 ---
 
 ## Extraction and Judgment Rules
@@ -132,13 +139,13 @@ CREATE TABLE public.rfi_facts (
    - Overwrites `sender_party` via `project_parties` lookup (domain → company name)
    - Performs activity joins for schedule-related facts
    - Computes float impact (from P6 schedule data)
-   - Computes dollar impact (float × daily delay cost)
+   - Computes dollar impact: **completion slip × daily_delay_cost_usd** (NOT float × cost)
    - Ranks findings by $ exposure
 4. **No model defaults**: If the model can't extract a value, it's left NULL
 
 ---
 
-## Notice Type Values
+## Notice Type Values (All 7 from DB Enum)
 
 Enum values for `notice_type` array (can be multiple per fact):
 
@@ -146,9 +153,11 @@ Enum values for `notice_type` array (can be multiple per fact):
 - `cost_change_claim` - Cost impact / change claim
 - `cure_default` - Cure notice / default notice
 - `differing_site_condition` - DSC notice
+- `change_directive_dispute` - Change directive dispute
+- `injury_property_damage` - Injury or property damage notice
 - `other` - Other contractual notice
 
-Maps to `public.notice_type` enum in the database schema.
+Maps to `public.notice_type` enum in the database schema (migration 20261009150346_sitetech_data_schema.sql).
 
 ---
 
@@ -167,7 +176,7 @@ The code (not the model) is responsible for:
 
 1. **Activity join**: Linking facts to `schedule_activities` via task codes or fuzzy matching
 2. **Float math**: Computing float impact using P6 `total_float_days`
-3. **Dollar calculation**: `float_impact × daily_delay_cost_usd`
+3. **Dollar calculation**: **completion slip × daily_delay_cost_usd** (NOT float × cost)
 4. **Ranking**: Ordering findings by cost exposure, float impact, or deadline proximity
 5. **Sender party override**: Always overwriting `sender_party` via `project_parties` lookup
 6. **Verification**: Ensuring quotes match verbatim on token boundaries

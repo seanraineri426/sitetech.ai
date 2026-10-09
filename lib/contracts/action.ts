@@ -53,7 +53,7 @@ export const DraftSchema = z.object({
   body: z.string().optional(),
   attachments: z.array(DraftAttachmentSchema).optional(),
   deep_link: z.string().url().optional(),
-  read_only: z.boolean()
+  read_only: z.literal(true) // M2 is read-only; must be literal true
 });
 
 export type Draft = z.infer<typeof DraftSchema>;
@@ -73,6 +73,7 @@ export const ActionSchema = z.object({
   measures: ActionMeasuresSchema,
   draft: DraftSchema,
   approval: ApprovalSchema.nullable(),
+  can_approve: z.boolean(), // Server-provided per-user; Approve button renders only from this
   created_at: z.string().datetime(),
   updated_at: z.string().datetime()
 });
