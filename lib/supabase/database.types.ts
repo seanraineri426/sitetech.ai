@@ -1,327 +1,504 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
-  public: {
-    Tables: {
-      audit_log: {
-        Row: {
-          id: number
-          org_id: string | null
-          actor_type: string
-          actor_user_id: string | null
-          action: string
-          target_table: string | null
-          target_id: string | null
-          metadata: Json
-          created_at: string
-        }
-        Insert: {
-          id?: never
-          org_id?: string | null
-          actor_type: string
-          actor_user_id?: string | null
-          action: string
-          target_table?: string | null
-          target_id?: string | null
-          metadata?: Json
-          created_at?: string
-        }
-        Update: {
-          id?: never
-          org_id?: string | null
-          actor_type?: string
-          actor_user_id?: string | null
-          action?: string
-          target_table?: string | null
-          target_id?: string | null
-          metadata?: Json
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "audit_log_actor_user_id_fkey"
-            columns: ["actor_user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "audit_log_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "orgs"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      org_memberships: {
-        Row: {
-          org_id: string
-          user_id: string
-          role: string
-          created_at: string
-        }
-        Insert: {
-          org_id: string
-          user_id: string
-          role: string
-          created_at?: string
-        }
-        Update: {
-          org_id?: string
-          user_id?: string
-          role?: string
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "org_memberships_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "orgs"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "org_memberships_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      orgs: {
-        Row: {
-          id: string
-          name: string
-          slug: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          name: string
-          slug: string
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          name?: string
-          slug?: string
-          created_at?: string
-        }
-        Relationships: []
-      }
-      profiles: {
-        Row: {
-          id: string
-          email: string | null
-          full_name: string | null
-          created_at: string
-        }
-        Insert: {
-          id: string
-          email?: string | null
-          full_name?: string | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          email?: string | null
-          full_name?: string | null
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      projects: {
-        Row: {
-          id: string
-          org_id: string
-          name: string
-          number: string | null
-          timezone: string
-          settings: Json
-          created_by: string | null
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          org_id: string
-          name: string
-          number?: string | null
-          timezone?: string
-          settings?: Json
-          created_by?: string | null
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          org_id?: string
-          name?: string
-          number?: string | null
-          timezone?: string
-          settings?: Json
-          created_by?: string | null
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "projects_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "projects_org_id_fkey"
-            columns: ["org_id"]
-            isOneToOne: false
-            referencedRelation: "orgs"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+  
+  "public": {
+          Tables: {
+            "audit_log": {
+                  Row: {
+                    "action": string,"actor_type": string,"actor_user_id": string | null,"created_at": string,"id": number,"metadata": Json | null,"org_id": string | null,"target_id": string | null,"target_table": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "action": string,"actor_type": string,"actor_user_id"?: string | null,"created_at"?: string,"id"?: never,"metadata"?: Json | null,"org_id"?: string | null,"target_id"?: string | null,"target_table"?: string | null
+                  }
+                  Update: {
+                    "action"?: string,"actor_type"?: string,"actor_user_id"?: string | null,"created_at"?: string,"id"?: never,"metadata"?: Json | null,"org_id"?: string | null,"target_id"?: string | null,"target_table"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "audit_log_actor_user_id_fkey"
+      columns: ["actor_user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "audit_log_org_id_fkey"
+      columns: ["org_id"]
+isOneToOne: false
+      referencedRelation: "orgs"
+      referencedColumns: ["id"]
     }
-    Views: {
-      [_ in never]: never
+                  ]
+                },"emails": {
+                  Row: {
+                    "body_preview": string | null,"cc_addresses": (string)[],"conversation_id": string | null,"created_at": string,"external_id": string,"from_address": string,"has_attachments": boolean,"id": string,"org_id": string,"project_id": string,"raw_record_id": string,"received_at": string,"received_at_source": Database["public"]['Enums']["received_at_source"],"subject": string,"to_addresses": (string)[],"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "body_preview"?: string | null,"cc_addresses"?: (string)[],"conversation_id"?: string | null,"created_at"?: string,"external_id": string,"from_address": string,"has_attachments"?: boolean,"id"?: string,"org_id": string,"project_id": string,"raw_record_id": string,"received_at": string,"received_at_source": Database["public"]['Enums']["received_at_source"],"subject": string,"to_addresses"?: (string)[],"updated_at"?: string
+                  }
+                  Update: {
+                    "body_preview"?: string | null,"cc_addresses"?: (string)[],"conversation_id"?: string | null,"created_at"?: string,"external_id"?: string,"from_address"?: string,"has_attachments"?: boolean,"id"?: string,"org_id"?: string,"project_id"?: string,"raw_record_id"?: string,"received_at"?: string,"received_at_source"?: Database["public"]['Enums']["received_at_source"],"subject"?: string,"to_addresses"?: (string)[],"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "emails_org_project_fk"
+      columns: ["project_id","org_id"]
+isOneToOne: false
+      referencedRelation: "projects"
+      referencedColumns: ["id","org_id"]
+    },{
+      foreignKeyName: "emails_raw_record_id_fkey"
+      columns: ["raw_record_id"]
+isOneToOne: false
+      referencedRelation: "raw_records"
+      referencedColumns: ["id"]
     }
-    Functions: {
-      create_org: {
-        Args: {
-          p_name: string
-          p_slug: string
+                  ]
+                },"integration_connections": {
+                  Row: {
+                    "created_at": string,"created_by": string | null,"disconnected_at": string | null,"display_name": string,"external_account_id": string,"id": string,"org_id": string,"provider": Database["public"]['Enums']["integration_provider"],"status": Database["public"]['Enums']["connection_status"],"updated_at": string,"vault_secret_id": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"created_by"?: string | null,"disconnected_at"?: string | null,"display_name": string,"external_account_id": string,"id"?: string,"org_id": string,"provider": Database["public"]['Enums']["integration_provider"],"status"?: Database["public"]['Enums']["connection_status"],"updated_at"?: string,"vault_secret_id"?: string | null
+                  }
+                  Update: {
+                    "created_at"?: string,"created_by"?: string | null,"disconnected_at"?: string | null,"display_name"?: string,"external_account_id"?: string,"id"?: string,"org_id"?: string,"provider"?: Database["public"]['Enums']["integration_provider"],"status"?: Database["public"]['Enums']["connection_status"],"updated_at"?: string,"vault_secret_id"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "integration_connections_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "integration_connections_org_id_fkey"
+      columns: ["org_id"]
+isOneToOne: false
+      referencedRelation: "orgs"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"org_memberships": {
+                  Row: {
+                    "created_at": string,"org_id": string,"role": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"org_id": string,"role": string,"user_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"org_id"?: string,"role"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "org_memberships_org_id_fkey"
+      columns: ["org_id"]
+isOneToOne: false
+      referencedRelation: "orgs"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "org_memberships_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"orgs": {
+                  Row: {
+                    "created_at": string,"id": string,"name": string,"slug": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"name": string,"slug": string
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"name"?: string,"slug"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"profiles": {
+                  Row: {
+                    "created_at": string,"email": string | null,"full_name": string | null,"id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"email"?: string | null,"full_name"?: string | null,"id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"email"?: string | null,"full_name"?: string | null,"id"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"project_holidays": {
+                  Row: {
+                    "created_at": string,"holiday_date": string,"id": string,"label": string,"org_id": string,"project_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"holiday_date": string,"id"?: string,"label": string,"org_id": string,"project_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"holiday_date"?: string,"id"?: string,"label"?: string,"org_id"?: string,"project_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "project_holidays_org_project_fk"
+      columns: ["project_id","org_id"]
+isOneToOne: false
+      referencedRelation: "projects"
+      referencedColumns: ["id","org_id"]
+    }
+                  ]
+                },"project_notice_periods": {
+                  Row: {
+                    "contract_kind": Database["public"]['Enums']["contract_kind"],"contract_section": string | null,"counterparty_name": string | null,"day_basis": Database["public"]['Enums']["day_basis"],"days": number,"entered_at": string,"entered_by": string | null,"id": string,"notice_type": Database["public"]['Enums']["notice_type"],"org_id": string,"project_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "contract_kind": Database["public"]['Enums']["contract_kind"],"contract_section"?: string | null,"counterparty_name"?: string | null,"day_basis": Database["public"]['Enums']["day_basis"],"days": number,"entered_at"?: string,"entered_by"?: string | null,"id"?: string,"notice_type": Database["public"]['Enums']["notice_type"],"org_id": string,"project_id": string
+                  }
+                  Update: {
+                    "contract_kind"?: Database["public"]['Enums']["contract_kind"],"contract_section"?: string | null,"counterparty_name"?: string | null,"day_basis"?: Database["public"]['Enums']["day_basis"],"days"?: number,"entered_at"?: string,"entered_by"?: string | null,"id"?: string,"notice_type"?: Database["public"]['Enums']["notice_type"],"org_id"?: string,"project_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "project_notice_periods_entered_by_fkey"
+      columns: ["entered_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "project_notice_periods_org_project_fk"
+      columns: ["project_id","org_id"]
+isOneToOne: false
+      referencedRelation: "projects"
+      referencedColumns: ["id","org_id"]
+    }
+                  ]
+                },"project_parties": {
+                  Row: {
+                    "company_name": string,"created_at": string,"email_domain": string,"id": string,"org_id": string,"project_id": string,"role": Database["public"]['Enums']["company_role"],"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "company_name": string,"created_at"?: string,"email_domain": string,"id"?: string,"org_id": string,"project_id": string,"role": Database["public"]['Enums']["company_role"],"updated_at"?: string
+                  }
+                  Update: {
+                    "company_name"?: string,"created_at"?: string,"email_domain"?: string,"id"?: string,"org_id"?: string,"project_id"?: string,"role"?: Database["public"]['Enums']["company_role"],"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "project_parties_org_project_fk"
+      columns: ["project_id","org_id"]
+isOneToOne: false
+      referencedRelation: "projects"
+      referencedColumns: ["id","org_id"]
+    }
+                  ]
+                },"project_sources": {
+                  Row: {
+                    "connection_id": string,"created_at": string,"id": string,"mailbox": string | null,"org_id": string,"project_id": string,"settings": NonNullable<Json>,"site_id": string | null,"source_company_id": string | null,"source_project_id": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "connection_id": string,"created_at"?: string,"id"?: string,"mailbox"?: string | null,"org_id": string,"project_id": string,"settings"?: NonNullable<Json>,"site_id"?: string | null,"source_company_id"?: string | null,"source_project_id": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "connection_id"?: string,"created_at"?: string,"id"?: string,"mailbox"?: string | null,"org_id"?: string,"project_id"?: string,"settings"?: NonNullable<Json>,"site_id"?: string | null,"source_company_id"?: string | null,"source_project_id"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "project_sources_connection_id_fkey"
+      columns: ["connection_id"]
+isOneToOne: false
+      referencedRelation: "integration_connections"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "project_sources_org_project_fk"
+      columns: ["project_id","org_id"]
+isOneToOne: false
+      referencedRelation: "projects"
+      referencedColumns: ["id","org_id"]
+    }
+                  ]
+                },"projects": {
+                  Row: {
+                    "created_at": string,"created_by": string | null,"daily_delay_cost_usd": number | null,"id": string,"name": string,"number": string | null,"org_id": string,"settings": NonNullable<Json>,"timezone": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"created_by"?: string | null,"daily_delay_cost_usd"?: number | null,"id"?: string,"name": string,"number"?: string | null,"org_id": string,"settings"?: NonNullable<Json>,"timezone"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"created_by"?: string | null,"daily_delay_cost_usd"?: number | null,"id"?: string,"name"?: string,"number"?: string | null,"org_id"?: string,"settings"?: NonNullable<Json>,"timezone"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "projects_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "projects_org_id_fkey"
+      columns: ["org_id"]
+isOneToOne: false
+      referencedRelation: "orgs"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"raw_records": {
+                  Row: {
+                    "allowlisted_payload": NonNullable<Json>,"deleted_at": string | null,"entity_type": string,"external_id": string,"fingerprint": string,"first_seen_at": string,"id": string,"last_seen_at": string,"org_id": string,"project_id": string,"source": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "allowlisted_payload": NonNullable<Json>,"deleted_at"?: string | null,"entity_type": string,"external_id": string,"fingerprint": string,"first_seen_at"?: string,"id"?: string,"last_seen_at"?: string,"org_id": string,"project_id": string,"source": string
+                  }
+                  Update: {
+                    "allowlisted_payload"?: NonNullable<Json>,"deleted_at"?: string | null,"entity_type"?: string,"external_id"?: string,"fingerprint"?: string,"first_seen_at"?: string,"id"?: string,"last_seen_at"?: string,"org_id"?: string,"project_id"?: string,"source"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "raw_records_org_project_fk"
+      columns: ["project_id","org_id"]
+isOneToOne: false
+      referencedRelation: "projects"
+      referencedColumns: ["id","org_id"]
+    }
+                  ]
+                },"rfis": {
+                  Row: {
+                    "answer": string | null,"assignees": Json | null,"closed_date": string | null,"cost_code": string | null,"cost_impact_amount": number | null,"cost_impact_status": string | null,"created_at": string,"due_date": string | null,"external_id": string,"id": string,"initiated_date": string | null,"location": string | null,"number": string,"org_id": string,"project_id": string,"question": string | null,"raw_record_id": string,"responsible_contractor": Json | null,"schedule_impact_days": number | null,"schedule_impact_status": string | null,"status": string,"subject": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "answer"?: string | null,"assignees"?: Json | null,"closed_date"?: string | null,"cost_code"?: string | null,"cost_impact_amount"?: number | null,"cost_impact_status"?: string | null,"created_at"?: string,"due_date"?: string | null,"external_id": string,"id"?: string,"initiated_date"?: string | null,"location"?: string | null,"number": string,"org_id": string,"project_id": string,"question"?: string | null,"raw_record_id": string,"responsible_contractor"?: Json | null,"schedule_impact_days"?: number | null,"schedule_impact_status"?: string | null,"status": string,"subject": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "answer"?: string | null,"assignees"?: Json | null,"closed_date"?: string | null,"cost_code"?: string | null,"cost_impact_amount"?: number | null,"cost_impact_status"?: string | null,"created_at"?: string,"due_date"?: string | null,"external_id"?: string,"id"?: string,"initiated_date"?: string | null,"location"?: string | null,"number"?: string,"org_id"?: string,"project_id"?: string,"question"?: string | null,"raw_record_id"?: string,"responsible_contractor"?: Json | null,"schedule_impact_days"?: number | null,"schedule_impact_status"?: string | null,"status"?: string,"subject"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "rfis_org_project_fk"
+      columns: ["project_id","org_id"]
+isOneToOne: false
+      referencedRelation: "projects"
+      referencedColumns: ["id","org_id"]
+    },{
+      foreignKeyName: "rfis_raw_record_id_fkey"
+      columns: ["raw_record_id"]
+isOneToOne: false
+      referencedRelation: "raw_records"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"submittals": {
+                  Row: {
+                    "approver_responses": Json | null,"buffer_time_days": number | null,"created_at": string,"current_revision": number | null,"due_date": string | null,"external_id": string,"id": string,"lead_time_days": number | null,"number": string,"org_id": string,"project_id": string,"raw_record_id": string,"received_date": string | null,"required_on_site_date": string | null,"review_time_days": number | null,"scheduled_task": Json | null,"spec_section": string | null,"status": string,"title": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "approver_responses"?: Json | null,"buffer_time_days"?: number | null,"created_at"?: string,"current_revision"?: number | null,"due_date"?: string | null,"external_id": string,"id"?: string,"lead_time_days"?: number | null,"number": string,"org_id": string,"project_id": string,"raw_record_id": string,"received_date"?: string | null,"required_on_site_date"?: string | null,"review_time_days"?: number | null,"scheduled_task"?: Json | null,"spec_section"?: string | null,"status": string,"title": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "approver_responses"?: Json | null,"buffer_time_days"?: number | null,"created_at"?: string,"current_revision"?: number | null,"due_date"?: string | null,"external_id"?: string,"id"?: string,"lead_time_days"?: number | null,"number"?: string,"org_id"?: string,"project_id"?: string,"raw_record_id"?: string,"received_date"?: string | null,"required_on_site_date"?: string | null,"review_time_days"?: number | null,"scheduled_task"?: Json | null,"spec_section"?: string | null,"status"?: string,"title"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "submittals_org_project_fk"
+      columns: ["project_id","org_id"]
+isOneToOne: false
+      referencedRelation: "projects"
+      referencedColumns: ["id","org_id"]
+    },{
+      foreignKeyName: "submittals_raw_record_id_fkey"
+      columns: ["raw_record_id"]
+isOneToOne: false
+      referencedRelation: "raw_records"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"sync_runs": {
+                  Row: {
+                    "checkpoint": Json | null,"counts": Json | null,"created_at": string,"error_code": string | null,"error_summary": string | null,"finished_at": string | null,"id": string,"kind": Database["public"]['Enums']["sync_kind"],"org_id": string,"project_id": string,"project_source_id": string,"started_at": string | null,"status": Database["public"]['Enums']["sync_status"]
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "checkpoint"?: Json | null,"counts"?: Json | null,"created_at"?: string,"error_code"?: string | null,"error_summary"?: string | null,"finished_at"?: string | null,"id"?: string,"kind": Database["public"]['Enums']["sync_kind"],"org_id": string,"project_id": string,"project_source_id": string,"started_at"?: string | null,"status"?: Database["public"]['Enums']["sync_status"]
+                  }
+                  Update: {
+                    "checkpoint"?: Json | null,"counts"?: Json | null,"created_at"?: string,"error_code"?: string | null,"error_summary"?: string | null,"finished_at"?: string | null,"id"?: string,"kind"?: Database["public"]['Enums']["sync_kind"],"org_id"?: string,"project_id"?: string,"project_source_id"?: string,"started_at"?: string | null,"status"?: Database["public"]['Enums']["sync_status"]
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "sync_runs_org_project_fk"
+      columns: ["project_id","org_id"]
+isOneToOne: false
+      referencedRelation: "projects"
+      referencedColumns: ["id","org_id"]
+    },{
+      foreignKeyName: "sync_runs_project_source_id_fkey"
+      columns: ["project_source_id"]
+isOneToOne: false
+      referencedRelation: "project_sources"
+      referencedColumns: ["id"]
+    }
+                  ]
+                }
+          }
+          Views: {
+            [_ in never]: never
+          }
+          Functions: {
+            "create_org":
+{ Args: { "p_name": string,"p_slug": string }; Returns: string
+                           },
+"dearmor":
+{ Args: { "": string }; Returns: string
+                           },
+"gen_random_uuid":
+{ Args: Record<PropertyKey, never>; Returns: string
+                           },
+"gen_salt":
+{ Args: { "": string }; Returns: string
+                           },
+"has_org_role":
+{ Args: { "p_org_id": string,"p_roles": (string)[] }; Returns: boolean
+                           },
+"is_org_member":
+{ Args: { "p_org_id": string }; Returns: boolean
+                           },
+"pgp_armor_headers":
+{ Args: { "": string }; Returns: Record<string, unknown>[]
+                           }
+          }
+          Enums: {
+            "company_role": "owner"|"architect_engineer"|"gc"|"sub","connection_status": "pending"|"active"|"error"|"disconnected","contract_kind": "owner_gc"|"gc_sub","day_basis": "calendar"|"business","integration_provider": "procore"|"msgraph"|"p6_upload","notice_type": "delay_time_extension"|"cost_change_claim"|"differing_site_condition"|"change_directive_dispute"|"cure_default"|"injury_property_damage"|"other","received_at_source": "graph"|"forwarded_text","sync_kind": "backfill"|"incremental"|"reconcile"|"purge","sync_status": "queued"|"running"|"succeeded"|"failed"|"partial"
+          }
+          CompositeTypes: {
+            [_ in never]: never
+          }
         }
-        Returns: string
-      }
-      has_org_role: {
-        Args: {
-          p_org_id: string
-          p_roles: string[]
-        }
-        Returns: boolean
-      }
-      is_org_member: {
-        Args: {
-          p_org_id: string
-        }
-        Returns: boolean
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
 }
 
-type PublicSchema = Database[Extract<keyof Database, "public">]
+type DatabaseWithoutInternals = Omit<Database, '__InternalSupabase'>
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
-  PublicTableNameOrOptions extends
-    | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-        Database[PublicTableNameOrOptions["schema"]]["Views"])
-    : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
-        PublicSchema["Views"])
-    ? (PublicSchema["Tables"] &
-        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+  ? (DefaultSchema["Tables"] & DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+      Row: infer R
+    }
+    ? R
     : never
+  : never
 
 export type TablesInsert<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
-        Insert: infer I
-      }
-      ? I
-      : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+      Insert: infer I
+    }
+    ? I
     : never
+  : never
 
 export type TablesUpdate<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
     : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
-        Update: infer U
-      }
-      ? U
-      : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+      Update: infer U
+    }
+    ? U
     : never
+  : never
 
 export type Enums<
-  PublicEnumNameOrOptions extends
-    | keyof PublicSchema["Enums"]
-    | { schema: keyof Database },
-  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
-> = PublicEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
-    ? PublicSchema["Enums"][PublicEnumNameOrOptions]
-    : never
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never
+> = DefaultSchemaEnumNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+  ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+  : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof PublicSchema["CompositeTypes"]
-    | { schema: keyof Database },
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
-> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
-    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+  ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  : never
+
+export const Constants = {
+  "public": {
+          Enums: {
+            "company_role": ["owner", "architect_engineer", "gc", "sub"],"connection_status": ["pending", "active", "error", "disconnected"],"contract_kind": ["owner_gc", "gc_sub"],"day_basis": ["calendar", "business"],"integration_provider": ["procore", "msgraph", "p6_upload"],"notice_type": ["delay_time_extension", "cost_change_claim", "differing_site_condition", "change_directive_dispute", "cure_default", "injury_property_damage", "other"],"received_at_source": ["graph", "forwarded_text"],"sync_kind": ["backfill", "incremental", "reconcile", "purge"],"sync_status": ["queued", "running", "succeeded", "failed", "partial"]
+          }
+        }
+} as const
