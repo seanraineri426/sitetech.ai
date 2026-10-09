@@ -1,3 +1,4 @@
+import "server-only";
 import { z } from "zod";
 
 const envSchema = z.object({
@@ -6,7 +7,7 @@ const envSchema = z.object({
     .default("development"),
 
   // Site configuration
-  NEXT_PUBLIC_SITE_URL: z.string().url().default("http://localhost:3000"),
+  NEXT_PUBLIC_SITE_URL: z.string().url().optional(),
 
   // Supabase (public)
   NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),
@@ -32,6 +33,22 @@ const envSchema = z.object({
   // Auth configuration
   NEXT_PUBLIC_AUTH_MICROSOFT_ENABLED: z.string().optional(),
   AUTH_OPEN_SIGNUP: z.string().optional(),
+}).superRefine((data, ctx) => {
+  // In production, NEXT_PUBLIC_SITE_URL must be explicitly set
+  if (data.NODE_ENV === "production" && !data.NEXT_PUBLIC_SITE_URL) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "NEXT_PUBLIC_SITE_URL must be set in production",
+      path: ["NEXT_PUBLIC_SITE_URL"],
+    });
+  }
 });
 
-export const env = envSchema.parse(process.env);
+const parsed = envSchema.parse(process.env);
+
+export const env = {
+  ...parsed,
+  // Default to localhost only outside production
+  NEXT_PUBLIC_SITE_URL: parsed.NEXT_PUBLIC_SITE_URL || 
+    (parsed.NODE_ENV === "production" ? "" : "http://localhost:3000"),
+};

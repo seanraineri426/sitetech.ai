@@ -57,6 +57,65 @@ describe("sanitizeRedirectUrl", () => {
     });
   });
 
+  describe("rejects dot segment attacks", () => {
+    it("rejects /.//evil.com", () => {
+      expect(sanitizeRedirectUrl("/.//evil.com", siteUrl, defaultUrl)).toBe(defaultUrl);
+    });
+
+    it("rejects /a/..//evil.com", () => {
+      expect(sanitizeRedirectUrl("/a/..//evil.com", siteUrl, defaultUrl)).toBe(defaultUrl);
+    });
+
+    it("rejects /%2e//evil.com", () => {
+      expect(sanitizeRedirectUrl("/%2e//evil.com", siteUrl, defaultUrl)).toBe(defaultUrl);
+    });
+
+    it("rejects /%2e%2e//evil.com", () => {
+      expect(sanitizeRedirectUrl("/%2e%2e//evil.com", siteUrl, defaultUrl)).toBe(defaultUrl);
+    });
+
+    it("rejects /.%2F/evil.com", () => {
+      expect(sanitizeRedirectUrl("/.%2F/evil.com", siteUrl, defaultUrl)).toBe(defaultUrl);
+    });
+
+    it("rejects /app/../..//evil.com", () => {
+      expect(sanitizeRedirectUrl("/app/../..//evil.com", siteUrl, defaultUrl)).toBe(defaultUrl);
+    });
+
+    it("rejects /%2F%2Fevil.com with leading slash", () => {
+      expect(sanitizeRedirectUrl("/%2F%2Fevil.com", siteUrl, defaultUrl)).toBe(defaultUrl);
+    });
+
+    // B1 cases: encoded query/hash characters hiding path traversal
+    it("rejects /x%3F/..//evil.com (? in path)", () => {
+      expect(sanitizeRedirectUrl("/x%3F/..//evil.com", siteUrl, defaultUrl)).toBe(defaultUrl);
+    });
+
+    it("rejects /x%3f/..//evil.com (lowercase ? in path)", () => {
+      expect(sanitizeRedirectUrl("/x%3f/..//evil.com", siteUrl, defaultUrl)).toBe(defaultUrl);
+    });
+
+    it("rejects /x%23/..//evil.com (# in path)", () => {
+      expect(sanitizeRedirectUrl("/x%23/..//evil.com", siteUrl, defaultUrl)).toBe(defaultUrl);
+    });
+
+    it("rejects /app%3F/../..//evil.com", () => {
+      expect(sanitizeRedirectUrl("/app%3F/../..//evil.com", siteUrl, defaultUrl)).toBe(defaultUrl);
+    });
+
+    it("rejects /a%3F/%2e%2e//evil.com", () => {
+      expect(sanitizeRedirectUrl("/a%3F/%2e%2e//evil.com", siteUrl, defaultUrl)).toBe(defaultUrl);
+    });
+
+    it("rejects %2Fx%3F/..//evil.com", () => {
+      expect(sanitizeRedirectUrl("%2Fx%3F/..//evil.com", siteUrl, defaultUrl)).toBe(defaultUrl);
+    });
+
+    it("rejects /..//..%3F/", () => {
+      expect(sanitizeRedirectUrl("/..//..%3F/", siteUrl, defaultUrl)).toBe(defaultUrl);
+    });
+  });
+
   describe("rejects backslash variants", () => {
     it("rejects /\\evil", () => {
       expect(sanitizeRedirectUrl("/\\evil", siteUrl, defaultUrl)).toBe(defaultUrl);
@@ -112,6 +171,10 @@ describe("sanitizeRedirectUrl", () => {
       expect(sanitizeRedirectUrl("javascript:alert(1)", siteUrl, defaultUrl)).toBe(defaultUrl);
     });
 
+    it("rejects https:evil.com (missing slashes)", () => {
+      expect(sanitizeRedirectUrl("https:evil.com", siteUrl, defaultUrl)).toBe(defaultUrl);
+    });
+
     it("rejects data: protocol", () => {
       expect(sanitizeRedirectUrl("data:text/html,<script>alert(1)</script>", siteUrl, defaultUrl)).toBe(
         defaultUrl
@@ -130,6 +193,55 @@ describe("sanitizeRedirectUrl", () => {
 
     it("rejects path starting with other character", () => {
       expect(sanitizeRedirectUrl("@dashboard", siteUrl, defaultUrl)).toBe(defaultUrl);
+    });
+  });
+
+  describe("preserves encoding in safe paths", () => {
+    it("preserves %26 encoding in query string /app?q=a%26b", () => {
+      expect(sanitizeRedirectUrl("/app?q=a%26b", siteUrl, defaultUrl)).toBe("/app?q=a%26b");
+    });
+  });
+
+  describe("edge cases with same-origin verification", () => {
+    it("double-encoded tab /%2509/evil.com is same-origin", () => {
+      expect(new URL(sanitizeRedirectUrl("/%2509/evil.com", siteUrl, defaultUrl), siteUrl).origin).toBe(new URL(siteUrl).origin);
+    });
+
+    it("rejects double unicode slash \\uff0f\\uff0fevil.com", () => {
+      expect(sanitizeRedirectUrl("\uff0f\uff0fevil.com", siteUrl, defaultUrl)).toBe(defaultUrl);
+    });
+
+    it("unicode slash /\\uff0f/evil.com is same-origin", () => {
+      expect(new URL(sanitizeRedirectUrl("/\uff0f/evil.com", siteUrl, defaultUrl), siteUrl).origin).toBe(new URL(siteUrl).origin);
+    });
+  });
+
+  describe("fuzz testing", () => {
+    it("rejects random combinations that might escape", () => {
+      const charset = ["/", ".", "%", "2", "e", "E", "F", "3", "f", "2", "3", "\\", "?", "#", "a"];
+      const site = new URL(siteUrl);
+      
+      // Test 1000 random combinations (scaled down from 10k for test speed)
+      for (let i = 0; i < 1000; i++) {
+        let input = "";
+        const len = Math.floor(Math.random() * 30) + 1;
+        for (let j = 0; j < len; j++) {
+          input += charset[Math.floor(Math.random() * charset.length)];
+        }
+        
+        const result = sanitizeRedirectUrl(input, siteUrl, defaultUrl);
+        
+        // If not rejected, must be same-origin
+        if (result !== defaultUrl) {
+          try {
+            const resultUrl = new URL(result, siteUrl);
+            expect(resultUrl.origin).toBe(site.origin);
+          } catch {
+            // If it throws, that's fine - just make sure it was rejected
+            expect(result).toBe(defaultUrl);
+          }
+        }
+      }
     });
   });
 });

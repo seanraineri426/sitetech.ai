@@ -17,6 +17,20 @@ const createOrgSchema = z.object({
 });
 
 export async function createOrganization(formData: FormData) {
+  const supabase = await createClient();
+  
+  // Check if user is signed in
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    return {
+      error: "You must be signed in to create an organization.",
+    };
+  }
+
   const name = formData.get("name");
   const slug = formData.get("slug");
 
@@ -31,7 +45,6 @@ export async function createOrganization(formData: FormData) {
   const { name: validatedName, slug: validatedSlug } = validation.data;
 
   try {
-    const supabase = await createClient();
     const { error: rpcError } = await supabase.rpc("create_org", {
       p_name: validatedName,
       p_slug: validatedSlug,

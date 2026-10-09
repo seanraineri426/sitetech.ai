@@ -139,7 +139,7 @@ cp .env.example .env.local
 3. Configure Auth redirect URLs in Supabase Dashboard:
    - Authentication → URL Configuration
    - Add to "Redirect URLs":
-     - Local development: `http://127.0.0.1:3000/auth/callback`, `http://localhost:3000/auth/callback`
+     - Local development: `http://localhost:3000/auth/callback`
      - Production: `https://app.sitetech.ai/auth/callback`
 
 ### Microsoft (Azure AD) Sign-In (Optional)
@@ -167,10 +167,17 @@ By default, signup is **invite-only** for the pilot. Users must be invited via t
 2. Click "Invite user" and enter their email
 3. They will receive a magic link to sign in
 
+**For hosted Supabase projects:** To enforce invite-only:
+- Set `AUTH_OPEN_SIGNUP=false` (or leave unset) in your environment
+- Set `enable_signup = false` in `supabase/config.toml` (lines 176 and 221)
+- Disable "Allow new users to sign up" in Supabase Dashboard → Authentication → Providers → Email
+
 To enable open signup (any email can sign up), set:
 ```
 AUTH_OPEN_SIGNUP=true
 ```
+
+**Important:** Use `localhost` consistently in local development. The app defaults to `http://localhost:3000`, Supabase runs on `http://127.0.0.1:54321`.
 
 See `.env.example` for all required environment variables.
 
