@@ -188,16 +188,25 @@ def main():
         must_not_flag_match = re.search(r'must[_\s-]not[_\s-]flag[:\s]+(\d+)', output, re.IGNORECASE)
         fabricated_match = re.search(r'fabricated[_\s]refs?[:\s]+(\d+)', output, re.IGNORECASE)
         
-        if recall_match:
+        # All three metrics must be present and parseable, or FAIL
+        if recall_match and must_not_flag_match and fabricated_match:
             surfaced, total = int(recall_match.group(1)), int(recall_match.group(2))
-            must_not_flag_violations = int(must_not_flag_match.group(1)) if must_not_flag_match else 0
-            fabricated_refs = int(fabricated_match.group(1)) if fabricated_match else 0
+            must_not_flag_violations = int(must_not_flag_match.group(1))
+            fabricated_refs = int(fabricated_match.group(1))
             
             # Accept as XFAIL if recall >= 8/11, no violations, no fabricated refs
             if surfaced >= 8 and total >= 11 and must_not_flag_violations == 0 and fabricated_refs == 0:
                 xfail_acceptable = True
                 print(f"✓ XFAIL (expected failure): linden_gate")
                 print(f"  Reason: {surfaced}/{total} recall (target 10/11), {must_not_flag_violations} must-not-flag, {fabricated_refs} fabricated")
+        else:
+            print(f"❌ FAILED: linden_gate - missing or unparseable metrics")
+            if not recall_match:
+                print("  Missing: recall metric")
+            if not must_not_flag_match:
+                print("  Missing: must-not-flag metric")
+            if not fabricated_match:
+                print("  Missing: fabricated metric")
     
     if not xfail_acceptable:
         all_passed = False
