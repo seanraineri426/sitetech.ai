@@ -279,6 +279,41 @@ describe("Procore mappers", () => {
       // Fingerprint should be SAME because email is not in allowlist
       expect(normalized1.fingerprint).toBe(normalized2.fingerprint);
     });
+
+    it("changes when scheduled_task.code changes", () => {
+      const normalized1 = mapProcoreSubmittalToNormalized(mockSubmittal);
+      const modified = {
+        ...mockSubmittal,
+        scheduled_task: {
+          ...mockSubmittal.scheduled_task!,
+          code: "B2030",
+        },
+      };
+      const normalized2 = mapProcoreSubmittalToNormalized(modified);
+
+      expect(normalized1.fingerprint).not.toBe(normalized2.fingerprint);
+    });
+
+    it("changes when scheduled_task.code is added", () => {
+      const noCode = {
+        ...mockSubmittal,
+        scheduled_task: {
+          ...mockSubmittal.scheduled_task!,
+          code: null,
+        },
+      };
+      const normalized1 = mapProcoreSubmittalToNormalized(noCode);
+      const withCode = {
+        ...mockSubmittal,
+        scheduled_task: {
+          ...mockSubmittal.scheduled_task!,
+          code: "A1020",
+        },
+      };
+      const normalized2 = mapProcoreSubmittalToNormalized(withCode);
+
+      expect(normalized1.fingerprint).not.toBe(normalized2.fingerprint);
+    });
   });
 
   describe("RFI nested object fingerprinting", () => {
