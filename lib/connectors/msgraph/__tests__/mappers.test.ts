@@ -7,7 +7,7 @@ import { describe, it, expect, vi } from "vitest";
 // Mock server-only
 vi.mock("server-only", () => ({}));
 
-import { mapGraphMessageToNormalized, emailToRawRecord } from "../mappers";
+import { mapGraphMessageToNormalized, emailToRawRecord, redactAddresses } from "../mappers";
 import type { GraphMessage } from "../types";
 
 describe("Microsoft Graph mappers", () => {
@@ -1066,6 +1066,162 @@ CO #12 @ $4,500, beam B-3@grid C/4`;
 
       const stripped = stripDriveItemEmails(driveItem);
       expect(stripped).toEqual(driveItem);
+    });
+  });
+
+  describe("redactAddresses - digit-leading domains and construction patterns", () => {
+    it("redacts digit-leading domains", () => {
+      expect(redactAddresses("bob@3m.com_")).toBe("[email-3m.com]_");
+      expect(redactAddresses("bob@123.com_")).toBe("[email-123.com]_");
+      expect(redactAddresses("bob@3m.com-x")).toBe("[email-3m.com]-x");
+      expect(redactAddresses("x@1and1.com-|y@1and1.com-")).toBe("[email-1and1.com]-|[email-1and1.com]-");
+      expect(redactAddresses("bob@1and1.com_ more")).toBe("[email-1and1.com]_ more");
+    });
+
+    it("redacts digit-leading domains in subject and body_preview through emailToRawRecord", () => {
+      const normalized = mapGraphMessageToNormalized({
+        id: "msg1",
+        conversationId: "conv1",
+        receivedDateTime: "2024-01-01T00:00:00Z",
+        sentDateTime: "2024-01-01T00:00:00Z",
+        subject: "bob@1and1.com_|carol@1and1.com_",
+        bodyPreview: "bob@1and1.com_|carol@1and1.com_",
+        from: { emailAddress: { name: "Alice", address: "alice@example.com" } },
+        toRecipients: [],
+        ccRecipients: [],
+        body: { contentType: "text", content: "" },
+        hasAttachments: false,
+        importance: "normal",
+        isRead: false,
+        categories: [],
+      }, "mb1");
+      const raw = emailToRawRecord(normalized);
+      const payload = raw.allowlistedPayload as Record<string, unknown>;
+      expect(payload.subject).toBe("[email-1and1.com]_|[email-1and1.com]_");
+      expect(payload.body_preview).toBe("[email-1and1.com]_|[email-1and1.com]_");
+    });
+
+    it("redacts digit-leading domains in normalized body_text", () => {
+      const normalized = mapGraphMessageToNormalized({
+        id: "msg1",
+        conversationId: "conv1",
+        receivedDateTime: "2024-01-01T00:00:00Z",
+        sentDateTime: "2024-01-01T00:00:00Z",
+        subject: "Test",
+        bodyPreview: "",
+        from: { emailAddress: { name: "Alice", address: "alice@example.com" } },
+        toRecipients: [],
+        ccRecipients: [],
+        body: { contentType: "text", content: "bob@1and1.com_|carol@1and1.com_" },
+        hasAttachments: false,
+        importance: "normal",
+        isRead: false,
+        categories: [],
+      }, "mb1");
+      expect(normalized.body_text).toBe("[email-1and1.com]_|[email-1and1.com]_");
+    });
+
+    it("leaves construction patterns unchanged", () => {
+      expect(redactAddresses("col@A.5")).toBe("col@A.5");
+      expect(redactAddresses("grid@B.3")).toBe("grid@B.3");
+      expect(redactAddresses("elev@El.100")).toBe("elev@El.100");
+      expect(redactAddresses("pour@level.2 deck")).toBe("pour@level.2 deck");
+      expect(redactAddresses("T.O.@El.102.5")).toBe("T.O.@El.102.5");
+      expect(redactAddresses("lintel@door.3")).toBe("lintel@door.3");
+      expect(redactAddresses("anchors@A.1-A.5")).toBe("anchors@A.1-A.5");
+    });
+
+    it("redacts look-alikes and invisible chars while preserving non-address look-alikes", () => {
+      // Zero-width space in address
+      expect(redactAddresses("bob\u200b@x.com")).toBe("[email-x.com]");
+      // Full-width @ in address (U+FE6B ﹫)
+      expect(redactAddresses("bob﹫x.com")).toBe("[email-x.com]");
+      // Full-width dot in address (U+FF0E ．)
+      expect(redactAddresses("bob@x．com")).toBe("[email-x.com]");
+      // Full-width @ NOT in address (U+FF20 ＠) - should be unchanged
+      expect(redactAddresses("price＠$5")).toBe("price＠$5");
+      expect(redactAddresses("＠channel")).toBe("＠channel");
+    });
+
+    it("preserves stray full-width @ and zero-width space outside addresses", () => {
+      const input = "Level 3＠grid C\u200b, see RFI-045 @ $4,500";
+      expect(redactAddresses(input)).toBe(input);
+    });
+
+    it("redacts real address while preserving stray look-alikes", () => {
+      const input = "Contact bob@acme.com for Level 3＠grid C\u200b details";
+      const output = redactAddresses(input);
+      expect(output).toBe("Contact [email-acme.com] for Level 3＠grid C\u200b details");
+      // Verify byte-identical non-address parts
+      expect(output.includes("Level 3＠grid C\u200b details")).toBe(true);
+    });
+
+    it("allows domains ending in digit when glued to text", () => {
+      expect(redactAddresses("bob@163.com1")).toBe("[email-163.com1]");
+      expect(redactAddresses("bob@3m.comPhone")).toBe("[email-3m.comPhone]");
+    });
+
+    it("keeps trailing dots outside placeholder", () => {
+      expect(redactAddresses("bob@gc.")).toBe("[email-gc].");
+      expect(redactAddresses("bob@x.com.")).toBe("[email-x.com].");
+      expect(redactAddresses("bob@x.com..")).toBe("[email-x.com]..");
+    });
+
+    it("finds quote spanning redacted address in body_text", () => {
+      const body = "Per bob@acmemech.com: the #5@10 rebar is short by $48,200.";
+      const normalized = mapGraphMessageToNormalized({
+        id: "msg1",
+        conversationId: "conv1",
+        receivedDateTime: "2024-01-01T00:00:00Z",
+        sentDateTime: "2024-01-01T00:00:00Z",
+        subject: "Test",
+        bodyPreview: "",
+        from: { emailAddress: { name: "Alice", address: "alice@example.com" } },
+        toRecipients: [],
+        ccRecipients: [],
+        body: { contentType: "text", content: body },
+        hasAttachments: false,
+        importance: "normal",
+        isRead: false,
+        categories: [],
+      }, "mb1");
+
+      expect(normalized.body_text).toBeTruthy();
+      
+      // Quote including the redacted address form
+      const quote1 = "Per [email-acmemech.com]: the #5@10 rebar";
+      expect(normalized.body_text!.indexOf(quote1)).toBeGreaterThanOrEqual(0);
+
+      // Quote after the address
+      const quote2 = "the #5@10 rebar is short by $48,200.";
+      expect(normalized.body_text!.indexOf(quote2)).toBeGreaterThanOrEqual(0);
+    });
+
+    it("validates quote offset deltas with multiple addresses", () => {
+      const original = "alice@a.com then bob@b.com then carol@c.com done";
+      const redacted = redactAddresses(original);
+      
+      // Calculate expected deltas for all three addresses
+      const addr1Original = "alice@a.com";
+      const addr1Redacted = "[email-a.com]";
+      const delta1 = addr1Redacted.length - addr1Original.length;
+      
+      const addr2Original = "bob@b.com";
+      const addr2Redacted = "[email-b.com]";
+      const delta2 = addr2Redacted.length - addr2Original.length;
+      
+      const addr3Original = "carol@c.com";
+      const addr3Redacted = "[email-c.com]";
+      const delta3 = addr3Redacted.length - addr3Original.length;
+      
+      // Quote after all addresses
+      const quoteAfterAll = "done";
+      const originalOffset = original.indexOf(quoteAfterAll);
+      const redactedOffset = redacted.indexOf(quoteAfterAll);
+      const expectedOffset = originalOffset + delta1 + delta2 + delta3;
+      
+      expect(redactedOffset).toBe(expectedOffset);
+      expect(redacted.substring(redactedOffset, redactedOffset + quoteAfterAll.length)).toBe(quoteAfterAll);
     });
   });
 });
