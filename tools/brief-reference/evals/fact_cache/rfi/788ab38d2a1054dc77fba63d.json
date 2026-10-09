@@ -1,0 +1,36 @@
+{
+ "kind": "rfi",
+ "ref": "procore:rfi:9042",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "procore:rfi:9042",
+  "label": "RFI #42",
+  "subject": "Embed plate layout at transfer girders, Grid C/4-7 (S-301 vs A-201)",
+  "status": "open",
+  "question": "Embed plate EP-7 spacing on S-301 Rev 2 does not match architectural column centerlines on A-201 at Grid C/4-7. Fabricator cannot detail transfer girder connections until resolved. Confirm governing dimensions.",
+  "answers": [],
+  "cost_impact": "tbd",
+  "cost_impact_value": null,
+  "schedule_impact": "yes_unknown",
+  "schedule_impact_value": null,
+  "referenced_instruments": []
+ },
+ "output": {
+  "ref": "procore:rfi:9042",
+  "scope_change": "unclear",
+  "scope_quote": "",
+  "differing_site_condition": false,
+  "condition": "",
+  "condition_quote": "",
+  "amount_usd": null,
+  "schedule_days": null,
+  "confidence": "high"
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:20:49"
+}

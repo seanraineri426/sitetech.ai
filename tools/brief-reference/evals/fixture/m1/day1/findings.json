@@ -1,0 +1,481 @@
+[
+  {
+    "id": "75709e34-ba39-5dda-8b6d-04735ef43496",
+    "org_id": "1befe790-aca8-5579-92e3-e97c76435686",
+    "project_id": "f9fdf464-52c4-5d02-a931-c76a025e916c",
+    "run_date": "2026-10-05",
+    "rule_id": "RFI-OVERDUE",
+    "rule_version": "1.0.0",
+    "entity_type": "rfi",
+    "entity_id": "200e45db-d745-5c19-8496-a4958ee46027",
+    "source": "procore",
+    "external_id": "9038",
+    "record_label": "RFI #38",
+    "title": "RFI #38 overdue 4d: Stair 2 handrail extension at intermediate landing",
+    "severity": "low",
+    "status": "open",
+    "days_overdue": 4,
+    "governing_date": "2026-10-01",
+    "governing_date_kind": "due_date",
+    "ball_in_court": "Hannah Cole",
+    "spec_section": "05 51 00",
+    "fingerprint": "RFI-OVERDUE|rfi|9038",
+    "first_detected_on": "2026-10-05",
+    "last_seen_on": "2026-10-05",
+    "resolved_on": null,
+    "change_since_prior_run": "new",
+    "evidence": {
+      "status": "open",
+      "due_date": "2026-10-01",
+      "ball_in_court": "Hannah Cole",
+      "schedule_impact.status": "no_impact",
+      "cost_impact.status": "no_impact"
+    },
+    "citations": [
+      {
+        "ref": "procore:rfi:9038",
+        "fields": [
+          "status",
+          "due_date",
+          "ball_in_court",
+          "schedule_impact.status",
+          "cost_impact.status"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "632df433-2b24-577a-ba17-a22284ba0499",
+    "org_id": "1befe790-aca8-5579-92e3-e97c76435686",
+    "project_id": "f9fdf464-52c4-5d02-a931-c76a025e916c",
+    "run_date": "2026-10-05",
+    "rule_id": "RFI-OVERDUE",
+    "rule_version": "1.0.0",
+    "entity_type": "rfi",
+    "entity_id": "1ee3615e-852e-5509-b21e-7e86decb3e95",
+    "source": "procore",
+    "external_id": "9039",
+    "record_label": "RFI #39",
+    "title": "RFI #39 overdue 5d: Roof drain location vs. truss layout at Wing A gridline 9",
+    "severity": "medium",
+    "status": "open",
+    "days_overdue": 5,
+    "governing_date": "2026-09-30",
+    "governing_date_kind": "due_date",
+    "ball_in_court": "Hannah Cole",
+    "spec_section": "22 14 26",
+    "fingerprint": "RFI-OVERDUE|rfi|9039",
+    "first_detected_on": "2026-10-05",
+    "last_seen_on": "2026-10-05",
+    "resolved_on": null,
+    "change_since_prior_run": "new",
+    "evidence": {
+      "status": "open",
+      "due_date": "2026-09-30",
+      "ball_in_court": "Hannah Cole",
+      "schedule_impact.status": "tbd",
+      "cost_impact.status": "tbd"
+    },
+    "citations": [
+      {
+        "ref": "procore:rfi:9039",
+        "fields": [
+          "status",
+          "due_date",
+          "ball_in_court",
+          "schedule_impact.status",
+          "cost_impact.status"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "bd60508d-8b6c-5e64-814d-acd76560503b",
+    "org_id": "1befe790-aca8-5579-92e3-e97c76435686",
+    "project_id": "f9fdf464-52c4-5d02-a931-c76a025e916c",
+    "run_date": "2026-10-05",
+    "rule_id": "RFI-OVERDUE",
+    "rule_version": "1.0.0",
+    "entity_type": "rfi",
+    "entity_id": "6d6a2992-4ccc-5e88-acf3-5d6477198b18",
+    "source": "procore",
+    "external_id": "9042",
+    "record_label": "RFI #42",
+    "title": "RFI #42 overdue 6d: Embed plate layout at transfer girders, Grid C/4-7 (S-301 vs A-201)",
+    "severity": "high",
+    "status": "open",
+    "days_overdue": 6,
+    "governing_date": "2026-09-29",
+    "governing_date_kind": "due_date",
+    "ball_in_court": "Raj Mehta",
+    "spec_section": "05 12 00",
+    "fingerprint": "RFI-OVERDUE|rfi|9042",
+    "first_detected_on": "2026-10-05",
+    "last_seen_on": "2026-10-05",
+    "resolved_on": null,
+    "change_since_prior_run": "new",
+    "evidence": {
+      "status": "open",
+      "due_date": "2026-09-29",
+      "ball_in_court": "Raj Mehta",
+      "schedule_impact.status": "yes_unknown",
+      "cost_impact.status": "tbd"
+    },
+    "citations": [
+      {
+        "ref": "procore:rfi:9042",
+        "fields": [
+          "status",
+          "due_date",
+          "ball_in_court",
+          "schedule_impact.status",
+          "cost_impact.status"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "a5243680-b5ca-5420-8f4f-eb42144c081c",
+    "org_id": "1befe790-aca8-5579-92e3-e97c76435686",
+    "project_id": "f9fdf464-52c4-5d02-a931-c76a025e916c",
+    "run_date": "2026-10-05",
+    "rule_id": "RFI-OVERDUE",
+    "rule_version": "1.0.0",
+    "entity_type": "rfi",
+    "entity_id": "41e8a8cb-c4f4-5324-a95e-09229db8fdc2",
+    "source": "procore",
+    "external_id": "9043",
+    "record_label": "RFI #43",
+    "title": "RFI #43 overdue 2d: Duct shaft size at Unit Stack 07 per ASI-07",
+    "severity": "medium",
+    "status": "open",
+    "days_overdue": 2,
+    "governing_date": "2026-10-03",
+    "governing_date_kind": "due_date",
+    "ball_in_court": "Hannah Cole",
+    "spec_section": "23 31 13",
+    "fingerprint": "RFI-OVERDUE|rfi|9043",
+    "first_detected_on": "2026-10-05",
+    "last_seen_on": "2026-10-05",
+    "resolved_on": null,
+    "change_since_prior_run": "new",
+    "evidence": {
+      "status": "open",
+      "due_date": "2026-10-03",
+      "ball_in_court": "Hannah Cole",
+      "schedule_impact.status": "yes_unknown",
+      "cost_impact.status": "yes_unknown"
+    },
+    "citations": [
+      {
+        "ref": "procore:rfi:9043",
+        "fields": [
+          "status",
+          "due_date",
+          "ball_in_court",
+          "schedule_impact.status",
+          "cost_impact.status"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "6880ec8c-e534-55d4-84ef-6b052a588d9a",
+    "org_id": "1befe790-aca8-5579-92e3-e97c76435686",
+    "project_id": "f9fdf464-52c4-5d02-a931-c76a025e916c",
+    "run_date": "2026-10-05",
+    "rule_id": "SUB-ROS-RISK",
+    "rule_version": "1.0.0",
+    "entity_type": "submittal",
+    "entity_id": "ed91e3b8-4afb-5c67-913e-3862f9a3a7f7",
+    "source": "procore",
+    "external_id": "6103",
+    "record_label": "Submittal 05 12 00-003 rev 1",
+    "title": "Submittal 05 12 00-003 rev 1: 4d margin to drop-dead return date (Structural Steel Shop Drawings - Podium Transfer & Embeds)",
+    "severity": "high",
+    "status": "open",
+    "days_overdue": 0,
+    "governing_date": "2026-10-09",
+    "governing_date_kind": "latest_return_date",
+    "ball_in_court": "Raj Mehta",
+    "spec_section": "05 12 00",
+    "fingerprint": "SUB-ROS-RISK|submittal|6103",
+    "first_detected_on": "2026-10-05",
+    "last_seen_on": "2026-10-05",
+    "resolved_on": null,
+    "change_since_prior_run": "new",
+    "evidence": {
+      "required_on_site_date": "2026-11-09",
+      "lead_time": 28,
+      "buffer_time": 3,
+      "design_team_review_time": 14,
+      "internal_review_time": 0,
+      "status.name": "Open",
+      "due_date": "2026-10-01",
+      "submit_by": "2026-09-17",
+      "computed.latest_return_date": "2026-10-09",
+      "computed.projected_return_date": "2026-10-05",
+      "computed.margin_days": 4
+    },
+    "citations": [
+      {
+        "ref": "procore:submittal:6103",
+        "fields": [
+          "required_on_site_date",
+          "lead_time",
+          "buffer_time",
+          "design_team_review_time",
+          "internal_review_time",
+          "status.name",
+          "due_date",
+          "submit_by",
+          "computed.latest_return_date",
+          "computed.projected_return_date",
+          "computed.margin_days"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "124dd8db-c612-5a9b-9cfc-400aed58dd9b",
+    "org_id": "1befe790-aca8-5579-92e3-e97c76435686",
+    "project_id": "f9fdf464-52c4-5d02-a931-c76a025e916c",
+    "run_date": "2026-10-05",
+    "rule_id": "SUB-ROS-RISK",
+    "rule_version": "1.0.0",
+    "entity_type": "submittal",
+    "entity_id": "b7070086-02c0-587f-8871-418363cddd5d",
+    "source": "procore",
+    "external_id": "6501",
+    "record_label": "Submittal 32 14 00-001 rev 0",
+    "title": "Submittal 32 14 00-001 rev 0: 1d margin to drop-dead return date (Amenity Deck Pavers and Pedestals)",
+    "severity": "high",
+    "status": "open",
+    "days_overdue": 0,
+    "governing_date": "2026-10-16",
+    "governing_date_kind": "latest_return_date",
+    "ball_in_court": "Kevin Osei",
+    "spec_section": "32 14 00",
+    "fingerprint": "SUB-ROS-RISK|submittal|6501",
+    "first_detected_on": "2026-10-05",
+    "last_seen_on": "2026-10-05",
+    "resolved_on": null,
+    "change_since_prior_run": "new",
+    "evidence": {
+      "required_on_site_date": "2026-12-14",
+      "lead_time": 56,
+      "buffer_time": 3,
+      "design_team_review_time": 10,
+      "internal_review_time": 0,
+      "status.name": "Draft",
+      "due_date": null,
+      "submit_by": "2026-10-03",
+      "computed.latest_return_date": "2026-10-16",
+      "computed.projected_return_date": "2026-10-15",
+      "computed.margin_days": 1
+    },
+    "citations": [
+      {
+        "ref": "procore:submittal:6501",
+        "fields": [
+          "required_on_site_date",
+          "lead_time",
+          "buffer_time",
+          "design_team_review_time",
+          "internal_review_time",
+          "status.name",
+          "due_date",
+          "submit_by",
+          "computed.latest_return_date",
+          "computed.projected_return_date",
+          "computed.margin_days"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "e9944ba5-79ec-5236-9c10-5a233451dbe9",
+    "org_id": "1befe790-aca8-5579-92e3-e97c76435686",
+    "project_id": "f9fdf464-52c4-5d02-a931-c76a025e916c",
+    "run_date": "2026-10-05",
+    "rule_id": "SUB-REVIEW-OVERDUE",
+    "rule_version": "1.0.0",
+    "entity_type": "submittal",
+    "entity_id": "ed91e3b8-4afb-5c67-913e-3862f9a3a7f7",
+    "source": "procore",
+    "external_id": "6103",
+    "record_label": "Submittal 05 12 00-003 rev 1",
+    "title": "Submittal 05 12 00-003 rev 1 review overdue 4d (Structural Steel Shop Drawings - Podium Transfer & Embeds)",
+    "severity": "medium",
+    "status": "open",
+    "days_overdue": 4,
+    "governing_date": "2026-10-01",
+    "governing_date_kind": "due_date",
+    "ball_in_court": "Raj Mehta",
+    "spec_section": "05 12 00",
+    "fingerprint": "SUB-REVIEW-OVERDUE|submittal|6103",
+    "first_detected_on": "2026-10-05",
+    "last_seen_on": "2026-10-05",
+    "resolved_on": null,
+    "change_since_prior_run": "new",
+    "evidence": {
+      "status.name": "Open",
+      "due_date": "2026-10-01",
+      "ball_in_court": "Raj Mehta"
+    },
+    "citations": [
+      {
+        "ref": "procore:submittal:6103",
+        "fields": [
+          "status.name",
+          "due_date",
+          "ball_in_court"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "47948265-9608-5afe-bded-074dfa0ae463",
+    "org_id": "1befe790-aca8-5579-92e3-e97c76435686",
+    "project_id": "f9fdf464-52c4-5d02-a931-c76a025e916c",
+    "run_date": "2026-10-05",
+    "rule_id": "SUB-SUBMIT-BY-MISSED",
+    "rule_version": "1.0.0",
+    "entity_type": "submittal",
+    "entity_id": "b7070086-02c0-587f-8871-418363cddd5d",
+    "source": "procore",
+    "external_id": "6501",
+    "record_label": "Submittal 32 14 00-001 rev 0",
+    "title": "Submittal 32 14 00-001 rev 0 not submitted; submit-by passed 2d ago (Amenity Deck Pavers and Pedestals)",
+    "severity": "medium",
+    "status": "open",
+    "days_overdue": 2,
+    "governing_date": "2026-10-03",
+    "governing_date_kind": "submit_by",
+    "ball_in_court": "Kevin Osei",
+    "spec_section": "32 14 00",
+    "fingerprint": "SUB-SUBMIT-BY-MISSED|submittal|6501",
+    "first_detected_on": "2026-10-05",
+    "last_seen_on": "2026-10-05",
+    "resolved_on": null,
+    "change_since_prior_run": "new",
+    "evidence": {
+      "status.name": "Draft",
+      "submit_by": "2026-10-03",
+      "received_date": null,
+      "ball_in_court": "Kevin Osei"
+    },
+    "citations": [
+      {
+        "ref": "procore:submittal:6501",
+        "fields": [
+          "status.name",
+          "submit_by",
+          "received_date",
+          "ball_in_court"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "ba2ac92a-26a8-5158-a083-575db027658a",
+    "org_id": "1befe790-aca8-5579-92e3-e97c76435686",
+    "project_id": "f9fdf464-52c4-5d02-a931-c76a025e916c",
+    "run_date": "2026-10-05",
+    "rule_id": "SUB-REVIEW-OVERDUE",
+    "rule_version": "1.0.0",
+    "entity_type": "submittal",
+    "entity_id": "26fa5974-4853-50c5-bb64-8e189a39523e",
+    "source": "procore",
+    "external_id": "6601",
+    "record_label": "Submittal 10 28 13-001 rev 0",
+    "title": "Submittal 10 28 13-001 rev 0 review overdue 3d (Toilet Accessories)",
+    "severity": "low",
+    "status": "open",
+    "days_overdue": 3,
+    "governing_date": "2026-10-02",
+    "governing_date_kind": "due_date",
+    "ball_in_court": "Hannah Cole",
+    "spec_section": "10 28 13",
+    "fingerprint": "SUB-REVIEW-OVERDUE|submittal|6601",
+    "first_detected_on": "2026-10-05",
+    "last_seen_on": "2026-10-05",
+    "resolved_on": null,
+    "change_since_prior_run": "new",
+    "evidence": {
+      "status.name": "Open",
+      "due_date": "2026-10-02",
+      "ball_in_court": "Hannah Cole"
+    },
+    "citations": [
+      {
+        "ref": "procore:submittal:6601",
+        "fields": [
+          "status.name",
+          "due_date",
+          "ball_in_court"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "0531d766-f06d-5850-93ed-5f4eac784e24",
+    "org_id": "1befe790-aca8-5579-92e3-e97c76435686",
+    "project_id": "f9fdf464-52c4-5d02-a931-c76a025e916c",
+    "run_date": "2026-10-05",
+    "rule_id": "SUB-REV-LOOP",
+    "rule_version": "1.0.0",
+    "entity_type": "submittal",
+    "entity_id": "4f05aa89-e18a-59f5-b42e-ce2f00ecd18d",
+    "source": "procore",
+    "external_id": "6202",
+    "record_label": "Submittal 08 53 13-001",
+    "title": "Submittal 08 53 13-001: 2 revise-and-resubmit cycles; rev 2 with Hannah Cole",
+    "severity": "medium",
+    "status": "open",
+    "days_overdue": 0,
+    "governing_date": "2026-09-21",
+    "governing_date_kind": "submit_by",
+    "ball_in_court": "Hannah Cole",
+    "spec_section": "08 53 13",
+    "fingerprint": "SUB-REV-LOOP|submittal|08 53 13-001",
+    "first_detected_on": "2026-10-05",
+    "last_seen_on": "2026-10-05",
+    "resolved_on": null,
+    "change_since_prior_run": "new",
+    "evidence": {
+      "rr_count": 2,
+      "rr_revisions": [
+        "0",
+        "1"
+      ],
+      "current_revision": "2",
+      "current_status": "Open",
+      "submit_by": "2026-09-21"
+    },
+    "citations": [
+      {
+        "ref": "procore:submittal:6202",
+        "fields": [
+          "rr_count",
+          "rr_revisions",
+          "current_revision",
+          "current_status",
+          "submit_by"
+        ]
+      },
+      {
+        "ref": "procore:submittal:6200",
+        "fields": [
+          "approvers[0].response.name"
+        ]
+      },
+      {
+        "ref": "procore:submittal:6201",
+        "fields": [
+          "approvers[0].response.name"
+        ]
+      }
+    ]
+  }
+]

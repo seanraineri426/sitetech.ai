@@ -1,0 +1,41 @@
+{
+ "kind": "rfi",
+ "ref": "procore:rfi:9038",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "procore:rfi:9038",
+  "label": "RFI #38",
+  "subject": "Stair 2 handrail extension at intermediate landing",
+  "status": "closed",
+  "question": "Handrail extension at Stair 2 intermediate landing conflicts with door swing. Confirm extension may return to post per 4/A-601.",
+  "answers": [
+   {
+    "official": true,
+    "text": "Return to post per 4/A-601 is acceptable. No change to stair fabrication."
+   }
+  ],
+  "cost_impact": "no_impact",
+  "cost_impact_value": 0,
+  "schedule_impact": "no_impact",
+  "schedule_impact_value": 0,
+  "referenced_instruments": []
+ },
+ "output": {
+  "ref": "procore:rfi:9038",
+  "scope_change": "none",
+  "scope_quote": "Return to post per 4/A-601 is acceptable. No change to stair fabrication.",
+  "differing_site_condition": false,
+  "condition": "",
+  "condition_quote": "",
+  "amount_usd": null,
+  "schedule_days": null,
+  "confidence": "high"
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:20:49"
+}

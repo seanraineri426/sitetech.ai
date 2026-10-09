@@ -1,0 +1,155 @@
+{
+  "_FICTIONAL": "ALL DATA IN THIS FIXTURE IS FICTIONAL. Not a real project, company, or person.",
+  "commitments": [
+    {
+      "id": 3305,
+      "ref": "procore:commitment:3305",
+      "number": "SC-005",
+      "type": "subcontract",
+      "vendor": "Timberline Framing (FICTIONAL)",
+      "title": "Wood Framing",
+      "status": "Executed",
+      "contract_amount_usd": 4180000,
+      "executed_date": "2026-05-12",
+      "retainage_pct": 0.1,
+      "cost_codes": [
+        "06-1100"
+      ],
+      "spec_sections": [
+        "06 11 00"
+      ],
+      "invoices": [
+        {
+          "id": 33056,
+          "ref": "procore:requisition:33056",
+          "number": 6,
+          "period_end": "2026-09-30",
+          "submitted_date": "2026-10-03",
+          "status": "under_review",
+          "requested_retainage_pct": 0.05,
+          "notes": "Sub requests retainage reduction from 10% to 5%.",
+          "lines": [
+            {
+              "sov_line": "Wood framing - Wing A",
+              "scheduled_value_usd": 2600000,
+              "pct_complete_prev": 0.45,
+              "pct_complete_to_date": 0.62
+            },
+            {
+              "sov_line": "Wood framing - Wing B",
+              "scheduled_value_usd": 1280000,
+              "pct_complete_prev": 0.0,
+              "pct_complete_to_date": 0.0
+            },
+            {
+              "sov_line": "Blocking & backing",
+              "scheduled_value_usd": 300000,
+              "pct_complete_prev": 0.25,
+              "pct_complete_to_date": 0.3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 3309,
+      "ref": "procore:commitment:3309",
+      "number": "SC-009",
+      "type": "subcontract",
+      "vendor": "Bayline Steel Fabricators (FICTIONAL)",
+      "title": "Structural Steel - Podium Transfer & Misc",
+      "status": "Executed",
+      "contract_amount_usd": 1940000,
+      "executed_date": "2026-05-20",
+      "retainage_pct": 0.1,
+      "cost_codes": [
+        "05-1200"
+      ],
+      "spec_sections": [
+        "05 12 00"
+      ],
+      "invoices": []
+    },
+    {
+      "id": 3312,
+      "ref": "procore:commitment:3312",
+      "number": "SC-012",
+      "type": "subcontract",
+      "vendor": "Polar Mechanical (FICTIONAL)",
+      "title": "HVAC",
+      "status": "Executed",
+      "contract_amount_usd": 3620000,
+      "executed_date": "2026-05-28",
+      "retainage_pct": 0.1,
+      "cost_codes": [
+        "23-3113"
+      ],
+      "spec_sections": [
+        "23 31 13"
+      ],
+      "invoices": []
+    },
+    {
+      "id": 3314,
+      "ref": "procore:commitment:3314",
+      "number": "SC-014",
+      "type": "subcontract",
+      "vendor": "Current Electric (FICTIONAL)",
+      "title": "Electrical (excludes main switchgear; gear by GC PO-0117)",
+      "status": "Executed",
+      "contract_amount_usd": 3350000,
+      "executed_date": "2026-06-02",
+      "retainage_pct": 0.1,
+      "cost_codes": [],
+      "spec_sections": [
+        "26 05 00"
+      ],
+      "invoices": []
+    },
+    {
+      "id": 3318,
+      "ref": "procore:commitment:3318",
+      "number": "SC-018",
+      "type": "subcontract",
+      "vendor": "ClearSpan Windows (FICTIONAL)",
+      "title": "Vinyl Windows - Supply & Install",
+      "status": "Executed",
+      "contract_amount_usd": 1280000,
+      "executed_date": "2026-06-15",
+      "retainage_pct": 0.1,
+      "cost_codes": [
+        "08-5313"
+      ],
+      "spec_sections": [
+        "08 53 13"
+      ],
+      "invoices": []
+    },
+    {
+      "id": 3401,
+      "ref": "procore:commitment:3401",
+      "number": "PO-0117",
+      "type": "purchase_order",
+      "vendor": "Ampere Supply Co. (FICTIONAL)",
+      "title": "Main Switchgear & Switchboards (GC-direct)",
+      "status": "Draft",
+      "contract_amount_usd": 486500,
+      "executed_date": null,
+      "retainage_pct": 0.0,
+      "cost_codes": [
+        "26-2413"
+      ],
+      "spec_sections": [
+        "26 24 13"
+      ],
+      "invoices": [],
+      "created_date": "2026-09-19",
+      "quote_ref": "msgraph_outlook:message:msg_E101",
+      "quote_terms": {
+        "price_valid_through": "2026-10-09",
+        "lead_time_weeks": 30,
+        "post_expiry": "+4% and 32-week lead time (per vendor email)"
+      }
+    }
+  ]
+}

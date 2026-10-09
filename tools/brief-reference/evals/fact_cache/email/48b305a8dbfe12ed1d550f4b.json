@@ -1,0 +1,23 @@
+{
+ "kind": "email",
+ "ref": "msgraph_outlook:message:msg_E108",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "msgraph_outlook:message:msg_E108",
+  "sent_local_date": "2026-10-06 (Tuesday)",
+  "from_party": "Ironbridge Builders (FICTIONAL) (gc)",
+  "subject": "Linden Yard - 2-week lookahead (wk of 10/5)",
+  "body": "Attached is the 2-week lookahead. Framing continues on Wing A L4. L2 close-in pending re-inspection. Elevator pit excavation paused at rock; RFI 41 with Tandem. Steel shop drawings still with Tandem. - Priya"
+ },
+ "output": {
+  "ref": "msgraph_outlook:message:msg_E108",
+  "facts": []
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:20:40"
+}

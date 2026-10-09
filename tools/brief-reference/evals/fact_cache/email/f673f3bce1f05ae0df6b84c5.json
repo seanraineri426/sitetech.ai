@@ -1,0 +1,23 @@
+{
+ "kind": "email",
+ "ref": "msgraph_outlook:message:msg_E109",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "msgraph_outlook:message:msg_E109",
+  "sent_local_date": "2026-10-06 (Tuesday)",
+  "from_party": "unknown party",
+  "subject": "Linden Yard - Draw 9 site visit",
+  "body": "Dana, confirming our site visit for Draw #9 on Tuesday 10/13 at 9am. Please have the GC's pay app with sub requisitions and the current schedule update available. - Carol Diaz, Ridgeway CM"
+ },
+ "output": {
+  "ref": "msgraph_outlook:message:msg_E109",
+  "facts": []
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:20:40"
+}

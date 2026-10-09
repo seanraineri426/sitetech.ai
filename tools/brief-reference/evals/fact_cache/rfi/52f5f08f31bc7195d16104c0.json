@@ -1,0 +1,47 @@
+{
+ "kind": "rfi",
+ "ref": "procore:rfi:9308",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "procore:rfi:9308",
+  "label": "RFI #308",
+  "subject": "Lobby ceiling layout",
+  "status": "closed",
+  "question": "Please clarify.",
+  "answers": [
+   {
+    "official": true,
+    "text": "Revise per ASI-07 (attached)"
+   }
+  ],
+  "cost_impact": null,
+  "cost_impact_value": null,
+  "schedule_impact": null,
+  "schedule_impact_value": null,
+  "referenced_instruments": [
+   {
+    "issued_via": "ASI-07",
+    "number": "A-301",
+    "description": "ASI-07 adds acoustic cloud ceilings and two additional soffits in the lobby"
+   }
+  ]
+ },
+ "output": {
+  "ref": "procore:rfi:9308",
+  "scope_change": "adds",
+  "scope_quote": "Revise per ASI-07 (attached)",
+  "differing_site_condition": false,
+  "condition": "",
+  "condition_quote": "",
+  "amount_usd": null,
+  "schedule_days": null,
+  "confidence": "high"
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:19:59"
+}

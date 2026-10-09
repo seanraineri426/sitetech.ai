@@ -1,0 +1,44 @@
+{
+ "kind": "email",
+ "ref": "msgraph_outlook:message:msg_E113",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "msgraph_outlook:message:msg_E113",
+  "sent_local_date": "2026-10-06 (Tuesday)",
+  "from_party": "Ironbridge Builders (FICTIONAL) (gc)",
+  "subject": "RE: Delivery delayed - Sales Order SO-44108",
+  "body": "Lauren - ignore this notice. Material on site and inventoried this morning; SO-44108 tagged in the west laydown. - Tom"
+ },
+ "output": {
+  "ref": "msgraph_outlook:message:msg_E113",
+  "facts": [
+   {
+    "kind": "received_on_site",
+    "item": "SO-44108 material",
+    "spec_section": null,
+    "submittal_no": null,
+    "rfi_no": null,
+    "ce_no": null,
+    "old_date": null,
+    "new_date": null,
+    "new_date_high": null,
+    "delay_days": null,
+    "delay_days_high": null,
+    "date_phrase": "this morning",
+    "date_basis": "relative_to_sent",
+    "amount_usd": null,
+    "notice_types": [],
+    "sender_party": "Ironbridge Builders (FICTIONAL) (gc)",
+    "quote": "Material on site and inventoried this morning; SO-44108 tagged in the west laydown.",
+    "confidence": "high"
+   }
+  ]
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:20:44"
+}

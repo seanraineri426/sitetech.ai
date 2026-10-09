@@ -1,0 +1,36 @@
+{
+ "kind": "rfi",
+ "ref": "procore:rfi:9410",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "procore:rfi:9410",
+  "label": "RFI #410",
+  "subject": "Existing slab thickness is 4\" not 6\" as shown.",
+  "status": "open",
+  "question": "Existing slab thickness is 4\" not 6\" as shown.",
+  "answers": [],
+  "cost_impact": null,
+  "cost_impact_value": null,
+  "schedule_impact": null,
+  "schedule_impact_value": null,
+  "referenced_instruments": []
+ },
+ "output": {
+  "ref": "procore:rfi:9410",
+  "scope_change": "unclear",
+  "scope_quote": "",
+  "differing_site_condition": true,
+  "condition": "existing slab thinner than shown",
+  "condition_quote": "Existing slab thickness is 4\" not 6\" as shown.",
+  "amount_usd": null,
+  "schedule_days": null,
+  "confidence": "high"
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:20:05"
+}

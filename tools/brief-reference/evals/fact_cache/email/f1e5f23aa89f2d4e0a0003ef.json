@@ -1,0 +1,46 @@
+{
+ "kind": "email",
+ "ref": "msgraph_outlook:message:msg_P5_10",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "msgraph_outlook:message:msg_P5_10",
+  "sent_local_date": "2026-10-08 (Thursday)",
+  "from_party": "Voltline Electric (FICTIONAL) (sub)",
+  "subject": "RE: Level 3 coordination",
+  "body": "Jo, letter below.\n\nNOTICE OF DELAY\nVoltline Electric (fictional)\nDate: 10/8/2026\nRe: Pack Yard - Level 3 electrical\nVoltline Electric is delayed in the performance of its work at Level 3 due to the late turnover of the electrical room. Impact to date is 6 working days and continuing.\nSincerely,\nOmar Hale, Project Manager"
+ },
+ "output": {
+  "ref": "msgraph_outlook:message:msg_P5_10",
+  "facts": [
+   {
+    "kind": "formal_notice",
+    "item": "Level 3 electrical room turnover",
+    "spec_section": null,
+    "submittal_no": null,
+    "rfi_no": null,
+    "ce_no": null,
+    "old_date": null,
+    "new_date": null,
+    "new_date_high": null,
+    "delay_days": null,
+    "delay_days_high": null,
+    "date_phrase": "6 working days and continuing",
+    "date_basis": "none",
+    "amount_usd": null,
+    "notice_types": [
+     "delay_time_extension"
+    ],
+    "sender_party": "Voltline Electric (FICTIONAL) (sub)",
+    "quote": "Voltline Electric is delayed in the performance of its work at Level 3 due to the late turnover of the electrical room.",
+    "confidence": "high"
+   }
+  ]
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:19:26"
+}

@@ -1,0 +1,44 @@
+{
+ "kind": "email",
+ "ref": "msgraph_outlook:message:msg_P2_02",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "msgraph_outlook:message:msg_P2_02",
+  "sent_local_date": "2026-10-08 (Thursday)",
+  "from_party": "Ridgeback Concrete (FICTIONAL) (sub)",
+  "subject": "RFI 102 - slab edge embeds Area B",
+  "body": "Jo, need this answered before we pour Tuesday. - Sam"
+ },
+ "output": {
+  "ref": "msgraph_outlook:message:msg_P2_02",
+  "facts": [
+   {
+    "kind": "need_by_date",
+    "item": "RFI 102 answer",
+    "spec_section": null,
+    "submittal_no": null,
+    "rfi_no": "102",
+    "ce_no": null,
+    "old_date": null,
+    "new_date": "2026-10-13",
+    "new_date_high": null,
+    "delay_days": null,
+    "delay_days_high": null,
+    "date_phrase": "before we pour Tuesday",
+    "date_basis": "relative_to_sent",
+    "amount_usd": null,
+    "notice_types": [],
+    "sender_party": "Ridgeback Concrete (FICTIONAL) (sub)",
+    "quote": "need this answered before we pour Tuesday",
+    "confidence": "high"
+   }
+  ]
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:19:15"
+}

@@ -1,0 +1,44 @@
+{
+ "kind": "email",
+ "ref": "msgraph_outlook:message:msg_E106",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "msgraph_outlook:message:msg_E106",
+  "sent_local_date": "2026-10-06 (Tuesday)",
+  "from_party": "Timberline Framing (FICTIONAL) (sub)",
+  "subject": "Pay app 6 - request for expedited payment and retainage reduction",
+  "body": "Priya, we need pay app 6 processed early this cycle and are requesting retainage be reduced to 5%. Cash is tight with two jobs starting at once. We had to move part of the crew this week but will be back at full strength soon. - Jake"
+ },
+ "output": {
+  "ref": "msgraph_outlook:message:msg_E106",
+  "facts": [
+   {
+    "kind": "other",
+    "item": "pay app 6 expedite and retainage reduction",
+    "spec_section": null,
+    "submittal_no": null,
+    "rfi_no": null,
+    "ce_no": null,
+    "old_date": null,
+    "new_date": null,
+    "new_date_high": null,
+    "delay_days": null,
+    "delay_days_high": null,
+    "date_phrase": null,
+    "date_basis": "none",
+    "amount_usd": null,
+    "notice_types": [],
+    "sender_party": "Timberline Framing (FICTIONAL) (sub)",
+    "quote": "we need pay app 6 processed early this cycle and are requesting retainage be reduced to 5%",
+    "confidence": "medium"
+   }
+  ]
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:20:40"
+}

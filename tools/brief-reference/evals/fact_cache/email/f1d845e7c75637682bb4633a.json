@@ -1,0 +1,44 @@
+{
+ "kind": "email",
+ "ref": "msgraph_outlook:message:msg_P1_11",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "msgraph_outlook:message:msg_P1_11",
+  "sent_local_date": "2026-10-08 (Thursday)",
+  "from_party": "Apex Switchgear Supply (FICTIONAL) (sub)",
+  "subject": "RE: RE: RE: Panelboards 26 24 19-001 - coordination",
+  "body": "Jo - see thread below re: the feeder schedule.\n\n> From: Omar Hale\n> Gear pads are poured, thanks.\n\n> From: Rita Vance\n> Confirming switchboard paperwork is in. ...also FYI the panels are slipping to 12/1, sorry for the late notice."
+ },
+ "output": {
+  "ref": "msgraph_outlook:message:msg_P1_11",
+  "facts": [
+   {
+    "kind": "schedule_date_change",
+    "item": "panels",
+    "spec_section": "26 24 19",
+    "submittal_no": "26 24 19-001",
+    "rfi_no": null,
+    "ce_no": null,
+    "old_date": null,
+    "new_date": "2026-12-01",
+    "new_date_high": null,
+    "delay_days": null,
+    "delay_days_high": null,
+    "date_phrase": "slipping to 12/1",
+    "date_basis": "explicit",
+    "amount_usd": null,
+    "notice_types": [],
+    "sender_party": "Apex Switchgear Supply (FICTIONAL) (sub)",
+    "quote": "FYI the panels are slipping to 12/1, sorry for the late notice.",
+    "confidence": "medium"
+   }
+  ]
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:19:03"
+}

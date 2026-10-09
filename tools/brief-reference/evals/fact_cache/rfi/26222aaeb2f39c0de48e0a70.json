@@ -1,0 +1,36 @@
+{
+ "kind": "rfi",
+ "ref": "procore:rfi:9046",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "procore:rfi:9046",
+  "label": "RFI #46",
+  "subject": "L2 plumbing chase clearance after failed rough-in inspection",
+  "status": "open",
+  "question": "Inspector requires 1-1/2 in. clearance for vent at chase C2-07; chase framed at 3-1/2 in. Can chase be furred 2 in. into the unit closet?",
+  "answers": [],
+  "cost_impact": "no_impact",
+  "cost_impact_value": 0,
+  "schedule_impact": "yes_unknown",
+  "schedule_impact_value": null,
+  "referenced_instruments": []
+ },
+ "output": {
+  "ref": "procore:rfi:9046",
+  "scope_change": "unclear",
+  "scope_quote": "",
+  "differing_site_condition": false,
+  "condition": "",
+  "condition_quote": "",
+  "amount_usd": null,
+  "schedule_days": null,
+  "confidence": "medium"
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:20:49"
+}

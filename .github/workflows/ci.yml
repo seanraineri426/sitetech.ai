@@ -27,6 +27,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       - name: Type check
         run: pnpm typecheck
 
@@ -40,6 +45,33 @@ jobs:
         run: pnpm build
         env:
           NEXT_PUBLIC_SITE_URL: http://localhost:3000
+
+      - name: Install Python dependencies for brief tests
+        run: |
+          cd tools/brief-reference
+          python3 -m pip install --require-hashes -r requirements.txt
+
+      - name: Test brief reference (offline, network isolated)
+        run: |
+          cd tools/brief-reference
+          # Get the full path to the venv python interpreter
+          PYTHON_PATH=$(which python3)
+          echo "Using Python: $PYTHON_PATH"
+          
+          # Try sudo unshare -n with venv python (GitHub runners support this)
+          if ! sudo unshare -n echo "Network isolation available"; then
+            echo "✗ Network namespace isolation setup failed"
+            echo "Tests MUST run with either sudo unshare -n or docker --network none"
+            exit 1
+          fi
+          
+          # Run tests with venv python through sudo by passing PATH
+          if ! sudo unshare -n env PATH="$PATH" python3 run_tests.py; then
+            echo "✗ Tests failed with network namespace isolation"
+            exit 1
+          fi
+          
+          echo "✓ Tests passed with network namespace isolation"
 
       - name: Check build for fixtures
         run: pnpm vitest run -c vitest.build.config.mts

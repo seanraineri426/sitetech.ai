@@ -1,0 +1,8 @@
+# Per-fixture run settings for the FICTIONAL Linden Yard fixture (moved here from harness/config.yaml in iteration 3).
+# Precedence: CLI flags > this file > derived from the fixture (m1 snapshot run_dates; sync/cutoff simulated as as_of+1 04:45 project time).
+# The fixture has no sync log, so the sync times below are simulated eval constants.
+as_of: "2026-10-06"
+compare_to: "2026-10-05"
+procore_last_sync: "2026-10-07T04:46:00-04:00"
+mailbox_last_sync: "2026-10-07T04:41:00-04:00"
+cutoff_at: "2026-10-07T04:46:00-04:00"

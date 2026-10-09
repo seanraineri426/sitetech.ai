@@ -1,0 +1,41 @@
+{
+ "kind": "rfi",
+ "ref": "procore:rfi:9343",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "procore:rfi:9343",
+  "label": "RFI #343",
+  "subject": "Paint sheen",
+  "status": "closed",
+  "question": "Please clarify.",
+  "answers": [
+   {
+    "official": true,
+    "text": "Clarification only, no change to contract."
+   }
+  ],
+  "cost_impact": "no_impact",
+  "cost_impact_value": null,
+  "schedule_impact": null,
+  "schedule_impact_value": null,
+  "referenced_instruments": []
+ },
+ "output": {
+  "ref": "procore:rfi:9343",
+  "scope_change": "none",
+  "scope_quote": "Clarification only, no change to contract.",
+  "differing_site_condition": false,
+  "condition": "",
+  "condition_quote": "",
+  "amount_usd": null,
+  "schedule_days": null,
+  "confidence": "high"
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:19:59"
+}

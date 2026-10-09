@@ -1,0 +1,47 @@
+{
+ "kind": "rfi",
+ "ref": "procore:rfi:9043",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "procore:rfi:9043",
+  "label": "RFI #43",
+  "subject": "Duct shaft size at Unit Stack 07 per ASI-07",
+  "status": "open",
+  "question": "ASI-07 enlarges shaft at Stack 07 to 24x30. Framed openings L2-L4 are built to 18x24 per prior set. Confirm whether reframing is required or duct may transition.",
+  "answers": [],
+  "cost_impact": "yes_unknown",
+  "cost_impact_value": null,
+  "schedule_impact": "yes_unknown",
+  "schedule_impact_value": null,
+  "referenced_instruments": [
+   {
+    "issued_via": "ASI-07",
+    "number": "M-401",
+    "description": "Shaft at Unit Stack 07 enlarged from 18x24 to 24x30, L2-L6"
+   },
+   {
+    "issued_via": "ASI-07",
+    "number": "M-402",
+    "description": null
+   }
+  ]
+ },
+ "output": {
+  "ref": "procore:rfi:9043",
+  "scope_change": "unclear",
+  "scope_quote": "",
+  "differing_site_condition": false,
+  "condition": "",
+  "condition_quote": "",
+  "amount_usd": null,
+  "schedule_days": null,
+  "confidence": "medium"
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:20:49"
+}

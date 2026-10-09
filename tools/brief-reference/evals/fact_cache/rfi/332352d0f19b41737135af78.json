@@ -1,0 +1,41 @@
+{
+ "kind": "rfi",
+ "ref": "procore:rfi:9310",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "procore:rfi:9310",
+  "label": "RFI #310",
+  "subject": "Transfer beams at L2",
+  "status": "closed",
+  "question": "Please clarify.",
+  "answers": [
+   {
+    "official": true,
+    "text": "Approved; add the two transfer beams shown on SK-12."
+   }
+  ],
+  "cost_impact": "yes_unknown",
+  "cost_impact_value": null,
+  "schedule_impact": "yes_known",
+  "schedule_impact_value": 5,
+  "referenced_instruments": []
+ },
+ "output": {
+  "ref": "procore:rfi:9310",
+  "scope_change": "adds",
+  "scope_quote": "Approved; add the two transfer beams shown on SK-12.",
+  "differing_site_condition": false,
+  "condition": "",
+  "condition_quote": "",
+  "amount_usd": null,
+  "schedule_days": 5,
+  "confidence": "high"
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:19:59"
+}

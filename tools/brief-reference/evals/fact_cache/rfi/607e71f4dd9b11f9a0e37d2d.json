@@ -1,0 +1,41 @@
+{
+ "kind": "rfi",
+ "ref": "procore:rfi:9309",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "procore:rfi:9309",
+  "label": "RFI #309",
+  "subject": "Added cleanouts",
+  "status": "closed",
+  "question": "Sub quote $18,400 per sub quote for added cleanouts; confirm.",
+  "answers": [
+   {
+    "official": true,
+    "text": "Accepted as proposed by the sub."
+   }
+  ],
+  "cost_impact": "yes_known",
+  "cost_impact_value": 18400,
+  "schedule_impact": null,
+  "schedule_impact_value": null,
+  "referenced_instruments": []
+ },
+ "output": {
+  "ref": "procore:rfi:9309",
+  "scope_change": "adds",
+  "scope_quote": "Accepted as proposed by the sub.",
+  "differing_site_condition": false,
+  "condition": "",
+  "condition_quote": "",
+  "amount_usd": 18400,
+  "schedule_days": null,
+  "confidence": "high"
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:19:59"
+}

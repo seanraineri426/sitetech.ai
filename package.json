@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "test:build": "next build && vitest run -c vitest.build.config.mts",
     "test:db": "pnpm supabase db reset && pnpm supabase test db && pnpm test lib/supabase/__tests__/rls.test.ts",
-    "test:db:nodocker": "bash scripts/test-db-nodocker.sh"
+    "test:db:nodocker": "bash scripts/test-db-nodocker.sh",
+    "test:brief": "cd tools/brief-reference && python3 run_tests.py"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

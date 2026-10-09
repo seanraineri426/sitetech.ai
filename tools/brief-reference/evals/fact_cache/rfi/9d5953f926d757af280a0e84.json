@@ -1,0 +1,41 @@
+{
+ "kind": "rfi",
+ "ref": "procore:rfi:9104",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "procore:rfi:9104",
+  "label": "RFI #104",
+  "subject": "Duct routing at L3 beam",
+  "status": "open",
+  "question": "Duct conflicts with beam B3-7.",
+  "answers": [
+   {
+    "official": false,
+    "text": "Draft response: lower duct 4 in. (not official)"
+   }
+  ],
+  "cost_impact": null,
+  "cost_impact_value": null,
+  "schedule_impact": null,
+  "schedule_impact_value": null,
+  "referenced_instruments": []
+ },
+ "output": {
+  "ref": "procore:rfi:9104",
+  "scope_change": "adds",
+  "scope_quote": "Draft response: lower duct 4 in. (not official)",
+  "differing_site_condition": false,
+  "condition": "",
+  "condition_quote": "",
+  "amount_usd": null,
+  "schedule_days": null,
+  "confidence": "low"
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:19:49"
+}

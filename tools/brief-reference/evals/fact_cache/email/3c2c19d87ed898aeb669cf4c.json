@@ -1,0 +1,64 @@
+{
+ "kind": "email",
+ "ref": "msgraph_outlook:message:msg_E104",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "msgraph_outlook:message:msg_E104",
+  "sent_local_date": "2026-10-06 (Tuesday)",
+  "from_party": "Bayline Steel Fabricators (FICTIONAL) (sub)",
+  "subject": "Linden Yard - Transfer steel shop release / RFI 42",
+  "body": "Priya, we still cannot release transfer girder connections to the shop. Embed layout at Grid C/4-7 is open on RFI 42 and our rev 1 shop drawings have been with Tandem since 9/17. To hold our Oct 12 shop slot we need approved drawings (with the RFI 42 embed dimensions resolved) released to us by end of day Friday Oct 9. If we miss it, the next available slot is Oct 26, which pushes delivery of the transfer steel from Nov 9 to approximately Nov 23. Please advise. - Gus Moreno, Bayline Steel"
+ },
+ "output": {
+  "ref": "msgraph_outlook:message:msg_E104",
+  "facts": [
+   {
+    "kind": "need_by_date",
+    "item": "approved transfer steel shop drawings",
+    "spec_section": null,
+    "submittal_no": null,
+    "rfi_no": "42",
+    "ce_no": null,
+    "old_date": null,
+    "new_date": "2026-10-09",
+    "new_date_high": null,
+    "delay_days": null,
+    "delay_days_high": null,
+    "date_phrase": "end of day Friday Oct 9",
+    "date_basis": "explicit",
+    "amount_usd": null,
+    "notice_types": [],
+    "sender_party": "Bayline Steel Fabricators (FICTIONAL) (sub)",
+    "quote": "we need approved drawings (with the RFI 42 embed dimensions resolved) released to us by end of day Friday Oct 9",
+    "confidence": "high"
+   },
+   {
+    "kind": "conditional_slip",
+    "item": "transfer steel delivery",
+    "spec_section": null,
+    "submittal_no": null,
+    "rfi_no": "42",
+    "ce_no": null,
+    "old_date": "2026-11-09",
+    "new_date": "2026-11-23",
+    "new_date_high": null,
+    "delay_days": null,
+    "delay_days_high": null,
+    "date_phrase": "from Nov 9 to approximately Nov 23",
+    "date_basis": "explicit",
+    "amount_usd": null,
+    "notice_types": [],
+    "sender_party": "Bayline Steel Fabricators (FICTIONAL) (sub)",
+    "quote": "If we miss it, the next available slot is Oct 26, which pushes delivery of the transfer steel from Nov 9 to approximately Nov 23.",
+    "confidence": "high"
+   }
+  ]
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:20:40"
+}

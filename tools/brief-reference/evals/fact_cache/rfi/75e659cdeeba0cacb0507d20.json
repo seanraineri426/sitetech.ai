@@ -1,0 +1,36 @@
+{
+ "kind": "rfi",
+ "ref": "procore:rfi:9442",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "procore:rfi:9442",
+  "label": "RFI #442",
+  "subject": "Field note: soils as expected per geotech. Confirm proof-rol",
+  "status": "open",
+  "question": "Field note: soils as expected per geotech. Confirm proof-roll sequence for Area A.",
+  "answers": [],
+  "cost_impact": null,
+  "cost_impact_value": null,
+  "schedule_impact": null,
+  "schedule_impact_value": null,
+  "referenced_instruments": []
+ },
+ "output": {
+  "ref": "procore:rfi:9442",
+  "scope_change": "unclear",
+  "scope_quote": "",
+  "differing_site_condition": false,
+  "condition": "",
+  "condition_quote": "",
+  "amount_usd": null,
+  "schedule_days": null,
+  "confidence": "high"
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:20:07"
+}

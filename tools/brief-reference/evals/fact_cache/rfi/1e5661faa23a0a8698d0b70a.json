@@ -1,0 +1,36 @@
+{
+ "kind": "rfi",
+ "ref": "procore:rfi:9039",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "procore:rfi:9039",
+  "label": "RFI #39",
+  "subject": "Roof drain location vs. truss layout at Wing A gridline 9",
+  "status": "open",
+  "question": "RD-4 lands on a truss bearing point at gridline 9. Can RD-4 shift 18 in. east?",
+  "answers": [],
+  "cost_impact": "tbd",
+  "cost_impact_value": null,
+  "schedule_impact": "tbd",
+  "schedule_impact_value": null,
+  "referenced_instruments": []
+ },
+ "output": {
+  "ref": "procore:rfi:9039",
+  "scope_change": "unclear",
+  "scope_quote": "",
+  "differing_site_condition": false,
+  "condition": "",
+  "condition_quote": "",
+  "amount_usd": null,
+  "schedule_days": null,
+  "confidence": "high"
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:20:49"
+}

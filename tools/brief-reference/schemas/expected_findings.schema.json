@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "expected_findings.schema.json",
+  "title": "Daily Brief eval answer key (expected_findings.json), any fixture",
+  "description": "Iteration 3 (2026-10-06). Read by evals/score_brief.py. Every check is driven by these fields; nothing in the scorer is project-specific. Constructs with gate=true must pass for the scorer GATE; others are informational. Optional sibling files in the fixture dir: _ref_index.json (fabricated-ref check), reference_ranking.json (top-7 overlap).",
+  "type": "object",
+  "required": ["findings"],
+  "properties": {
+    "_FICTIONAL": {"type": "string"},
+    "_schema": {"type": "string"},
+    "brief_date": {"type": "string", "format": "date"},
+    "compare_to": {"type": "string", "format": "date"},
+    "scoring": {"type": "object", "properties": {
+      "gate": {"type": "object", "properties": {"recall_min": {"type": "number", "minimum": 0, "maximum": 1, "description": "A1 recall threshold. Default: miss at most one must_surface finding."}}}},
+      "additionalProperties": true},
+    "findings": {"type": "array", "items": {"$ref": "#/$defs/finding"}},
+    "must_not_flag": {"type": "array", "items": {"$ref": "#/$defs/trap"}},
+    "traps": {"type": "array", "items": {"$ref": "#/$defs/trap"}, "description": "Alias of must_not_flag."},
+    "rank_constraints": {"type": "array", "items": {"type": "object", "required": ["above", "below"], "properties": {
+      "above": {"type": "string", "description": "finding id that must rank higher (smaller top rank)"},
+      "below": {"type": "string"}, "gate": {"type": "boolean", "default": false}, "basis": {"type": "string"}}}},
+    "required_freshness_disclosures": {"type": "array", "items": {"type": "object", "required": ["source"], "properties": {
+      "source": {"type": "string", "description": "brief freshness source; aliases: email/mail/mailbox -> msgraph_outlook, p6/xer -> schedule"},
+      "must_state": {"type": "string", "description": "prose; ISO dates and email addresses in it must appear in the source's freshness entry"},
+      "freshness_band": {"type": "string", "description": "prose starting with or containing fresh|aging|stale|missing; the entry band must match (aging also accepts stale)"},
+      "effect": {"type": "string"},
+      "checks": {"type": "object", "properties": {"dates": {"type": "array", "items": {"type": "string"}}, "contains": {"type": "array", "items": {"type": "string"}},
+                                                  "band_in": {"type": "array", "items": {"type": "string"}}},
+                 "description": "explicit machine checks overriding what is extracted from must_state/freshness_band. With nothing extractable, the entry only needs a last_successful_sync or as_of_label."}}}},
+    "status_items": {"type": "array", "description": "Optional per fixture. Only entries with `checks` are scored; others are human-judged.", "items": {"type": "object", "required": ["id"], "properties": {
+      "id": {"type": "string"}, "expectation": {"type": "string"}, "refs": {"type": "array", "items": {"type": "string"}},
+      "checks": {"type": "array", "items": {"type": "object", "required": ["type", "ref"], "properties": {
+        "type": {"enum": ["in_closed", "in_section", "not_in_section", "in_top", "not_in_top"]},
+        "section": {"type": "string", "description": "brief sections key (required for in_section / not_in_section)"},
+        "ref": {"type": "string"}}}}}}}
+  },
+  "$defs": {
+    "label": {"enum": ["Confirmed", "Likely", "Signal"]},
+    "finding": {"type": "object", "required": ["id", "required_citations"], "properties": {
+      "id": {"type": "string"}, "title": {"type": "string"}, "section": {"type": "string"}, "must_surface": {"type": "boolean"},
+      "reference_rank": {"type": ["integer", "null"], "description": "optional; used for Kendall tau"},
+      "rank_expectation": {"type": "string", "description": "'top N' is checked; anything else is informational"},
+      "min_severity": {"type": "string"},
+      "required_citations": {"type": "array", "items": {"type": "string"}}, "min_citations_matched": {"type": "integer", "minimum": 1},
+      "key_facts": {"type": "object", "description": "number | ISO date | string | {value, tolerance|tolerance_pct} | list | bool (bool = not machine-checked)"},
+      "expected_owner_roles": {"type": "array", "items": {"type": "string"}}, "expected_action": {"type": "string"},
+      "confidence_expectation": {"type": "string", "description": "prose (human audit)"},
+      "expected_label": {"oneOf": [{"$ref": "#/$defs/label"}, {"type": "array", "items": {"$ref": "#/$defs/label"}}], "description": "the matched unit's confidence must be one of these"},
+      "forbidden_label": {"oneOf": [{"$ref": "#/$defs/label"}, {"type": "array", "items": {"$ref": "#/$defs/label"}}], "description": "the matched unit's confidence must not be one of these"},
+      "label_gate": {"type": "boolean", "default": false},
+      "label_basis": {"type": "string"},
+      "required_elements": {"type": "array", "items": {"type": "object", "required": ["section", "value"], "properties": {
+        "section": {"type": "string", "description": "management_attention (= top_items + action_items) | top_items | action_items | decisions (= new + unresolved) | status | freshness | gaps | any brief sections key"},
+        "value": {"type": "string", "description": "ISO date (matches YYYY-MM-DD or M/D) or a case-insensitive substring"},
+        "scope": {"enum": ["related", "section"], "default": "related", "description": "related = only units for this finding (matched/citing a required citation; action items that unblock them); section = anywhere in the section"},
+        "gate": {"type": "boolean", "default": false}, "basis": {"type": "string"}}}},
+      "new_or_worse": {"type": "string"}}},
+    "trap": {"type": "object", "required": ["id"], "properties": {
+      "id": {"type": "string"}, "ref": {"type": "string", "description": "violation = a brief unit whose primary (first) citation is this ref (new_decisions excluded)"},
+      "check": {"type": "object", "required": ["type", "pattern"], "properties": {"type": {"const": "text_pattern"}, "pattern": {"type": "string", "description": "case-insensitive regex over unit text"}}},
+      "scope": {"enum": ["anywhere", "top_items_only"], "default": "anywhere", "description": "top_items_only: only a top item counts as a violation"},
+      "reason": {"type": "string"}, "check_basis": {"type": "string"}}}
+  }
+}

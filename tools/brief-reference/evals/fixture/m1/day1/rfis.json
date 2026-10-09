@@ -1,0 +1,708 @@
+[
+  {
+    "id": "200e45db-d745-5c19-8496-a4958ee46027",
+    "org_id": "1befe790-aca8-5579-92e3-e97c76435686",
+    "project_id": "f9fdf464-52c4-5d02-a931-c76a025e916c",
+    "source": "procore",
+    "entity_type": "rfi",
+    "external_id": "9038",
+    "source_url": "https://app.procore.com/8800123/project/rfi/show/9038",
+    "number": "38",
+    "full_number": "38",
+    "prefix": null,
+    "revision": "0",
+    "current_revision": true,
+    "subject": "Stair 2 handrail extension at intermediate landing",
+    "status": "open",
+    "draft": false,
+    "private": false,
+    "accepted": false,
+    "initiated_at": "2026-09-24T10:00:00-04:00",
+    "created_at": "2026-09-24T10:00:00-04:00",
+    "due_date": "2026-10-01",
+    "time_resolved": null,
+    "ball_in_court_role": "assignees",
+    "ball_in_court": {
+      "id": 5007,
+      "login": "hcole@arcwell.example",
+      "name": "Hannah Cole"
+    },
+    "ball_in_courts": [
+      {
+        "id": 5007,
+        "login": "hcole@arcwell.example",
+        "name": "Hannah Cole"
+      }
+    ],
+    "assignees": [
+      {
+        "id": 5007,
+        "login": "hcole@arcwell.example",
+        "name": "Hannah Cole"
+      }
+    ],
+    "rfi_manager": {
+      "id": 5005,
+      "login": "kosei@ironbridgebuild.example",
+      "name": "Kevin Osei"
+    },
+    "received_from": {
+      "id": 5004,
+      "login": "talvarez@ironbridgebuild.example",
+      "name": "Tom Alvarez"
+    },
+    "responsible_contractor": {
+      "id": 7002,
+      "name": "Ironbridge Builders (FICTIONAL)"
+    },
+    "specification_section": {
+      "id": 31014,
+      "number": "05 51 00",
+      "description": "Metal Stairs"
+    },
+    "location": {
+      "id": 41009,
+      "name": "Wing A > Stair 2"
+    },
+    "cost_code": null,
+    "drawing_number": "A-601",
+    "reference": null,
+    "schedule_impact": {
+      "status": "no_impact",
+      "value": 0
+    },
+    "cost_impact": {
+      "status": "no_impact",
+      "value": 0
+    },
+    "questions": [
+      {
+        "id": 90380,
+        "question_date": "2026-09-24T10:00:00-04:00",
+        "plain_text_body": "Handrail extension at Stair 2 intermediate landing conflicts with door swing. Confirm extension may return to post per 4/A-601.",
+        "created_by": "Tom Alvarez",
+        "answers": []
+      }
+    ]
+  },
+  {
+    "id": "1ee3615e-852e-5509-b21e-7e86decb3e95",
+    "org_id": "1befe790-aca8-5579-92e3-e97c76435686",
+    "project_id": "f9fdf464-52c4-5d02-a931-c76a025e916c",
+    "source": "procore",
+    "entity_type": "rfi",
+    "external_id": "9039",
+    "source_url": "https://app.procore.com/8800123/project/rfi/show/9039",
+    "number": "39",
+    "full_number": "39",
+    "prefix": null,
+    "revision": "0",
+    "current_revision": true,
+    "subject": "Roof drain location vs. truss layout at Wing A gridline 9",
+    "status": "open",
+    "draft": false,
+    "private": false,
+    "accepted": false,
+    "initiated_at": "2026-09-23T10:00:00-04:00",
+    "created_at": "2026-09-23T10:00:00-04:00",
+    "due_date": "2026-09-30",
+    "time_resolved": null,
+    "ball_in_court_role": "assignees",
+    "ball_in_court": {
+      "id": 5007,
+      "login": "hcole@arcwell.example",
+      "name": "Hannah Cole"
+    },
+    "ball_in_courts": [
+      {
+        "id": 5007,
+        "login": "hcole@arcwell.example",
+        "name": "Hannah Cole"
+      }
+    ],
+    "assignees": [
+      {
+        "id": 5007,
+        "login": "hcole@arcwell.example",
+        "name": "Hannah Cole"
+      }
+    ],
+    "rfi_manager": {
+      "id": 5005,
+      "login": "kosei@ironbridgebuild.example",
+      "name": "Kevin Osei"
+    },
+    "received_from": {
+      "id": 5004,
+      "login": "talvarez@ironbridgebuild.example",
+      "name": "Tom Alvarez"
+    },
+    "responsible_contractor": {
+      "id": 7002,
+      "name": "Ironbridge Builders (FICTIONAL)"
+    },
+    "specification_section": {
+      "id": 31011,
+      "number": "22 14 26",
+      "description": "Facility Storm Drains"
+    },
+    "location": {
+      "id": 41008,
+      "name": "Wing A > Roof"
+    },
+    "cost_code": {
+      "id": 51009,
+      "full_code": "22-1116",
+      "name": "Plumbing"
+    },
+    "drawing_number": "P-501",
+    "reference": null,
+    "schedule_impact": {
+      "status": "tbd",
+      "value": null
+    },
+    "cost_impact": {
+      "status": "tbd",
+      "value": null
+    },
+    "questions": [
+      {
+        "id": 90390,
+        "question_date": "2026-09-23T10:00:00-04:00",
+        "plain_text_body": "RD-4 lands on a truss bearing point at gridline 9. Can RD-4 shift 18 in. east?",
+        "created_by": "Tom Alvarez",
+        "answers": []
+      }
+    ]
+  },
+  {
+    "id": "7d0ffc6d-6694-5e35-ad15-e0ccf0dfe632",
+    "org_id": "1befe790-aca8-5579-92e3-e97c76435686",
+    "project_id": "f9fdf464-52c4-5d02-a931-c76a025e916c",
+    "source": "procore",
+    "entity_type": "rfi",
+    "external_id": "9040",
+    "source_url": "https://app.procore.com/8800123/project/rfi/show/9040",
+    "number": "40",
+    "full_number": "40",
+    "prefix": null,
+    "revision": "0",
+    "current_revision": true,
+    "subject": "Retail storefront head detail at Grid A",
+    "status": "open",
+    "draft": false,
+    "private": false,
+    "accepted": false,
+    "initiated_at": "2026-09-28T10:00:00-04:00",
+    "created_at": "2026-09-28T10:00:00-04:00",
+    "due_date": "2026-10-09",
+    "time_resolved": null,
+    "ball_in_court_role": "assignees",
+    "ball_in_court": {
+      "id": 5007,
+      "login": "hcole@arcwell.example",
+      "name": "Hannah Cole"
+    },
+    "ball_in_courts": [
+      {
+        "id": 5007,
+        "login": "hcole@arcwell.example",
+        "name": "Hannah Cole"
+      }
+    ],
+    "assignees": [
+      {
+        "id": 5007,
+        "login": "hcole@arcwell.example",
+        "name": "Hannah Cole"
+      }
+    ],
+    "rfi_manager": {
+      "id": 5005,
+      "login": "kosei@ironbridgebuild.example",
+      "name": "Kevin Osei"
+    },
+    "received_from": {
+      "id": 5005,
+      "login": "kosei@ironbridgebuild.example",
+      "name": "Kevin Osei"
+    },
+    "responsible_contractor": {
+      "id": 7002,
+      "name": "Ironbridge Builders (FICTIONAL)"
+    },
+    "specification_section": {
+      "id": 31012,
+      "number": "08 41 13",
+      "description": "Aluminum-Framed Entrances and Storefronts"
+    },
+    "location": {
+      "id": 41010,
+      "name": "Wing A > Retail > Grid A"
+    },
+    "cost_code": null,
+    "drawing_number": "A-511",
+    "reference": null,
+    "schedule_impact": {
+      "status": "no_impact",
+      "value": 0
+    },
+    "cost_impact": {
+      "status": "tbd",
+      "value": null
+    },
+    "questions": [
+      {
+        "id": 90400,
+        "question_date": "2026-09-28T10:00:00-04:00",
+        "plain_text_body": "Storefront head detail 6/A-511 shows no deflection header. Confirm deflection allowance.",
+        "created_by": "Kevin Osei",
+        "answers": []
+      }
+    ]
+  },
+  {
+    "id": "9faa99ce-5f86-5e95-a87b-fc9b395f3536",
+    "org_id": "1befe790-aca8-5579-92e3-e97c76435686",
+    "project_id": "f9fdf464-52c4-5d02-a931-c76a025e916c",
+    "source": "procore",
+    "entity_type": "rfi",
+    "external_id": "9041",
+    "source_url": "https://app.procore.com/8800123/project/rfi/show/9041",
+    "number": "41",
+    "full_number": "41",
+    "prefix": null,
+    "revision": "0",
+    "current_revision": true,
+    "subject": "Elevator pit depth vs. encountered rock elevation (Wing B)",
+    "status": "open",
+    "draft": false,
+    "private": false,
+    "accepted": false,
+    "initiated_at": "2026-10-01T10:00:00-04:00",
+    "created_at": "2026-10-01T10:00:00-04:00",
+    "due_date": "2026-10-08",
+    "time_resolved": null,
+    "ball_in_court_role": "assignees",
+    "ball_in_court": {
+      "id": 5008,
+      "login": "rmehta@tandemse.example",
+      "name": "Raj Mehta"
+    },
+    "ball_in_courts": [
+      {
+        "id": 5008,
+        "login": "rmehta@tandemse.example",
+        "name": "Raj Mehta"
+      }
+    ],
+    "assignees": [
+      {
+        "id": 5008,
+        "login": "rmehta@tandemse.example",
+        "name": "Raj Mehta"
+      }
+    ],
+    "rfi_manager": {
+      "id": 5005,
+      "login": "kosei@ironbridgebuild.example",
+      "name": "Kevin Osei"
+    },
+    "received_from": {
+      "id": 5016,
+      "login": "bhart@granitelineconc.example",
+      "name": "Bill Hart"
+    },
+    "responsible_contractor": {
+      "id": 7011,
+      "name": "Granite Line Concrete (FICTIONAL)"
+    },
+    "specification_section": {
+      "id": 31013,
+      "number": "31 23 16",
+      "description": "Excavation"
+    },
+    "location": {
+      "id": 41006,
+      "name": "Wing B > Elevator Pit"
+    },
+    "cost_code": {
+      "id": 51008,
+      "full_code": "31-2316",
+      "name": "Excavation"
+    },
+    "drawing_number": "S-101",
+    "reference": null,
+    "schedule_impact": {
+      "status": "yes_unknown",
+      "value": null
+    },
+    "cost_impact": {
+      "status": "yes_unknown",
+      "value": null
+    },
+    "questions": [
+      {
+        "id": 90410,
+        "question_date": "2026-10-01T10:00:00-04:00",
+        "plain_text_body": "Rock encountered at El. 92.5 vs. geotech El. 88. Confirm whether pit may be raised 6 in. or rock removal is required.",
+        "created_by": "Bill Hart",
+        "answers": []
+      }
+    ]
+  },
+  {
+    "id": "6d6a2992-4ccc-5e88-acf3-5d6477198b18",
+    "org_id": "1befe790-aca8-5579-92e3-e97c76435686",
+    "project_id": "f9fdf464-52c4-5d02-a931-c76a025e916c",
+    "source": "procore",
+    "entity_type": "rfi",
+    "external_id": "9042",
+    "source_url": "https://app.procore.com/8800123/project/rfi/show/9042",
+    "number": "42",
+    "full_number": "42",
+    "prefix": null,
+    "revision": "0",
+    "current_revision": true,
+    "subject": "Embed plate layout at transfer girders, Grid C/4-7 (S-301 vs A-201)",
+    "status": "open",
+    "draft": false,
+    "private": false,
+    "accepted": false,
+    "initiated_at": "2026-09-22T10:00:00-04:00",
+    "created_at": "2026-09-22T10:00:00-04:00",
+    "due_date": "2026-09-29",
+    "time_resolved": null,
+    "ball_in_court_role": "assignees",
+    "ball_in_court": {
+      "id": 5008,
+      "login": "rmehta@tandemse.example",
+      "name": "Raj Mehta"
+    },
+    "ball_in_courts": [
+      {
+        "id": 5008,
+        "login": "rmehta@tandemse.example",
+        "name": "Raj Mehta"
+      }
+    ],
+    "assignees": [
+      {
+        "id": 5007,
+        "login": "hcole@arcwell.example",
+        "name": "Hannah Cole"
+      }
+    ],
+    "rfi_manager": {
+      "id": 5005,
+      "login": "kosei@ironbridgebuild.example",
+      "name": "Kevin Osei"
+    },
+    "received_from": {
+      "id": 5009,
+      "login": "gmoreno@baylinesteel.example",
+      "name": "Gus Moreno"
+    },
+    "responsible_contractor": {
+      "id": 7005,
+      "name": "Bayline Steel Fabricators (FICTIONAL)"
+    },
+    "specification_section": {
+      "id": 31001,
+      "number": "05 12 00",
+      "description": "Structural Steel Framing"
+    },
+    "location": {
+      "id": 41001,
+      "name": "Wing B > Podium L2 > Grid C/4-7"
+    },
+    "cost_code": {
+      "id": 51002,
+      "full_code": "05-1200",
+      "name": "Structural Steel"
+    },
+    "drawing_number": "S-301",
+    "reference": null,
+    "schedule_impact": {
+      "status": "yes_unknown",
+      "value": null
+    },
+    "cost_impact": {
+      "status": "tbd",
+      "value": null
+    },
+    "questions": [
+      {
+        "id": 90420,
+        "question_date": "2026-09-22T10:00:00-04:00",
+        "plain_text_body": "Embed plate EP-7 spacing on S-301 Rev 2 does not match architectural column centerlines on A-201 at Grid C/4-7. Fabricator cannot detail transfer girder connections until resolved. Confirm governing dimensions.",
+        "created_by": "Gus Moreno",
+        "answers": []
+      }
+    ]
+  },
+  {
+    "id": "41e8a8cb-c4f4-5324-a95e-09229db8fdc2",
+    "org_id": "1befe790-aca8-5579-92e3-e97c76435686",
+    "project_id": "f9fdf464-52c4-5d02-a931-c76a025e916c",
+    "source": "procore",
+    "entity_type": "rfi",
+    "external_id": "9043",
+    "source_url": "https://app.procore.com/8800123/project/rfi/show/9043",
+    "number": "43",
+    "full_number": "43",
+    "prefix": null,
+    "revision": "0",
+    "current_revision": true,
+    "subject": "Duct shaft size at Unit Stack 07 per ASI-07",
+    "status": "open",
+    "draft": false,
+    "private": false,
+    "accepted": false,
+    "initiated_at": "2026-09-26T10:00:00-04:00",
+    "created_at": "2026-09-26T10:00:00-04:00",
+    "due_date": "2026-10-03",
+    "time_resolved": null,
+    "ball_in_court_role": "assignees",
+    "ball_in_court": {
+      "id": 5007,
+      "login": "hcole@arcwell.example",
+      "name": "Hannah Cole"
+    },
+    "ball_in_courts": [
+      {
+        "id": 5007,
+        "login": "hcole@arcwell.example",
+        "name": "Hannah Cole"
+      }
+    ],
+    "assignees": [
+      {
+        "id": 5007,
+        "login": "hcole@arcwell.example",
+        "name": "Hannah Cole"
+      }
+    ],
+    "rfi_manager": {
+      "id": 5005,
+      "login": "kosei@ironbridgebuild.example",
+      "name": "Kevin Osei"
+    },
+    "received_from": {
+      "id": 5013,
+      "login": "skim@polarmech.example",
+      "name": "Sandra Kim"
+    },
+    "responsible_contractor": {
+      "id": 7008,
+      "name": "Polar Mechanical (FICTIONAL)"
+    },
+    "specification_section": {
+      "id": 31004,
+      "number": "23 31 13",
+      "description": "Metal Ducts"
+    },
+    "location": {
+      "id": 41005,
+      "name": "Wing A > Unit Stack 07 (L2-L6)"
+    },
+    "cost_code": {
+      "id": 51005,
+      "full_code": "23-3113",
+      "name": "HVAC Ductwork"
+    },
+    "drawing_number": "M-401",
+    "reference": null,
+    "schedule_impact": {
+      "status": "yes_unknown",
+      "value": null
+    },
+    "cost_impact": {
+      "status": "yes_unknown",
+      "value": null
+    },
+    "questions": [
+      {
+        "id": 90430,
+        "question_date": "2026-09-26T10:00:00-04:00",
+        "plain_text_body": "ASI-07 enlarges shaft at Stack 07 to 24x30. Framed openings L2-L4 are built to 18x24 per prior set. Confirm whether reframing is required or duct may transition.",
+        "created_by": "Sandra Kim",
+        "answers": []
+      }
+    ]
+  },
+  {
+    "id": "d0a1db85-aa04-5c84-b314-62a304b09658",
+    "org_id": "1befe790-aca8-5579-92e3-e97c76435686",
+    "project_id": "f9fdf464-52c4-5d02-a931-c76a025e916c",
+    "source": "procore",
+    "entity_type": "rfi",
+    "external_id": "9044",
+    "source_url": "https://app.procore.com/8800123/project/rfi/show/9044",
+    "number": "44",
+    "full_number": "44",
+    "prefix": null,
+    "revision": "0",
+    "current_revision": true,
+    "subject": "Amenity deck paver pedestal height at drains",
+    "status": "open",
+    "draft": false,
+    "private": false,
+    "accepted": false,
+    "initiated_at": "2026-09-30T10:00:00-04:00",
+    "created_at": "2026-09-30T10:00:00-04:00",
+    "due_date": "2026-10-07",
+    "time_resolved": null,
+    "ball_in_court_role": "assignees",
+    "ball_in_court": {
+      "id": 5007,
+      "login": "hcole@arcwell.example",
+      "name": "Hannah Cole"
+    },
+    "ball_in_courts": [
+      {
+        "id": 5007,
+        "login": "hcole@arcwell.example",
+        "name": "Hannah Cole"
+      }
+    ],
+    "assignees": [
+      {
+        "id": 5007,
+        "login": "hcole@arcwell.example",
+        "name": "Hannah Cole"
+      }
+    ],
+    "rfi_manager": {
+      "id": 5005,
+      "login": "kosei@ironbridgebuild.example",
+      "name": "Kevin Osei"
+    },
+    "received_from": {
+      "id": 5005,
+      "login": "kosei@ironbridgebuild.example",
+      "name": "Kevin Osei"
+    },
+    "responsible_contractor": {
+      "id": 7002,
+      "name": "Ironbridge Builders (FICTIONAL)"
+    },
+    "specification_section": {
+      "id": 31006,
+      "number": "32 14 00",
+      "description": "Unit Paving"
+    },
+    "location": {
+      "id": 41007,
+      "name": "Podium L2 > Amenity Deck"
+    },
+    "cost_code": {
+      "id": 51007,
+      "full_code": "32-1400",
+      "name": "Unit Paving / Amenity Deck"
+    },
+    "drawing_number": "L-301",
+    "reference": null,
+    "schedule_impact": {
+      "status": "tbd",
+      "value": null
+    },
+    "cost_impact": {
+      "status": "tbd",
+      "value": null
+    },
+    "questions": [
+      {
+        "id": 90440,
+        "question_date": "2026-09-30T10:00:00-04:00",
+        "plain_text_body": "Pedestal heights at deck drains exceed manufacturer max for the base paver. Is Alt 2 (thicker paver) intended?",
+        "created_by": "Kevin Osei",
+        "answers": []
+      }
+    ]
+  },
+  {
+    "id": "2b20c964-b547-5087-8126-6bb5c6779039",
+    "org_id": "1befe790-aca8-5579-92e3-e97c76435686",
+    "project_id": "f9fdf464-52c4-5d02-a931-c76a025e916c",
+    "source": "procore",
+    "entity_type": "rfi",
+    "external_id": "9045",
+    "source_url": "https://app.procore.com/8800123/project/rfi/show/9045",
+    "number": "45",
+    "full_number": "45",
+    "prefix": null,
+    "revision": "0",
+    "current_revision": true,
+    "subject": "Unit 3B kitchen layout dimension conflict",
+    "status": "closed",
+    "draft": false,
+    "private": false,
+    "accepted": true,
+    "initiated_at": "2026-09-18T10:00:00-04:00",
+    "created_at": "2026-09-18T10:00:00-04:00",
+    "due_date": "2026-09-25",
+    "time_resolved": "2026-10-02T15:30:00-04:00",
+    "ball_in_court_role": "assignees",
+    "ball_in_court": null,
+    "ball_in_courts": [],
+    "assignees": [
+      {
+        "id": 5007,
+        "login": "hcole@arcwell.example",
+        "name": "Hannah Cole"
+      }
+    ],
+    "rfi_manager": {
+      "id": 5005,
+      "login": "kosei@ironbridgebuild.example",
+      "name": "Kevin Osei"
+    },
+    "received_from": {
+      "id": 5004,
+      "login": "talvarez@ironbridgebuild.example",
+      "name": "Tom Alvarez"
+    },
+    "responsible_contractor": {
+      "id": 7002,
+      "name": "Ironbridge Builders (FICTIONAL)"
+    },
+    "specification_section": {
+      "id": 31010,
+      "number": "06 11 00",
+      "description": "Wood Framing"
+    },
+    "location": {
+      "id": 41011,
+      "name": "Wing A > Level 3 > Unit 3B"
+    },
+    "cost_code": null,
+    "drawing_number": "A-412",
+    "reference": null,
+    "schedule_impact": {
+      "status": "no_impact",
+      "value": 0
+    },
+    "cost_impact": {
+      "status": "no_impact",
+      "value": 0
+    },
+    "questions": [
+      {
+        "id": 90450,
+        "question_date": "2026-09-18T10:00:00-04:00",
+        "plain_text_body": "Kitchen wall dimension on A-412 conflicts with enlarged plan. Which governs?",
+        "created_by": "Tom Alvarez",
+        "answers": [
+          {
+            "id": 90451,
+            "official": true,
+            "answer_date": "2026-10-02T15:30:00-04:00",
+            "plain_text_body": "Enlarged plan governs.",
+            "created_by": "Hannah Cole"
+          }
+        ]
+      }
+    ]
+  }
+]

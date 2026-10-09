@@ -1,0 +1,36 @@
+{
+ "kind": "rfi",
+ "ref": "procore:rfi:9401",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "procore:rfi:9401",
+  "label": "RFI #401",
+  "subject": "Encountered rock at elevator pit, 4' above geotech assumptio",
+  "status": "open",
+  "question": "Encountered rock at elevator pit, 4' above geotech assumption.",
+  "answers": [],
+  "cost_impact": null,
+  "cost_impact_value": null,
+  "schedule_impact": null,
+  "schedule_impact_value": null,
+  "referenced_instruments": []
+ },
+ "output": {
+  "ref": "procore:rfi:9401",
+  "scope_change": "unclear",
+  "scope_quote": "",
+  "differing_site_condition": true,
+  "condition": "rock at elevator pit above geotech assumption",
+  "condition_quote": "Encountered rock at elevator pit, 4' above geotech assumption.",
+  "amount_usd": null,
+  "schedule_days": null,
+  "confidence": "high"
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:19:59"
+}

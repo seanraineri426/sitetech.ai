@@ -1,0 +1,36 @@
+{
+ "kind": "rfi",
+ "ref": "procore:rfi:9040",
+ "model": "openrouter:anthropic/claude-sonnet-5.5",
+ "prompt_version": "facts-v1",
+ "input": {
+  "ref": "procore:rfi:9040",
+  "label": "RFI #40",
+  "subject": "Retail storefront head detail at Grid A",
+  "status": "open",
+  "question": "Storefront head detail 6/A-511 shows no deflection header. Confirm deflection allowance.",
+  "answers": [],
+  "cost_impact": "tbd",
+  "cost_impact_value": null,
+  "schedule_impact": "no_impact",
+  "schedule_impact_value": 0,
+  "referenced_instruments": []
+ },
+ "output": {
+  "ref": "procore:rfi:9040",
+  "scope_change": "unclear",
+  "scope_quote": "",
+  "differing_site_condition": false,
+  "condition": "",
+  "condition_quote": "",
+  "amount_usd": null,
+  "schedule_days": null,
+  "confidence": "high"
+ },
+ "contract_report": {
+  "errors_final": [],
+  "repaired": false,
+  "truncated": false
+ },
+ "extracted_at": "2026-10-09T11:20:49"
+}

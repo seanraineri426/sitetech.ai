@@ -1,0 +1,387 @@
+{
+  "_FICTIONAL": "ALL DATA IN THIS FIXTURE IS FICTIONAL. Not a real project, company, or person.",
+  "coverage_note": "Only messages delivered to lindenyard@larkspurdev.example are visible (Exchange RBAC for Applications / application access policy scope). Threads that never copy the project mailbox are invisible.",
+  "emails": [
+    {
+      "id": "msg_E101",
+      "ref": "msgraph_outlook:message:msg_E101",
+      "mailbox": "lindenyard@larkspurdev.example",
+      "conversation_id": "conv_E101",
+      "received_at": "2026-10-05T11:20:00-04:00",
+      "from": {
+        "name": "Nina Shah",
+        "email": "nshah@amperesupply.example"
+      },
+      "to": [
+        {
+          "name": "Lauren Pike",
+          "email": "lpike@ironbridgebuild.example"
+        }
+      ],
+      "cc": [
+        {
+          "name": "Mike Dunn",
+          "email": "mdunn@currentelectric.example"
+        },
+        {
+          "name": "Linden Yard Project",
+          "email": "lindenyard@larkspurdev.example"
+        }
+      ],
+      "subject": "Linden Yard - Main Switchgear Quote Q-55120 - pricing expiry",
+      "body_text": "Lauren, reminder that quote Q-55120 for the main switchgear and switchboards ($486,500) is held through Friday 10/9. Current factory lead time is 30 weeks from released PO with approved drawings. After 10/9 we have to re-quote: expect about +4% and a 32-week lead time based on the latest factory allocation. Approved submittal is on file. Please send the PO when ready. - Nina",
+      "attachments": [
+        "Q-55120_rev2.pdf"
+      ]
+    },
+    {
+      "id": "msg_E102",
+      "ref": "msgraph_outlook:message:msg_E102",
+      "mailbox": "lindenyard@larkspurdev.example",
+      "conversation_id": "conv_WIN",
+      "received_at": "2026-10-05T15:05:00-04:00",
+      "from": {
+        "name": "Hannah Cole",
+        "email": "hcole@arcwell.example"
+      },
+      "to": [
+        {
+          "name": "Kevin Osei",
+          "email": "kosei@ironbridgebuild.example"
+        }
+      ],
+      "cc": [
+        {
+          "name": "Linden Yard Project",
+          "email": "lindenyard@larkspurdev.example"
+        }
+      ],
+      "subject": "RE: Linden Yard - Window submittal rev 2 status",
+      "body_text": "Kevin, window rev 2 review is underway. Comments will be out tomorrow. Heads up that anchorage calcs still look unstamped. - Hannah",
+      "attachments": []
+    },
+    {
+      "id": "msg_E103",
+      "ref": "msgraph_outlook:message:msg_E103",
+      "mailbox": "lindenyard@larkspurdev.example",
+      "conversation_id": "conv_E103",
+      "received_at": "2026-10-05T16:45:00-04:00",
+      "from": {
+        "name": "Kevin Osei",
+        "email": "kosei@ironbridgebuild.example"
+      },
+      "to": [
+        {
+          "name": "Linden Yard Project",
+          "email": "lindenyard@larkspurdev.example"
+        }
+      ],
+      "cc": [],
+      "subject": "Lunch & learn delayed to 1pm Thursday",
+      "body_text": "Team - the Thursday lunch & learn on the new punch app is delayed to 1pm. Food arrives at 12:45. No action needed.",
+      "attachments": []
+    },
+    {
+      "id": "msg_E104",
+      "ref": "msgraph_outlook:message:msg_E104",
+      "mailbox": "lindenyard@larkspurdev.example",
+      "conversation_id": "conv_E104",
+      "received_at": "2026-10-06T08:12:00-04:00",
+      "from": {
+        "name": "Gus Moreno",
+        "email": "gmoreno@baylinesteel.example"
+      },
+      "to": [
+        {
+          "name": "Priya Nair",
+          "email": "pnair@ironbridgebuild.example"
+        },
+        {
+          "name": "Kevin Osei",
+          "email": "kosei@ironbridgebuild.example"
+        }
+      ],
+      "cc": [
+        {
+          "name": "Raj Mehta",
+          "email": "rmehta@tandemse.example"
+        },
+        {
+          "name": "Dana Whitfield",
+          "email": "dwhitfield@larkspurdev.example"
+        },
+        {
+          "name": "Linden Yard Project",
+          "email": "lindenyard@larkspurdev.example"
+        }
+      ],
+      "subject": "Linden Yard - Transfer steel shop release / RFI 42",
+      "body_text": "Priya, we still cannot release transfer girder connections to the shop. Embed layout at Grid C/4-7 is open on RFI 42 and our rev 1 shop drawings have been with Tandem since 9/17. To hold our Oct 12 shop slot we need approved drawings (with the RFI 42 embed dimensions resolved) released to us by end of day Friday Oct 9. If we miss it, the next available slot is Oct 26, which pushes delivery of the transfer steel from Nov 9 to approximately Nov 23. Please advise. - Gus Moreno, Bayline Steel",
+      "attachments": []
+    },
+    {
+      "id": "msg_E105",
+      "ref": "msgraph_outlook:message:msg_E105",
+      "mailbox": "lindenyard@larkspurdev.example",
+      "conversation_id": "conv_E105",
+      "received_at": "2026-10-06T10:31:00-04:00",
+      "from": {
+        "name": "Sandra Kim",
+        "email": "skim@polarmech.example"
+      },
+      "to": [
+        {
+          "name": "Priya Nair",
+          "email": "pnair@ironbridgebuild.example"
+        }
+      ],
+      "cc": [
+        {
+          "name": "Linden Yard Project",
+          "email": "lindenyard@larkspurdev.example"
+        }
+      ],
+      "subject": "Linden Yard - Notice of delay and additional cost - ASI-07 duct shaft revisions",
+      "body_text": "Priya, please accept this letter as Polar Mechanical's written notice under Subcontract Section 9.3 of delay and additional cost arising from ASI-07 (issued 9/24), which enlarged the duct shaft at Unit Stack 07 after our ductwork shop drawings were approved on 9/15 against Rev 2. Approximately 40% of the Stack 07 duct for L2-L4 is already fabricated to the prior size. We have stopped installation at Stack 07 pending RFI 43. We reserve our right to claim time and cost; pricing will follow within 10 days. - Sandra Kim, Polar Mechanical",
+      "attachments": [
+        "Polar_Notice_ASI-07.pdf"
+      ]
+    },
+    {
+      "id": "msg_E106",
+      "ref": "msgraph_outlook:message:msg_E106",
+      "mailbox": "lindenyard@larkspurdev.example",
+      "conversation_id": "conv_E106",
+      "received_at": "2026-10-06T11:02:00-04:00",
+      "from": {
+        "name": "Jake Rourke",
+        "email": "jrourke@timberlineframing.example"
+      },
+      "to": [
+        {
+          "name": "Priya Nair",
+          "email": "pnair@ironbridgebuild.example"
+        }
+      ],
+      "cc": [
+        {
+          "name": "Linden Yard Project",
+          "email": "lindenyard@larkspurdev.example"
+        }
+      ],
+      "subject": "Pay app 6 - request for expedited payment and retainage reduction",
+      "body_text": "Priya, we need pay app 6 processed early this cycle and are requesting retainage be reduced to 5%. Cash is tight with two jobs starting at once. We had to move part of the crew this week but will be back at full strength soon. - Jake",
+      "attachments": []
+    },
+    {
+      "id": "msg_E107",
+      "ref": "msgraph_outlook:message:msg_E107",
+      "mailbox": "lindenyard@larkspurdev.example",
+      "conversation_id": "conv_WIN",
+      "received_at": "2026-10-06T14:40:00-04:00",
+      "from": {
+        "name": "Hannah Cole",
+        "email": "hcole@arcwell.example"
+      },
+      "to": [
+        {
+          "name": "Kevin Osei",
+          "email": "kosei@ironbridgebuild.example"
+        }
+      ],
+      "cc": [
+        {
+          "name": "Eli Novak",
+          "email": "enovak@clearspan.example"
+        },
+        {
+          "name": "Linden Yard Project",
+          "email": "lindenyard@larkspurdev.example"
+        }
+      ],
+      "subject": "RE: Linden Yard - Window submittal rev 2 status - REVISE AND RESUBMIT",
+      "body_text": "Kevin, window submittal 08 53 13-001 rev 2 is returned Revise and Resubmit. Open items: (1) anchorage calcs must be stamped by a licensed engineer; (2) NFRC labels/certs missing for types W3 and W5; (3) sill flashing must follow new A-501 Rev 4 (ASI-08 issued today). This is the third cycle. Happy to do a 30-minute pre-review call before rev 3 goes in. - Hannah",
+      "attachments": [
+        "085313-001_rev2_comments.pdf"
+      ]
+    },
+    {
+      "id": "msg_E108",
+      "ref": "msgraph_outlook:message:msg_E108",
+      "mailbox": "lindenyard@larkspurdev.example",
+      "conversation_id": "conv_E108",
+      "received_at": "2026-10-06T15:30:00-04:00",
+      "from": {
+        "name": "Priya Nair",
+        "email": "pnair@ironbridgebuild.example"
+      },
+      "to": [
+        {
+          "name": "Dana Whitfield",
+          "email": "dwhitfield@larkspurdev.example"
+        },
+        {
+          "name": "Marcus Bell",
+          "email": "mbell@larkspurdev.example"
+        }
+      ],
+      "cc": [
+        {
+          "name": "Linden Yard Project",
+          "email": "lindenyard@larkspurdev.example"
+        }
+      ],
+      "subject": "Linden Yard - 2-week lookahead (wk of 10/5)",
+      "body_text": "Attached is the 2-week lookahead. Framing continues on Wing A L4. L2 close-in pending re-inspection. Elevator pit excavation paused at rock; RFI 41 with Tandem. Steel shop drawings still with Tandem. - Priya",
+      "attachments": [
+        "LY_Lookahead_wk1005.pdf"
+      ]
+    },
+    {
+      "id": "msg_E109",
+      "ref": "msgraph_outlook:message:msg_E109",
+      "mailbox": "lindenyard@larkspurdev.example",
+      "conversation_id": "conv_E109",
+      "received_at": "2026-10-06T16:05:00-04:00",
+      "from": {
+        "name": "Carol Diaz",
+        "email": "cdiaz@ridgewaycm.example"
+      },
+      "to": [
+        {
+          "name": "Dana Whitfield",
+          "email": "dwhitfield@larkspurdev.example"
+        }
+      ],
+      "cc": [
+        {
+          "name": "Priya Nair",
+          "email": "pnair@ironbridgebuild.example"
+        },
+        {
+          "name": "Linden Yard Project",
+          "email": "lindenyard@larkspurdev.example"
+        }
+      ],
+      "subject": "Linden Yard - Draw 9 site visit",
+      "body_text": "Dana, confirming our site visit for Draw #9 on Tuesday 10/13 at 9am. Please have the GC's pay app with sub requisitions and the current schedule update available. - Carol Diaz, Ridgeway CM",
+      "attachments": []
+    },
+    {
+      "id": "msg_E110",
+      "ref": "msgraph_outlook:message:msg_E110",
+      "mailbox": "lindenyard@larkspurdev.example",
+      "conversation_id": "conv_E110",
+      "received_at": "2026-10-06T16:40:00-04:00",
+      "from": {
+        "name": "Bill Hart",
+        "email": "bhart@granitelineconc.example"
+      },
+      "to": [
+        {
+          "name": "Priya Nair",
+          "email": "pnair@ironbridgebuild.example"
+        }
+      ],
+      "cc": [
+        {
+          "name": "Kevin Osei",
+          "email": "kosei@ironbridgebuild.example"
+        },
+        {
+          "name": "Linden Yard Project",
+          "email": "lindenyard@larkspurdev.example"
+        }
+      ],
+      "subject": "Wing B elevator pit - rock removal pricing",
+      "body_text": "Priya, rock removal pricing for the Wing B elevator pit will come Friday. Hoe-ram and haul-off; our crew is idle on the east half until we hear from Tandem on RFI 41. - Bill",
+      "attachments": []
+    },
+    {
+      "id": "msg_E111",
+      "ref": "msgraph_outlook:message:msg_E111",
+      "mailbox": "lindenyard@larkspurdev.example",
+      "conversation_id": "conv_E111",
+      "received_at": "2026-10-06T17:10:00-04:00",
+      "from": {
+        "name": "Dana Whitfield",
+        "email": "dwhitfield@larkspurdev.example"
+      },
+      "to": [
+        {
+          "name": "Priya Nair",
+          "email": "pnair@ironbridgebuild.example"
+        }
+      ],
+      "cc": [
+        {
+          "name": "Marcus Bell",
+          "email": "mbell@larkspurdev.example"
+        },
+        {
+          "name": "Linden Yard Project",
+          "email": "lindenyard@larkspurdev.example"
+        }
+      ],
+      "subject": "PCO-014 storefront upgrade - approved",
+      "body_text": "Priya, Larkspur approves PCO-014 (retail storefront upgrade) at $118,000. Please issue the change order for signature. Still working through the paver selection internally. - Dana",
+      "attachments": []
+    },
+    {
+      "id": "msg_E112",
+      "ref": "msgraph_outlook:message:msg_E112",
+      "mailbox": "lindenyard@larkspurdev.example",
+      "conversation_id": "conv_SO44108",
+      "received_at": "2026-10-05T07:05:00-04:00",
+      "from": {
+        "name": "Nina Shah",
+        "email": "nshah@amperesupply.example"
+      },
+      "to": [
+        {
+          "name": "Lauren Pike",
+          "email": "lpike@ironbridgebuild.example"
+        }
+      ],
+      "cc": [
+        {
+          "name": "Linden Yard Project",
+          "email": "lindenyard@larkspurdev.example"
+        }
+      ],
+      "subject": "Delivery delayed - Sales Order SO-44108",
+      "body_text": "This is an automated notice. Sales Order SO-44108 (Linden Yard - conduit and cable tray accessories) delivery status: DELAYED. Revised ship date: 10/10/2026. Please do not reply.",
+      "attachments": []
+    },
+    {
+      "id": "msg_E113",
+      "ref": "msgraph_outlook:message:msg_E113",
+      "mailbox": "lindenyard@larkspurdev.example",
+      "conversation_id": "conv_SO44108",
+      "received_at": "2026-10-06T07:40:00-04:00",
+      "from": {
+        "name": "Tom Alvarez",
+        "email": "talvarez@ironbridgebuild.example"
+      },
+      "to": [
+        {
+          "name": "Lauren Pike",
+          "email": "lpike@ironbridgebuild.example"
+        }
+      ],
+      "cc": [
+        {
+          "name": "Priya Nair",
+          "email": "pnair@ironbridgebuild.example"
+        },
+        {
+          "name": "Linden Yard Project",
+          "email": "lindenyard@larkspurdev.example"
+        }
+      ],
+      "subject": "RE: Delivery delayed - Sales Order SO-44108",
+      "body_text": "Lauren - ignore this notice. Material on site and inventoried this morning; SO-44108 tagged in the west laydown. - Tom",
+      "attachments": []
+    }
+  ]
+}
