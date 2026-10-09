@@ -14,14 +14,16 @@ describe('ESLint architectural boundary', () => {
     let output = '';
     let exitCode = 0;
     try {
-      execSync(`pnpm eslint ${bypassFile}`, { 
+      // Use --no-ignore to lint the file despite being in globalIgnores
+      execSync(`pnpm eslint --no-ignore ${bypassFile}`, { 
         cwd: join(__dirname, '..'),
         encoding: 'utf-8',
         stdio: 'pipe'
       });
-    } catch (error: any) {
-      output = error.stdout + error.stderr;
-      exitCode = error.status;
+    } catch (error) {
+      const execError = error as { stdout: string; stderr: string; status: number };
+      output = execError.stdout + execError.stderr;
+      exitCode = execError.status;
     }
     
     // Should fail (exit code 1)

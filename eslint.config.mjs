@@ -13,6 +13,7 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     "tools/brief-reference/**",
+    "__lint-tests__/**",
   ]),
   {
     files: ["**/*.{js,jsx,ts,tsx,mjs,cjs}"],
