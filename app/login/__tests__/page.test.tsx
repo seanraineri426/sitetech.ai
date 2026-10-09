@@ -1,8 +1,16 @@
+// @vitest-environment jsdom
+
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
-import LoginPage from "../page";
+import { LoginForm } from "../login-form";
 
-// Mock the Supabase client
+// Mock dependencies
+vi.mock("next/navigation", () => ({
+  useSearchParams: vi.fn(() => ({
+    get: vi.fn(() => null),
+  })),
+}));
+
 vi.mock("@/lib/supabase/client", () => ({
   createClient: vi.fn(() => ({
     auth: {
@@ -12,7 +20,13 @@ vi.mock("@/lib/supabase/client", () => ({
   })),
 }));
 
-describe("LoginPage", () => {
+vi.mock("@/lib/env", () => ({
+  env: {
+    NEXT_PUBLIC_SITE_URL: "http://localhost:3000",
+  },
+}));
+
+describe("LoginForm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     delete (process.env as Record<string, unknown>).NEXT_PUBLIC_AUTH_MICROSOFT_ENABLED;
@@ -24,21 +38,21 @@ describe("LoginPage", () => {
 
   describe("Microsoft sign-in button visibility", () => {
     it("hides Microsoft button when flag is not set", () => {
-      render(<LoginPage />);
+      render(<LoginForm />);
       
       expect(screen.queryByRole("button", { name: /microsoft/i })).not.toBeInTheDocument();
     });
 
     it("hides Microsoft button when flag is false", () => {
       process.env.NEXT_PUBLIC_AUTH_MICROSOFT_ENABLED = "false";
-      render(<LoginPage />);
+      render(<LoginForm />);
       
       expect(screen.queryByRole("button", { name: /microsoft/i })).not.toBeInTheDocument();
     });
 
     it("shows Microsoft button when flag is true", () => {
       process.env.NEXT_PUBLIC_AUTH_MICROSOFT_ENABLED = "true";
-      render(<LoginPage />);
+      render(<LoginForm />);
       
       expect(screen.getByRole("button", { name: /microsoft/i })).toBeInTheDocument();
     });
@@ -55,7 +69,7 @@ describe("LoginPage", () => {
         },
       });
 
-      render(<LoginPage />);
+      render(<LoginForm />);
       
       const emailInput = screen.getByLabelText(/email address/i);
       const submitButton = screen.getByRole("button", { name: /send magic link/i });
@@ -80,7 +94,7 @@ describe("LoginPage", () => {
         },
       });
 
-      render(<LoginPage />);
+      render(<LoginForm />);
       
       const emailInput = screen.getByLabelText(/email address/i);
       const submitButton = screen.getByRole("button", { name: /send magic link/i });
@@ -100,7 +114,7 @@ describe("LoginPage", () => {
 
   describe("form validation", () => {
     it("prevents submission with empty email via HTML5 validation", async () => {
-      render(<LoginPage />);
+      render(<LoginForm />);
       
       const emailInput = screen.getByLabelText(/email address/i) as HTMLInputElement;
       const submitButton = screen.getByRole("button", { name: /send magic link/i }) as HTMLButtonElement;
@@ -120,7 +134,7 @@ describe("LoginPage", () => {
         },
       });
 
-      render(<LoginPage />);
+      render(<LoginForm />);
       
       const emailInput = screen.getByLabelText(/email address/i) as HTMLInputElement;
       const submitButton = screen.getByRole("button", { name: /send magic link/i });

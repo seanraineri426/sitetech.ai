@@ -25,6 +25,9 @@ describe("proxy", () => {
         auth: {
           getUser: vi.fn().mockResolvedValue({ data: { user: null } }),
         },
+        cookies: {
+          getAll: vi.fn().mockReturnValue([]),
+        },
       });
 
       const request = new NextRequest(new URL("http://localhost:3000/app"));
@@ -41,6 +44,9 @@ describe("proxy", () => {
         auth: {
           getUser: vi.fn().mockResolvedValue({ data: { user: null } }),
         },
+        cookies: {
+          getAll: vi.fn().mockReturnValue([]),
+        },
       });
 
       const request = new NextRequest(new URL("http://localhost:3000/app/dashboard"));
@@ -51,6 +57,44 @@ describe("proxy", () => {
       expect(response.headers.get("location")).toContain("next=%2Fapp%2Fdashboard");
     });
 
+    it("preserves query string in next param", async () => {
+      const { createServerClient } = await import("@supabase/ssr");
+      (createServerClient as ReturnType<typeof vi.fn>).mockReturnValue({
+        auth: {
+          getUser: vi.fn().mockResolvedValue({ data: { user: null } }),
+        },
+        cookies: {
+          getAll: vi.fn().mockReturnValue([]),
+        },
+      });
+
+      const request = new NextRequest(new URL("http://localhost:3000/app?tab=projects"));
+      const response = await proxy(request);
+
+      expect(response.status).toBe(307);
+      expect(response.headers.get("location")).toContain("/login");
+      expect(response.headers.get("location")).toContain("next=%2Fapp%3Ftab%3Dprojects");
+    });
+
+    it("does not protect /apple", async () => {
+      const { createServerClient } = await import("@supabase/ssr");
+      (createServerClient as ReturnType<typeof vi.fn>).mockReturnValue({
+        auth: {
+          getUser: vi.fn().mockResolvedValue({ data: { user: null } }),
+        },
+        cookies: {
+          getAll: vi.fn().mockReturnValue([]),
+        },
+      });
+
+      const request = new NextRequest(new URL("http://localhost:3000/apple"));
+      const response = await proxy(request);
+
+      // Should not redirect
+      expect(response.status).not.toBe(307);
+      expect(response.headers.get("location")).toBeNull();
+    });
+
     it("allows authenticated user to access /app", async () => {
       const { createServerClient } = await import("@supabase/ssr");
       (createServerClient as ReturnType<typeof vi.fn>).mockReturnValue({
@@ -58,6 +102,9 @@ describe("proxy", () => {
           getUser: vi.fn().mockResolvedValue({
             data: { user: { id: "123", email: "test@example.com" } },
           }),
+        },
+        cookies: {
+          getAll: vi.fn().mockReturnValue([]),
         },
       });
 
@@ -75,6 +122,9 @@ describe("proxy", () => {
         auth: {
           getUser: vi.fn().mockResolvedValue({ data: { user: null } }),
         },
+        cookies: {
+          getAll: vi.fn().mockReturnValue([]),
+        },
       });
 
       const request = new NextRequest(new URL("http://localhost:3000/login"));
@@ -90,6 +140,9 @@ describe("proxy", () => {
       (createServerClient as ReturnType<typeof vi.fn>).mockReturnValue({
         auth: {
           getUser: vi.fn().mockResolvedValue({ data: { user: null } }),
+        },
+        cookies: {
+          getAll: vi.fn().mockReturnValue([]),
         },
       });
 
