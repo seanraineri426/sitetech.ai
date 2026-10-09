@@ -1,0 +1,97 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`allowlist fooling > value deltatokenPath passes through 1`] = `
+{
+  "k": "deltatokenPath",
+  "len": 29,
+  "passed": false,
+}
+`;
+
+exports[`allowlist fooling > value emailDomain passes through 1`] = `
+{
+  "k": "emailDomain",
+  "len": 14,
+  "passed": false,
+}
+`;
+
+exports[`allowlist fooling > value fileName passes through 1`] = `
+{
+  "k": "fileName",
+  "len": 31,
+  "passed": false,
+}
+`;
+
+exports[`allowlist fooling > value hex64 passes through 1`] = `
+{
+  "k": "hex64",
+  "len": 64,
+  "passed": false,
+}
+`;
+
+exports[`allowlist fooling > value jwtish passes through 1`] = `
+{
+  "k": "jwtish",
+  "len": 45,
+  "passed": false,
+}
+`;
+
+exports[`allowlist fooling > value localAndDomainNoAt passes through 1`] = `
+{
+  "k": "localAndDomainNoAt",
+  "len": 23,
+  "passed": false,
+}
+`;
+
+exports[`allowlist fooling > value personName passes through 1`] = `
+{
+  "k": "personName",
+  "len": 10,
+  "passed": false,
+}
+`;
+
+exports[`allowlist fooling > value procoreToken43 passes through 1`] = `
+{
+  "k": "procoreToken43",
+  "len": 43,
+  "passed": false,
+}
+`;
+
+exports[`allowlist fooling > value projectName passes through 1`] = `
+{
+  "k": "projectName",
+  "len": 20,
+  "passed": false,
+}
+`;
+
+exports[`allowlist fooling > value rfiTitle passes through 1`] = `
+{
+  "k": "rfiTitle",
+  "len": 36,
+  "passed": false,
+}
+`;
+
+exports[`allowlist fooling > value spPath passes through 1`] = `
+{
+  "k": "spPath",
+  "len": 53,
+  "passed": false,
+}
+`;
+
+exports[`allowlist fooling > value spUrlNoQuery passes through 1`] = `
+{
+  "k": "spUrlNoQuery",
+  "len": 46,
+  "passed": false,
+}
+`;

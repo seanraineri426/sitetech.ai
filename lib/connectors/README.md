@@ -4,9 +4,36 @@ Standalone, pure-TypeScript connector modules for Procore, Microsoft Graph (Mail
 
 ---
 
+## CTO Logging Rule (2026-10-09)
+
+**NO customer field values in logs on ANY connector.**
+
+Logs may contain **only**:
+- IDs (strings or numbers)
+- Counts (numbers)
+- Status codes (numbers)
+- Durations (numbers)
+- Endpoint paths with IDs (no query values)
+- Error class names (strings)
+- Enum-like status strings capped at 64 chars matching `/^[A-Za-z0-9_.:\/-]+$/`
+
+**PROHIBITED** in logs:
+- Customer field values (names, emails, subjects, bodies, descriptions, etc.)
+- Response bodies
+- URLs with query strings that carry values
+- Internal task IDs or project IDs that could be used to reconstruct customer data
+
+All connector logging routes through `lib/connectors/shared/log.ts`, which enforces the allowlist. Errors that may be logged must not embed payload content.
+
+A CI test (`lib/connectors/__tests__/log-scrub.test.ts`) runs all connectors over fixtures and fails if any fixture values >= 4 chars (excluding allowed IDs) appear in captured output.
+
+---
+
 ## Test Status
 
 ✅ **All tests passing**
+
+**Note:** There is no Granola connector yet. The logging rule applies to Procore, Microsoft Graph, and P6 connectors only.
 
 ---
 
