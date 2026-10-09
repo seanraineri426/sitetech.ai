@@ -175,6 +175,9 @@ export function redactAddresses(text: string): string {
     const parts = detection.split(/(\s+)/u);
     let offset = 0;
     
+    // Moving pointer for O(1) coverage check (redactions are sorted by start)
+    let primaryIndex = 0;
+    
     for (let i = 0; i < parts.length; i++) {
       const token = parts[i];
       if (token.trim() && token.includes('@')) {
@@ -214,10 +217,19 @@ export function redactAddresses(text: string): string {
                 const dotlessAtEnd = isAtEnd && labels.length === 1 && /^\p{L}/u.test(d);
                 
                 if (dotted || dotlessAtEnd) {
-                  // Check if already covered by primary pattern
+                  // Check if already covered by primary pattern using moving pointer
                   const addrStart = tokenOffset;
                   const addrEnd = tokenOffset + domainEnd;
-                  const alreadyCovered = redactions.some(([s, e]) => s <= addrStart && e >= addrEnd);
+                  
+                  // Advance pointer to first redaction that could cover this address
+                  while (primaryIndex < redactions.length && redactions[primaryIndex][1] < addrStart) {
+                    primaryIndex++;
+                  }
+                  
+                  // Check if current redaction covers this address
+                  const alreadyCovered = primaryIndex < redactions.length &&
+                    redactions[primaryIndex][0] <= addrStart &&
+                    redactions[primaryIndex][1] >= addrEnd;
                   
                   if (!alreadyCovered) {
                     const replacement = '[email-' + d + ']' + trailingDots;

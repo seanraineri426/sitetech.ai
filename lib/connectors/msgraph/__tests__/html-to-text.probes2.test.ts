@@ -165,4 +165,40 @@ describe("addresses", () => {
     expect(f({ toRecipients: [{ emailAddress: { name: "Q", address: "q@sub.y.com" } }] })).toBe(a);
     expect(f({ from: { emailAddress: { name: "A", address: "alice@other.com" } } })).not.toBe(a);
   });
+
+  it("redaction quadratic fix: 28k addresses (~200KB) under 100ms", () => {
+    const input = "a@b.co ".repeat(28000);
+    const times = [
+      time(() => redactAddresses(input)),
+      time(() => redactAddresses(input)),
+      time(() => redactAddresses(input))
+    ];
+    const best = Math.min(...times);
+    console.log("28k addresses", best.toFixed(0), "ms (best of 3)");
+    expect(best).toBeLessThan(100);
+  });
+
+  it("redaction quadratic fix: 18k comma-separated addresses under 100ms", () => {
+    const input = "bob@x.com, ".repeat(18000);
+    const times = [
+      time(() => redactAddresses(input)),
+      time(() => redactAddresses(input)),
+      time(() => redactAddresses(input))
+    ];
+    const best = Math.min(...times);
+    console.log("18k addresses", best.toFixed(0), "ms (best of 3)");
+    expect(best).toBeLessThan(100);
+  });
+
+  it("redaction quadratic fix: 28k addresses through mapper under 200ms", () => {
+    const input = "a@b.co ".repeat(28000);
+    const times = [
+      time(() => mapGraphMessageToNormalized({ ...base, body: { contentType: "text", content: input } }, "mb")),
+      time(() => mapGraphMessageToNormalized({ ...base, body: { contentType: "text", content: input } }, "mb")),
+      time(() => mapGraphMessageToNormalized({ ...base, body: { contentType: "text", content: input } }, "mb"))
+    ];
+    const best = Math.min(...times);
+    console.log("28k addresses through mapper", best.toFixed(0), "ms (best of 3)");
+    expect(best).toBeLessThan(200);
+  });
 });
