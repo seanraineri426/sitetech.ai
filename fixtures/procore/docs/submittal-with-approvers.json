@@ -1,0 +1,56 @@
+/**
+ * Procore Submittal fixture - docs-derived shape from developers.procore.com
+ * 
+ * NOT VERIFIED AGAINST SANDBOX - Sean is creating free developer account.
+ * Sandbox verification pending.
+ * 
+ * Based on Procore REST API v1.1 Submittals endpoint documentation.
+ * Per CTO 2026-10-07: location and cost_code DROPPED from allowlist.
+ */
+
+{
+  "id": 45678,
+  "number": "SUB-025",
+  "title": "Structural Steel Shop Drawings - Building A",
+  "revision": "Rev B",
+  "status": "approved_as_noted",
+  "specification_section": "05 12 00",
+  "created_at": "2026-09-15T08:00:00Z",
+  "updated_at": "2026-10-05T16:00:00Z",
+  "received_date": "2026-09-16",
+  "due_date": "2026-09-30",
+  "required_on_site_date": "2026-10-15",
+  "lead_time": 14,
+  "design_team_review_time": 5,
+  "internal_review_time": 3,
+  "buffer_time": 2,
+  "approvers": [
+    {
+      "id": 6001,
+      "name": "Alice Engineer",
+      "login": "alice@engineer.com",
+      "revision": "Rev A",
+      "response": "revise_resubmit",
+      "responded_at": "2026-09-25T10:00:00Z"
+    },
+    {
+      "id": 6001,
+      "name": "Alice Engineer",
+      "login": "alice@engineer.com",
+      "revision": "Rev B",
+      "response": "approved_as_noted",
+      "responded_at": "2026-10-05T16:00:00Z"
+    }
+  ],
+  "scheduled_task": {
+    "id": 7001,
+    "code": "A1050",
+    "name": "Steel Erection - Building A"
+  },
+  "project": {
+    "id": 999
+  },
+  "company": {
+    "id": 12345
+  }
+}
