@@ -32,37 +32,18 @@ sudo -u postgres psql -v ON_ERROR_STOP=1 -c "CREATE DATABASE $DB_NAME;"
 echo -e "\n${YELLOW}Running bootstrap script...${NC}"
 sudo -u postgres psql -d $DB_NAME -v ON_ERROR_STOP=1 -f supabase/tests/bootstrap_no_docker.sql
 
+# Install pgTAP extension before migrations
+# This must happen before migrations so that migration-created functions don't get PUBLIC execute
+# (the migration revokes default PUBLIC execute for postgres-created functions)
+echo -e "\n${YELLOW}Installing pgTAP extension...${NC}"
+sudo -u postgres psql -d $DB_NAME -v ON_ERROR_STOP=1 -c "CREATE EXTENSION IF NOT EXISTS pgtap;"
+
 # Apply migrations in order
 echo -e "\n${YELLOW}Applying migrations...${NC}"
 for migration in supabase/migrations/*.sql; do
   echo "  Applying: $(basename $migration)"
   sudo -u postgres psql -d $DB_NAME -v ON_ERROR_STOP=1 -f "$migration"
 done
-
-# Install pgTAP extension
-echo -e "\n${YELLOW}Installing pgTAP extension...${NC}"
-sudo -u postgres psql -d $DB_NAME -v ON_ERROR_STOP=1 -c "CREATE EXTENSION IF NOT EXISTS pgtap;"
-
-# Grant PUBLIC execute on pgTAP functions (they are created after our event trigger is active)
-echo -e "${YELLOW}Granting PUBLIC execute on pgTAP functions...${NC}"
-sudo -u postgres psql -d $DB_NAME -v ON_ERROR_STOP=1 -c "
-DO \$\$
-DECLARE
-  func record;
-BEGIN
-  FOR func IN 
-    SELECT p.oid::regprocedure as func_sig
-    FROM pg_proc p
-    JOIN pg_namespace n ON n.oid = p.pronamespace
-    JOIN pg_depend d ON d.objid = p.oid AND d.deptype = 'e'
-    JOIN pg_extension e ON e.oid = d.refobjid AND e.extname = 'pgtap'
-    WHERE n.nspname IN ('public', 'tap')
-  LOOP
-    EXECUTE format('GRANT EXECUTE ON FUNCTION %s TO PUBLIC', func.func_sig);
-  END LOOP;
-END;
-\$\$;
-"
 
 # Run pgTAP tests
 echo -e "\n${YELLOW}Running pgTAP tests...${NC}"

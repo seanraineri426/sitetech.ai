@@ -6,7 +6,7 @@
 begin;
 set local role postgres;
 
-select plan(8);
+select plan(9);
 
 -- ============================================================================
 -- Test 1: Assert we found >= 14 tables with org_id
@@ -195,6 +195,20 @@ select is_empty(
       and has_table_privilege('authenticated', c.oid, 'truncate')
   $$,
   'authenticated cannot TRUNCATE any tenant table'
+);
+
+-- ============================================================================
+-- Test 9: No non-extension public function is executable by PUBLIC or anon
+-- ============================================================================
+
+select is_empty(
+  $$
+    select p.oid::regprocedure from pg_proc p
+    where p.pronamespace = 'public'::regnamespace
+      and not exists (select 1 from pg_depend d where d.classid='pg_proc'::regclass and d.objid=p.oid and d.deptype='e')
+      and (has_function_privilege('public',p.oid,'execute') or has_function_privilege('anon',p.oid,'execute'))
+  $$,
+  'No non-extension public function is executable by PUBLIC or anon'
 );
 
 select * from finish();

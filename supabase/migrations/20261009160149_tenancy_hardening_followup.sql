@@ -11,51 +11,43 @@ declare
   mismatch_ids text;
 begin
   -- Check for cross-org connection references in project_sources
-  with mismatches as (
-    select ps.id
-    from public.project_sources ps
+  select count(*)::int, string_agg(id::text, ', ')
+  into mismatch_count, mismatch_ids
+  from (
+    select id from public.project_sources ps
     left join public.integration_connections ic 
       on ps.connection_id = ic.id and ps.org_id = ic.org_id
     where ic.id is null
     limit 5
-  )
-  select count(*), string_agg(id::text, ', ')
-  into mismatch_count, mismatch_ids
-  from (
-    select count(*)::int from public.project_sources ps
-    left join public.integration_connections ic 
-      on ps.connection_id = ic.id and ps.org_id = ic.org_id
-    where ic.id is null
-  ) c
-  cross join mismatches;
+  ) sample;
   
   if mismatch_count > 0 then
     raise exception 'Found % project_sources with cross-org connection_id references (sample ids: %)', 
-      mismatch_count, coalesce(mismatch_ids, 'none');
+      (select count(*)::int from public.project_sources ps
+       left join public.integration_connections ic 
+         on ps.connection_id = ic.id and ps.org_id = ic.org_id
+       where ic.id is null),
+      mismatch_ids;
   end if;
   
   -- Check for cross-org project_source references in sync_runs
-  with mismatches as (
-    select sr.id
-    from public.sync_runs sr
+  select count(*)::int, string_agg(id::text, ', ')
+  into mismatch_count, mismatch_ids
+  from (
+    select id from public.sync_runs sr
     left join public.project_sources ps 
       on sr.project_source_id = ps.id and sr.org_id = ps.org_id and sr.project_id = ps.project_id
     where ps.id is null
     limit 5
-  )
-  select count(*), string_agg(id::text, ', ')
-  into mismatch_count, mismatch_ids
-  from (
-    select count(*)::int from public.sync_runs sr
-    left join public.project_sources ps 
-      on sr.project_source_id = ps.id and sr.org_id = ps.org_id and sr.project_id = ps.project_id
-    where ps.id is null
-  ) c
-  cross join mismatches;
+  ) sample;
   
   if mismatch_count > 0 then
     raise exception 'Found % sync_runs with cross-org project_source_id references (sample ids: %)', 
-      mismatch_count, coalesce(mismatch_ids, 'none');
+      (select count(*)::int from public.sync_runs sr
+       left join public.project_sources ps 
+         on sr.project_source_id = ps.id and sr.org_id = ps.org_id and sr.project_id = ps.project_id
+       where ps.id is null),
+      mismatch_ids;
   end if;
 end;
 $$;
@@ -128,46 +120,7 @@ alter default privileges for role postgres in schema public revoke truncate on t
 -- Revoke execute on functions from PUBLIC (prevents anon access via PUBLIC role)
 revoke execute on all functions in schema public from public;
 
--- Create event trigger to revoke PUBLIC execute on newly created functions in public schema
+-- Revoke default PUBLIC execute privilege for functions created by postgres
 -- This overrides PostgreSQL's system default that grants EXECUTE to PUBLIC
-create or replace function public.revoke_public_execute_on_functions()
-returns event_trigger language plpgsql as $$
-declare
-  obj record;
-  func_schema text;
-  func_oid oid;
-  is_extension_func boolean;
-begin
-  for obj in select * from pg_event_trigger_ddl_commands() where command_tag = 'CREATE FUNCTION'
-  loop
-    -- Extract schema from object_identity (format: schema.function_name(args))
-    func_schema := split_part(obj.object_identity, '.', 1);
-    
-    -- Only process functions in the public schema
-    if func_schema = 'public' then
-      -- Check if this function is part of an extension (e.g., pgTAP)
-      -- Extension functions should keep their default privileges
-      select p.oid, exists (
-        select 1 from pg_depend d 
-        where d.objid = p.oid 
-          and d.deptype = 'e'
-      )
-      into func_oid, is_extension_func
-      from pg_proc p
-      join pg_namespace n on n.oid = p.pronamespace
-      where n.nspname = func_schema 
-        and p.oid::regprocedure::text = obj.object_identity;
-      
-      -- Only revoke from non-extension functions
-      if not coalesce(is_extension_func, false) then
-        execute format('revoke execute on function %s from public', obj.object_identity);
-      end if;
-    end if;
-  end loop;
-end;
-$$;
-
-create event trigger revoke_public_execute_on_create_function
-  on ddl_command_end
-  when tag in ('CREATE FUNCTION')
-  execute function public.revoke_public_execute_on_functions();
+-- The global form (without IN SCHEMA) is required; the IN SCHEMA form is a no-op for PUBLIC
+alter default privileges for role postgres revoke execute on functions from public;
