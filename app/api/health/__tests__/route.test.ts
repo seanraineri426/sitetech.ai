@@ -7,6 +7,9 @@ describe("/api/health", () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data).toEqual({ ok: true });
+    expect(data).toHaveProperty("ok", true);
+    expect(data).toHaveProperty("supabase");
+    expect(data.supabase).toHaveProperty("configured");
+    expect(typeof data.supabase.configured).toBe("boolean");
   });
 });
