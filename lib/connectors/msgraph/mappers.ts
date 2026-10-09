@@ -46,6 +46,43 @@ function stripNullBytes(text: string): string {
 }
 
 /**
+ * Pre-cap text at max length with whitespace boundary cutting.
+ * Cuts on whitespace boundary (look back up to 512 chars) to avoid splitting addresses.
+ * Checks for surrogate pairs at boundary.
+ * Does NOT append truncation marker (used before redaction).
+ */
+function preCapText(text: string, maxChars: number): string {
+  if (text.length <= maxChars) {
+    return text;
+  }
+  
+  let cutPos = maxChars;
+  
+  // Look back up to 512 chars for the last whitespace
+  const searchStart = Math.max(0, cutPos - 512);
+  let lastWhitespace = -1;
+  for (let i = cutPos - 1; i >= searchStart; i--) {
+    const char = text[i];
+    if (char === ' ' || char === '\t' || char === '\n' || char === '\r') {
+      lastWhitespace = i;
+      break;
+    }
+  }
+  
+  if (lastWhitespace !== -1) {
+    cutPos = lastWhitespace;
+  }
+  
+  // Check if we're about to split a surrogate pair
+  const charCode = text.charCodeAt(cutPos - 1);
+  if (charCode >= 0xD800 && charCode <= 0xDBFF) {
+    cutPos--;
+  }
+  
+  return text.slice(0, cutPos);
+}
+
+/**
  * Cap text at max length and append truncation marker.
  * Checks for surrogate pairs at boundary to avoid splitting them.
  * If cut point falls inside [email-...] placeholder, moves cut back before '['.
@@ -65,18 +102,25 @@ function capText(text: string, maxChars: number): string {
   }
   
   // Check if cut point falls inside a [email-...] placeholder
-  // Look for [email- in the last 100 chars before cut (placeholders are typically <50 chars)
-  const searchStart = Math.max(0, cutPos - 100);
-  const snippet = text.substring(searchStart, cutPos);
-  const lastEmailStart = snippet.lastIndexOf('[email-');
+  // Scan back 270 chars for last '[', check if it starts [email- whose ] is at/after cut
+  const searchStart = Math.max(0, cutPos - 270);
+  let lastBracket = -1;
+  for (let i = cutPos - 1; i >= searchStart; i--) {
+    if (text[i] === '[') {
+      lastBracket = i;
+      break;
+    }
+  }
   
-  if (lastEmailStart !== -1) {
-    // Found a placeholder start, check if it closes before cutPos
-    const actualStart = searchStart + lastEmailStart;
-    const closeIndex = text.indexOf(']', actualStart);
-    if (closeIndex === -1 || closeIndex >= cutPos) {
-      // No close bracket, or it's after our cut point - we're inside
-      cutPos = actualStart;
+  if (lastBracket !== -1 && lastBracket + 7 <= text.length) {
+    // Check if this '[' starts '[email-'
+    if (text.substring(lastBracket, lastBracket + 7) === '[email-') {
+      // Find the closing ']'
+      const closeIndex = text.indexOf(']', lastBracket + 7);
+      if (closeIndex === -1 || closeIndex >= cutPos) {
+        // No close bracket, or it's at/after our cut point - move cut before '['
+        cutPos = lastBracket;
+      }
     }
   }
   
@@ -86,7 +130,8 @@ function capText(text: string, maxChars: number): string {
 /**
  * Extract body text from Graph message body.
  * Converts HTML to text if content type is HTML.
- * Strips null bytes but does NOT cap (caller must cap after redaction).
+ * Pre-caps at 4x limit with whitespace boundary before processing.
+ * Strips null bytes but does NOT append truncation marker (caller must cap after redaction).
  */
 function extractBodyText(body: GraphMessage["body"]): string | null {
   if (!body?.content) {
@@ -96,17 +141,18 @@ function extractBodyText(body: GraphMessage["body"]): string | null {
   let text: string;
 
   if (body.contentType === "text") {
-    text = body.content;
+    // Pre-cap text at 4x limit with whitespace boundary (before strip/redact)
+    text = preCapText(body.content, MAX_BODY_CHARS * 4);
   } else {
-    // Cap raw HTML at 4x the text limit before conversion
-    const cappedHtml = capText(body.content, MAX_BODY_CHARS * 4);
+    // Cap raw HTML at 4x the text limit before conversion (whitespace boundary)
+    const cappedHtml = preCapText(body.content, MAX_BODY_CHARS * 4);
     text = htmlToText(cappedHtml);
   }
 
   // Strip null bytes
   text = stripNullBytes(text);
 
-  // Note: Capping now happens AFTER redaction in the mapper
+  // Note: Final capping with truncation marker happens AFTER redaction in the mapper
   return text;
 }
 
