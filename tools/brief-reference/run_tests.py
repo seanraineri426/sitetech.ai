@@ -76,6 +76,8 @@ def main():
         ("tests_iter3", "python3 -m harness.tests_iter3"),
         ("tests_zero_cost", "python3 -m harness.tests_zero_cost"),
         ("tests_recall_pack", "python3 -m harness.tests_recall_pack"),
+        ("linden_gate", "python3 test_linden_gate.py"),
+        ("prompt_injection_defense", "python3 -m harness.tests_prompt_injection"),
     ]
     
     for name, command in suites:
