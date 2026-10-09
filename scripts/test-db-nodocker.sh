@@ -14,10 +14,19 @@ DB_NAME="sitetech_test"
 DB_USER="postgres"
 export PGHOST=localhost
 
+# Cleanup function
+cleanup() {
+  echo -e "\n${YELLOW}Cleaning up...${NC}"
+  sudo -u postgres psql -v ON_ERROR_STOP=1 -c "DROP DATABASE IF EXISTS $DB_NAME;" 2>/dev/null || true
+}
+
+# Set trap to cleanup on exit
+trap cleanup EXIT
+
 # Drop and recreate database
 echo -e "\n${YELLOW}Dropping and recreating database...${NC}"
-sudo -u postgres psql -c "DROP DATABASE IF EXISTS $DB_NAME;" 2>/dev/null || true
-sudo -u postgres psql -c "CREATE DATABASE $DB_NAME;"
+sudo -u postgres psql -v ON_ERROR_STOP=1 -c "DROP DATABASE IF EXISTS $DB_NAME;" 2>/dev/null || true
+sudo -u postgres psql -v ON_ERROR_STOP=1 -c "CREATE DATABASE $DB_NAME;"
 
 # Run bootstrap script
 echo -e "\n${YELLOW}Running bootstrap script...${NC}"
@@ -37,9 +46,5 @@ sudo -u postgres psql -d $DB_NAME -v ON_ERROR_STOP=1 -c "CREATE EXTENSION IF NOT
 # Run pgTAP tests
 echo -e "\n${YELLOW}Running pgTAP tests...${NC}"
 PGPASSWORD=postgres pg_prove -d $DB_NAME -U authenticator supabase/tests/*.test.sql
-
-# Cleanup
-echo -e "\n${YELLOW}Cleaning up...${NC}"
-sudo -u postgres psql -c "DROP DATABASE IF EXISTS $DB_NAME;" 2>/dev/null || true
 
 echo -e "\n${GREEN}=== All tests completed ===${NC}"
