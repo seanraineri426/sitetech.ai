@@ -40,13 +40,13 @@ export const CitationSourceSchema = z.enum([
 export type CitationSource = z.infer<typeof CitationSourceSchema>;
 
 export const CitationSchema = z.object({
-  connection_id: z.string().uuid().nullable(),
   source: CitationSourceSchema,
   entity_type: z.string(),
   external_id: z.string(),
   label: z.string().optional(),
-  quote: z.string().optional(),
-  data_date: z.string().optional()
+  connection_id: z.string().uuid().optional(), // UI-added for stale detection
+  data_date: z.string().optional(), // UI-added
+  quote: z.string().optional() // UI-added
 });
 
 export type Citation = z.infer<typeof CitationSchema>;

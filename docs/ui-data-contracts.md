@@ -77,23 +77,27 @@ type Measure<T> = {
 
 ## 2. Citation
 
-Reference to source record with optional quote and data date.
+Reference to source record with optional quote and data date. UI type enriches stored citations with connection metadata.
 
 ```typescript
 type Citation = {
-  connection_id: string | null; // UUID of integration_connection for stale detection
   source: 'procore' | 'msgraph_mail' | 'p6_xer' | 'granola' | 'project_settings' | 'manual';
   entity_type: string; // e.g. 'rfi', 'email', 'schedule_activity', 'meeting'
   external_id: string; // External system's ID
   label?: string; // Human-readable label
-  quote?: string; // Verbatim text from redacted body
-  data_date?: string; // ISO date - when this record was captured
+  connection_id?: string | null; // UUID of integration_connection for stale detection (UI-added)
+  data_date?: string; // ISO date - when this record was captured (UI-added)
+  quote?: string; // Verbatim text from redacted body (UI-added)
 };
 ```
 
 **Purpose:** Every number on screen must cite its source. `connection_id` allows cards to show "source stale" next to the exact number it affects.
 
-**Redaction:** Quotes match against redacted email bodies where addresses are replaced with `[email-<domain>]` placeholders.
+**Storage vs. UI:**
+- **Stored citations** (in `findings.citations` JSONB): `{source, entity_type, external_id, label?}`
+- **UI citations** (enriched): Add `connection_id`, `data_date`, and `quote` from linked records
+
+**Redaction:** Quotes match against redacted email bodies where addresses are replaced with `[email-<domain>]` placeholders. See `docs/email-facts-fields.md`.
 
 **Fixture example:**
 ```typescript
@@ -852,18 +856,28 @@ type UnverifiedSendersSection = {
 
 ## OPEN Items
 
-1. **CEO escalation tier** - A11 escalates to CEO; enum needs CEO tier or change target (actions-registry.md line 600)
-2. **gc_vendor party enum** - A6 notice tracking mentions gc_vendor; not in current company_role enum (actions-registry.md line 306)
-3. **Stale threshold values** - Per-provider staleness thresholds for SourceFreshness (procore: ? hours, msgraph_mail: ? hours, p6_upload: ? hours, granola: ? hours)
-4. **Lead time defaults** - A2/A7 "Confirm lead time" rule needs per-project defaults by spec division (actions-registry.md lines 90, 368)
-5. **Delay cost unit** - Confirm delay cost is per calendar day vs working day (what-if-math.md line 147)
-6. **hours_per_day source** - Needed for fixture; propose add to projects table or XER metadata (what-if-math.md line 78)
-7. **A5 resequence for no-float activities** - When activity has ≤ 0 float, omit resequence or show with note? (actions-registry.md line 770)
-8. **m1-findings-columns.md** - Referenced but not found; citation format derived from context
-9. **email-facts-fields.md** - Referenced but not found; email redaction rules from actions-registry.md
+1. **CEO escalation tier** - A11 outgoing delay notice escalates to CEO if not approved by PX. Current approval tier enum supports only PE/PM/PX. Add CEO tier or change A11 escalation target? (actions-registry.md line 600)
+
+2. **gc_vendor party enum** - A6 notice response tracking mentions gc_vendor as a contract_kind counterparty. Current `company_role` enum on main: owner, architect_engineer, gc, sub. Add gc_vendor role or clarify mapping? (actions-registry.md line 306)
+
+3. **Stale threshold values** - Per-provider staleness thresholds for SourceFreshness.stale computation:
+   - procore: ? hours
+   - msgraph_mail: ? hours
+   - msgraph_drive: ? hours
+   - p6_upload: ? hours
+   - granola: ? hours
+
+4. **Lead time rule** - A2 submittal chase uses: (1) the submittal's `lead_time_days` field if set, else (2) per-project lead time by spec division (configured at onboarding), else (3) "Confirm lead time" with no $ impact shown. There are NO defaults—missing values require explicit confirmation. (actions-registry.md line 90)
+
+5. **Delay cost unit** - Confirm whether `projects.daily_delay_cost_usd` is per calendar day or working day (affects what-if $ calculations and critical-path slip conversions). (what-if-math.md line 147)
+
+6. **hours_per_day source** - What-if math needs `hours_per_day` for float conversion (P6 stores float in hours). Propose adding to `projects` table or storing in XER metadata? (what-if-math.md line 78)
+
+7. **A5 resequence for no-float activities** - When activity has ≤ 0 float remaining, should the resequence suggestion be omitted entirely, or shown with a note that float is exhausted? (actions-registry.md line 770)
 
 ---
 
 ## Version History
 
 - **v1.0 (Oct 9, 2026, 19:17 UTC):** Initial draft with all 13 contract types, fixtures, permission model, UI states, unverified senders section, SourceFreshness integration, email sender_auth, and 9 documented OPEN items.
+- **v1.1 (Oct 9, 2026, 19:26 UTC):** Added `docs/m1-findings-columns.md` and `docs/email-facts-fields.md` reconciled against main migrations (tables don't exist yet; docs describe planned schema). Clarified Citation storage vs. UI enrichment (stored citations lack connection_id/data_date/quote; UI adds them). Fixed OPEN #4 wording (no lead-time defaults). Noted current enum differences for CEO tier and gc_vendor. OPEN count: 7 (resolved #8, #9).

@@ -101,11 +101,11 @@ describe('UI Data Contracts - Fixtures', () => {
   describe('Citation', () => {
     it('parses citation with connection_id and quote', () => {
       const citationFixture: Citation = {
-        connection_id: '550e8400-e29b-41d4-a716-446655440000',
         source: 'procore',
         entity_type: 'rfi',
         external_id: '112',
         label: 'RFI 112: Shaft wall fire rating',
+        connection_id: '550e8400-e29b-41d4-a716-446655440000',
         quote: 'What is the required fire rating for the shaft wall at grid line B?',
         data_date: '2026-10-08'
       };
@@ -115,17 +115,16 @@ describe('UI Data Contracts - Fixtures', () => {
       expect(result.source).toBe('procore');
     });
 
-    it('parses citation without connection_id (manual source)', () => {
-      const manualCitationFixture: Citation = {
-        connection_id: null,
+    it('parses stored citation without UI-added fields', () => {
+      const storedCitationFixture: Citation = {
         source: 'manual',
         entity_type: 'note',
         external_id: 'manual_001',
         label: 'Manual entry by PM'
       };
 
-      const result = CitationSchema.parse(manualCitationFixture);
-      expect(result.connection_id).toBeNull();
+      const result = CitationSchema.parse(storedCitationFixture);
+      expect(result.connection_id).toBeUndefined();
       expect(result.source).toBe('manual');
     });
   });
