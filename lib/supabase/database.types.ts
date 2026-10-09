@@ -24,6 +24,12 @@ isOneToOne: false
       referencedRelation: "profiles"
       referencedColumns: ["id"]
     },{
+      foreignKeyName: "audit_log_org_fk"
+      columns: ["org_id"]
+isOneToOne: false
+      referencedRelation: "orgs"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "audit_log_org_id_fkey"
       columns: ["org_id"]
 isOneToOne: false

@@ -2,7 +2,7 @@
 -- Tests: cross-org isolation, RLS policies, constraints, service role writes
 
 begin;
-select plan(105);
+select plan(125);
 
 -- Setup test data
 set role postgres;
@@ -855,6 +855,151 @@ select is(
   (select count(*)::int from public.emails where body_text like '%Confidential Org B%'),
   0,
   'Member of Org A cannot read Org B email body_text (RLS isolation)'
+);
+reset role;
+
+-- ============================================================================
+-- FOLLOW-UP TESTS (for PR #13 fixes)
+-- ============================================================================
+
+-- Test 106: Deleting raw_record nulls only raw_record_id (keeps org_id, project_id)
+set role postgres;
+insert into public.raw_records (id, org_id, project_id, source, entity_type, external_id, allowlisted_payload, fingerprint) 
+  values ('99999999-9999-9999-9999-999999999991', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-aaaa-aaaa-aaaa-333333333333', 'procore', 'activity', 'del-raw', '{}', 'fp-del');
+insert into public.schedule_activities (org_id, project_id, external_id, task_code, name, raw_record_id) 
+  values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-aaaa-aaaa-aaaa-333333333333', 'DELTEST:ACT', 'DELACT', 'Delete Test', '99999999-9999-9999-9999-999999999991');
+delete from public.raw_records where id = '99999999-9999-9999-9999-999999999991';
+select is(
+  (select row(org_id, project_id, raw_record_id)::text from public.schedule_activities where external_id = 'DELTEST:ACT'),
+  '(aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa,33333333-aaaa-aaaa-aaaa-333333333333,)',
+  'Deleting raw_record nulls only raw_record_id, preserves org_id and project_id'
+);
+reset role;
+
+-- Test 107-108: Deleting connection cascades through project_sources and sync_runs
+set role postgres;
+insert into public.integration_connections (id, org_id, provider, status, display_name, external_account_id) 
+  values ('99999999-9999-9999-9999-999999999991', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'procore', 'active', 'Del Test', 'del-conn');
+insert into public.project_sources (id, org_id, project_id, connection_id, source_project_id) 
+  values ('99999999-9999-9999-9999-999999999991', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-aaaa-aaaa-aaaa-333333333333', '99999999-9999-9999-9999-999999999991', 'del-src');
+insert into public.sync_runs (org_id, project_id, project_source_id, kind, started_at) 
+  values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-aaaa-aaaa-aaaa-333333333333', '99999999-9999-9999-9999-999999999991', 'incremental', now());
+delete from public.integration_connections where id = '99999999-9999-9999-9999-999999999991';
+select is(
+  (select count(*)::int from public.project_sources where id = '99999999-9999-9999-9999-999999999991'),
+  0,
+  'Deleting connection cascades to project_sources'
+);
+select is(
+  (select count(*)::int from public.sync_runs where project_source_id = '99999999-9999-9999-9999-999999999991'),
+  0,
+  'Deleting connection cascades through to sync_runs'
+);
+reset role;
+
+-- Test 109-111: Deleting user nulls created_by, actor_user_id
+set role postgres;
+insert into auth.users (id, email) values ('99999999-9999-9999-9999-999999999999', 'delete-test@example.com');
+-- Profile created by trigger
+insert into public.projects (id, org_id, name, timezone, created_by) 
+  values ('99999999-9999-9999-9999-999999999999', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'User Delete Test', 'UTC', '99999999-9999-9999-9999-999999999999');
+insert into public.audit_log (org_id, entity_type, entity_id, action, actor_user_id) 
+  values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'project', '99999999-9999-9999-9999-999999999999', 'create_project', '99999999-9999-9999-9999-999999999999');
+delete from auth.users where id = '99999999-9999-9999-9999-999999999999';
+select is(
+  (select created_by from public.projects where id = '99999999-9999-9999-9999-999999999999'),
+  null,
+  'Deleting user nulls projects.created_by'
+);
+select is(
+  (select actor_user_id from public.audit_log where entity_id = '99999999-9999-9999-9999-999999999999'),
+  null,
+  'Deleting user nulls audit_log.actor_user_id'
+);
+select is(
+  (select count(*)::int from public.projects where id = '99999999-9999-9999-9999-999999999999'),
+  1,
+  'Project still exists after user delete'
+);
+reset role;
+
+-- Test 112-115: Cross-org project_id rejected on project_sources, sync_runs, raw_records, project_notice_periods
+set role postgres;
+select throws_ok(
+  $$insert into public.project_sources (org_id, project_id, connection_id, source_project_id) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '44444444-bbbb-bbbb-bbbb-444444444444', '11111111-1111-1111-1111-000000000001', 'cross-src')$$,
+  '23503',
+  null,
+  'Cross-org project_id rejected (project_sources)'
+);
+select throws_ok(
+  $$insert into public.sync_runs (org_id, project_id, project_source_id, kind, started_at) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '44444444-bbbb-bbbb-bbbb-444444444444', '11111111-1111-1111-1111-111111111111', 'incremental', now())$$,
+  '23503',
+  null,
+  'Cross-org project_id rejected (sync_runs)'
+);
+select throws_ok(
+  $$insert into public.raw_records (org_id, project_id, source, entity_type, external_id, allowlisted_payload, fingerprint) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '44444444-bbbb-bbbb-bbbb-444444444444', 'procore', 'rfi', 'cross-raw', '{}', 'fp1')$$,
+  '23503',
+  null,
+  'Cross-org project_id rejected (raw_records)'
+);
+select throws_ok(
+  $$insert into public.project_notice_periods (org_id, project_id, contract_kind, notice_type, days, day_basis) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '44444444-bbbb-bbbb-bbbb-444444444444', 'owner_gc', 'delay_time_extension', 10, 'calendar')$$,
+  '23503',
+  null,
+  'Cross-org project_id rejected (project_notice_periods)'
+);
+reset role;
+
+-- Test 116-122: Org delete cascades to all child tables
+set role postgres;
+insert into public.orgs (id, name, slug) values ('88888888-8888-8888-8888-888888888888', 'Cascade Test Org', 'cascade-test');
+insert into public.org_memberships (org_id, user_id, role) values ('88888888-8888-8888-8888-888888888888', '11111111-1111-1111-1111-111111111111', 'owner');
+insert into public.projects (id, org_id, name, timezone) values ('88888888-8888-8888-8888-888888888881', '88888888-8888-8888-8888-888888888888', 'Cascade Project', 'UTC');
+insert into public.integration_connections (id, org_id, provider, status, display_name, external_account_id) values ('88888888-8888-8888-8888-888888888881', '88888888-8888-8888-8888-888888888888', 'procore', 'active', 'Cascade', 'test-conn');
+insert into public.project_sources (id, org_id, project_id, connection_id, source_project_id) values ('88888888-8888-8888-8888-888888888881', '88888888-8888-8888-8888-888888888888', '88888888-8888-8888-8888-888888888881', '88888888-8888-8888-8888-888888888881', 'test-src');
+insert into public.sync_runs (org_id, project_id, project_source_id, kind, started_at) values ('88888888-8888-8888-8888-888888888888', '88888888-8888-8888-8888-888888888881', '88888888-8888-8888-8888-888888888881', 'backfill', now());
+insert into public.raw_records (id, org_id, project_id, source, entity_type, external_id, allowlisted_payload, fingerprint) values ('88888888-8888-8888-8888-888888888881', '88888888-8888-8888-8888-888888888888', '88888888-8888-8888-8888-888888888881', 'procore', 'rfi', 'test-raw', '{}', 'fp-test');
+insert into public.rfis (org_id, project_id, raw_record_id, external_id, number, subject, status) values ('88888888-8888-8888-8888-888888888888', '88888888-8888-8888-8888-888888888881', '88888888-8888-8888-8888-888888888881', 'test-rfi', '999', 'Test', 'open');
+insert into public.submittals (org_id, project_id, raw_record_id, external_id, number, title, status) values ('88888888-8888-8888-8888-888888888888', '88888888-8888-8888-8888-888888888881', '88888888-8888-8888-8888-888888888881', 'test-sub', 'S999', 'Test', 'pending');
+insert into public.emails (org_id, project_id, raw_record_id, external_id, subject, from_address, received_at, received_at_source) values ('88888888-8888-8888-8888-888888888888', '88888888-8888-8888-8888-888888888881', '88888888-8888-8888-8888-888888888881', 'test-email', 'Test', 'test@example.com', now(), 'graph');
+insert into public.schedule_activities (org_id, project_id, external_id, task_code, name) values ('88888888-8888-8888-8888-888888888888', '88888888-8888-8888-8888-888888888881', 'CASCADE:ACT', 'ACT', 'Test');
+delete from public.orgs where id = '88888888-8888-8888-8888-888888888888';
+select is((select count(*)::int from public.rfis where org_id = '88888888-8888-8888-8888-888888888888'), 0, 'Org delete cascades: rfis');
+select is((select count(*)::int from public.submittals where org_id = '88888888-8888-8888-8888-888888888888'), 0, 'Org delete cascades: submittals');
+select is((select count(*)::int from public.raw_records where org_id = '88888888-8888-8888-8888-888888888888'), 0, 'Org delete cascades: raw_records');
+select is((select count(*)::int from public.schedule_activities where org_id = '88888888-8888-8888-8888-888888888888'), 0, 'Org delete cascades: schedule_activities');
+select is((select count(*)::int from public.emails where org_id = '88888888-8888-8888-8888-888888888888'), 0, 'Org delete cascades: emails');
+select is((select count(*)::int from public.sync_runs where org_id = '88888888-8888-8888-8888-888888888888'), 0, 'Org delete cascades: sync_runs');
+select is((select count(*)::int from public.audit_log where org_id = '88888888-8888-8888-8888-888888888888'), 0, 'Org delete cascades: audit_log');
+reset role;
+
+-- Test 123: Connection-leak attack as Org A admin (authenticated + JWT)
+set role authenticated;
+set local "request.jwt.claim.sub" = '33333333-3333-3333-3333-333333333333';
+select throws_ok(
+  $$insert into public.project_sources (org_id, project_id, connection_id, source_project_id) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-aaaa-aaaa-aaaa-333333333333', '22222222-2222-2222-2222-000000000002', 'leak-attack')$$,
+  '23503',
+  null,
+  'Org A admin cannot attach Org B connection (composite FK blocks attack)'
+);
+reset role;
+
+-- Test 124-125: Positive admin update/delete (admin CAN modify own org)
+set role authenticated;
+set local "request.jwt.claim.sub" = '33333333-3333-3333-3333-333333333333';
+insert into public.project_holidays (org_id, project_id, holiday_date, label) 
+  values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-aaaa-aaaa-aaaa-333333333333', '2027-12-31', 'Admin Test');
+select is(
+  (select count(*)::int from public.project_holidays where label = 'Admin Test'),
+  1,
+  'Admin CAN insert into own org'
+);
+delete from public.project_holidays where label = 'Admin Test';
+select is(
+  (select count(*)::int from public.project_holidays where label = 'Admin Test'),
+  0,
+  'Admin CAN delete from own org'
 );
 reset role;
 
