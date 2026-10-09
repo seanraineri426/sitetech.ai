@@ -329,11 +329,11 @@ From https://developers.procore.com/reference/rest/drawings?version=latest and h
 >
    330|> We **do not** store attachments, drawing files or images, PDFs, comments, or Procore login emails. We don't use extracted drawing text.
 >
-> **Two storage modes. We ask which one Procore will confirm.**
-> 1. **Default mode:** we store the allowlisted fields above, plus a dated history of changes to those fields only (for example, "status changed from Open to Closed on Oct 3"). The history lets us confirm outcomes, for example that an RFI was answered before the activity it blocked started, without re-reading the whole project.
-> 2. **Fallback mode (minimal storage), which can be enabled per customer:** Procore data is processed in memory and not retained. We keep only what a user's action card shows: the record number, the specific dates and amounts behind the card's days-and-dollars figures, one quoted line, and stable Procore IDs. Source links open the live Procore page. We keep no field history; outcome checks re-read the live record.
+> **Two storage modes. In-memory is the DEFAULT per CTO decision 2026-10-09.**
+> 1. **Default mode (in-memory, minimal storage):** Procore field values do not reach the model. We keep only what a user's action card shows: the record number, the specific dates and amounts behind the card's days-and-dollars figures, one quoted line, and stable Procore IDs. Source links open the live Procore page. We keep no field history; outcome checks re-read the live record. **NO customer field values reach the model or storage.**
+> 2. **Field storage mode (requires Procore's express written consent under Developer Policy §2(h)):** we store the allowlisted fields above, plus a dated history of changes to those fields only (for example, "status changed from Open to Closed on Oct 3"). The history lets us confirm outcomes without re-reading the whole project. **This mode happens ONLY with Procore's express written consent under Developer Policy §2(h).**
 >
-> **If Procore prefers, we will run Fallback mode by default for all customers** and offer Default mode only where Procore confirms it.
+> **If Procore authorizes Field storage mode in writing, we will offer it as an opt-in for customers where Procore confirms it.** Otherwise, we remain in-memory by default.
 >
 > **Why we keep it.** Only to show that customer's own team their open actions and the confirmed results of actions they approved. One customer's data is never used for, shown to, or combined with another customer's data, and never used in templates, benchmarks or marketing.
 >
@@ -347,11 +347,21 @@ From https://developers.procore.com/reference/rest/drawings?version=latest and h
 > - We honor customer deletion requests.
 > - Security incidents are reported to security@procore.com within 24 hours, per the API Terms.
 >
+> **Vendor encryption at rest.**
+> - **Supabase:** "All customer data is encrypted at rest with AES-256 and in transit via TLS." (https://supabase.com/security)
+> - **Supabase Data Processing Addendum:** "All hard disks are encrypted-at-rest using the industry-standard AES-256 algorithm" and "the regularly scheduled backups are also encrypted-at-rest using AES-256." (https://supabase.com/legal/customer-resources/data-processing-addendum)
+> - **Vercel:** "Vercel encrypts data at rest (when on disk) with 256 bit Advanced Encryption Standard (AES-256)." (https://vercel.com/docs/security/compliance)
+> - **Vercel Data Processing Addendum, Schedule 2 §7:** "Customer Data is stored encrypted using AES-256." (https://vercel.com/legal/dpa)
+> - **Note:** Log storage at both vendors is covered only by blanket wording. SiteTech keeps customer field values out of logs by design (see PR https://cursor.com/codebase/nfl-bot/sitetech-app/pull/19). Trust-center and SOC 2 report access has been requested and is pending.
+>
+> **Vendor incidents.**
+> - **Vercel trust center** (security.vercel.com) lists a "Vercel April 2026 Security Incident" ("unauthorized access to certain internal Vercel systems", affecting "a subset of customers"). **SiteTech had no deployment or data on Vercel at the time.**
+>
    350|> **Consent.** Before any sync, the installing organization explicitly authorizes the reads, processing and storage described here. Our public privacy policy describes the same practices.
 >
 > **What we're asking Procore to confirm in writing:**
-> 1. That the storage described above is permitted. Under Developer Policy §2(h) ("build databases ... or otherwise create copies ... without Procore's express consent") we ask for express consent for **(a) Default mode** or, if not, **(b) Fallback mode**.
-> 2. That keeping a dated history of the allowlisted fields while connected is consistent with Developer Policy §2(n), given that we delete the history when a record is deleted and on disconnect.
+> 1. That the in-memory default mode described above is permitted. Under Developer Policy §2(h) ("build databases ... or otherwise create copies ... without Procore's express consent"), **(a) in-memory mode with only record numbers, dates, amounts, one quoted line and stable IDs for action cards** is our default and we believe compliant, and **(b) field storage mode with dated history** requires express consent per §2(h) and would only be offered to customers if Procore authorizes it in writing.
+> 2. That keeping a dated history of the allowlisted fields in field storage mode (if authorized) while connected is consistent with Developer Policy §2(n), given that we delete the history when a record is deleted and on disconnect.
 > 3. That the initial sync of a newly enabled project, limited to the allowlisted fields and a bounded lookback, is not "bulk export" under API Terms §5.4(b).
 > 4. That SiteTech, as described, is not a competitive or replicating product under API Terms §3(j) and Developer Policy §4(b), or Procore's written authorization if it considers one necessary.
 > 5. Whether Procore would rather we use any other API (including Agentic APIs) for part of this use case.
