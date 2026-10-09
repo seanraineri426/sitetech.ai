@@ -1,5 +1,7 @@
-{
-  "_FICTIONAL": "ALL DATA IN THIS EXAMPLE IS FICTIONAL. Not a real project, company, or person.",
+main-body words: 586
+schema: valid
+dangling refs: none
+L. Not a real project, company, or person.",
   "schema_version": "1.0",
   "brief_id": "brief_linden_yard_2026-10-06_v1",
   "run_id": "run_2026-10-06_linden_yard",
@@ -778,27 +780,6 @@
               "total_float_wd"
             ],
             "as_of": "XER data date 2026-09-28"
-          }
-        ]
-      },
-      {
-        "headline": "Duct shop drawings approved 9/15 against M-401 Rev 2; Rev 3 (ASI-07) issued 9/24. Fabricated Stack 07 duct at risk of rework (A1700 TF 9). See top item 7",
-        "tag": "NEW",
-        "confidence": "Confirmed",
-        "owner": {
-          "name": "Kevin Osei",
-          "role": "GC Project Engineer",
-          "company": "Ironbridge Builders"
-        },
-        "action": "Re-review the duct shop drawings against Rev 3 and confirm fabricated quantities",
-        "citations": [
-          {
-            "ref": "procore:submittal:6401",
-            "label": "Submittal 23 31 13-002"
-          },
-          {
-            "ref": "procore:drawing_revision:7741",
-            "label": "M-401 Rev 3"
           }
         ]
       }

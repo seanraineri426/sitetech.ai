@@ -50,10 +50,12 @@ ASI-07 (9/24) enlarged the Stack 07 shaft after duct shop drawings were approved
 
 #### Schedule (not in top 7)
 - NEW · L2 plumbing rough-in inspection failed. A1620 has 4 wd of float. New RFI 46. Re-inspection Fri 10/9 → Tom Alvarez: Correct the 3 items and get RFI 46 answered before re-inspection on 10/9 *[Inspection log 10/6 (Failed)] · [RFI #46] · [A1620]*
-- NEW · Duct shop drawings approved 9/15 against M-401 Rev 2; Rev 3 (ASI-07) issued 9/24. Fabricated Stack 07 duct at risk of rework (A1700 TF 9). See top item 7 → Kevin Osei: Re-review the duct shop drawings against Rev 3 and confirm fabricated quantities *[Submittal 23 31 13-002] · [M-401 Rev 3]*
 
 #### Cost (not in top 7)
 - NEW · Rock in the Wing B elevator pit: RFI 41 due Thu 10/8, CE-031 ROM $145k (counted in item 3), concrete crew idle on the east half. A1210 has 5 wd of float → Raj Mehta: EOR direction on RFI 41 (raise pit vs. remove rock) by 10/8; priced CE-031 by Fri 10/9 *[RFI #41] · [CE-031] · [Notes log 10/5] · [Email: Granite Line 10/6 4:40 PM]*
+
+#### Procurement (not in top 7)
+- NEW · Submittal 23 31 13-002 (duct shop drawings) approved 9/15 before M-401 Rev 3 (ASI-07, issued 9/24): approved before revision, confirm fabrication hold. Stack 07 duct at risk of rework (A1700 TF 9). See top item 7 → Kevin Osei: Re-review the duct shop drawings against Rev 3 and confirm fabricated quantities *[Submittal 23 31 13-002] · [M-401 Rev 3]*
 
 #### Overdue RFIs
 | Record | Days overdue | Ball in court | Note |
