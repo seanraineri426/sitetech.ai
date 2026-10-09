@@ -112,56 +112,44 @@ The system maintains an audit log of:
 
 ## What the Tests Prove
 
-We maintain a **hostile email test suite** (9 adversarial emails, 42 automated checks) that validates defenses at three levels:
+**Test coverage**: 19 checks across 9 hostile email cases, executing the actual pipeline:
 
-### Level 1: FIXTURE CHECKS (39 checks)
+1. **Baseline Pipeline** (3 checks)  
+   ✓ Pipeline completes without hostile input  
+   ✓ Produces valid brief with findings  
+   ✓ No fabricated refs in baseline
 
-1. **Unknown Domain Rejection** (6 checks)  
-   ✓ Emails from `malicious-external.example`, `attacker.example`, `fake-larkspur.example` etc. are rejected as unknown parties
+2. **Fact Rules & Impact** (2 checks)  
+   ✓ fact_rules produces deterministic findings  
+   ✓ Hostile facts don't affect baseline finding count
 
-2. **Metadata Safety** (7 checks)  
-   ✓ Hostile instructions in email bodies don't leak into system metadata (email IDs, subjects remain clean)
+3. **Rank Stage** (2 checks)  
+   ✓ Rank produces insights from fixture  
+   ✓ Top items are code-generated refs (not hostile)
 
-3. **Fake Owner Directive** (1 check)  
-   ✓ Email from `legal@fake-larkspur.example` claiming owner authority is rejected (domain doesn't match configured owner)
+4. **Verify Stage** (3 checks)  
+   ✓ Verify produces verified insights  
+   ✓ Drops unverifiable claims  
+   ✓ All refs exist in fixture index
 
-4. **Tool Call Neutering** (5 checks)  
-   ✓ Embedded `<tool_call>`, `{{action:`, `[SYSTEM:`, `<parameters>` tags are treated as quoted text, not executed
+5. **Deliver Stage** (2 checks)  
+   ✓ Deliver produces valid brief structure  
+   ✓ No fabricated refs in delivered output
 
-5. **Claim Attribution** (4 checks)  
-   ✓ Dollar amounts ($500k, $2M, $1M, $50k) from hostile emails are attributed to the sender, not accepted as fact
+6. **Domain Party Resolution** (2 checks)  
+   ✓ Unknown domains identified  
+   ✓ Not treated as project parties
 
-6. **Status Override Blocked** (4 checks)  
-   ✓ Instructions like "mark RFI 42 closed", "zero risks", fake system status updates are ignored  
-   ✓ Actual status comes from Procore API (RFI status) or deterministic rules (overdue computation)
+7. **Pipeline Safety** (3 checks)  
+   ✓ Brief word count reasonable  
+   ✓ No hostile instruction phrases verbatim in output  
+   ✓ RFI/CE statuses unchanged from fixture
 
-7. **Hidden Instruction Formats** (4 checks)  
-   ✓ Instructions in HTML comments, forwarded message headers, bracketed tags, and fake system messages are quoted, not executed
+8. **Cross-Stage Integration** (2 checks)  
+   ✓ Hostile facts flow through fact_rules → impact → rank → verify → deliver  
+   ✓ Output brief grounded in fixture records only
 
-8. **Action Execution Blocked** (3 checks)  
-   ✓ Requests to send emails, approve changes, or mark items complete are blocked  
-   ✓ T2 actions (send/write) are disabled in V1; any action requires human approval
-
-### Level 2: EXTRACTION FACTS (cached-style test objects)
-
-Built cached-style fact objects for hostile emails:
-- **Faithful extractions**: What a model would return for each hostile email (quoted claims, attributed to sender party)
-- **Adversarial extractions**: What a compromised model might return (e.g., "RFI 42 closed", owner directive from unknown domain with direct email in sender_party field)
-
-### Level 3: PIPELINE CHECKS (3 checks)
-
-Pushed hostile fact objects through actual pipeline code: `fact_rules` → `impact` → `rank` → `verifier`
-
-1. **No RFI Status Changes** (1 check)  
-   ✓ Hostile fact claiming "RFI 42 closed" does not change actual RFI status (Procore API is authority)
-
-2. **No Unknown-Domain Owner Directives** (1 check)  
-   ✓ Facts from `sender_party="unknown party"` cannot create owner directives
-
-3. **No $/Date/Rank Manipulation** (1 check)  
-   ✓ Amounts and dates from hostile facts are attributed, not applied as authoritative updates
-
-**Result**: 42/42 checks pass (39 fixture + 3 pipeline). The test suite runs in CI on every commit.
+**Result**: 19/19 checks pass. Tests execute real pipeline code (no stubs, no `assert True`). Suite runs in CI on every commit with network isolation.
 
 ## Residual Risks
 
