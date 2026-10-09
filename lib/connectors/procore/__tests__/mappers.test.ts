@@ -551,6 +551,26 @@ describe("Procore mappers", () => {
       const normalized = mapProcoreSubmittalToNormalized(submittal);
       expect(normalized.scheduled_task).toBeNull();
     });
+
+    it("handles null scheduled_task.code", () => {
+      const submittal = {
+        ...mockSubmittal,
+        scheduled_task: {
+          id: 333,
+          code: null,
+          name: "Install Steel",
+        },
+      };
+      const normalized = mapProcoreSubmittalToNormalized(submittal);
+      expect(normalized.scheduled_task).not.toBeNull();
+      expect(normalized.scheduled_task?.code).toBeNull();
+    });
+
+    it("preserves scheduled_task.code when present", () => {
+      const normalized = mapProcoreSubmittalToNormalized(mockSubmittal);
+      expect(normalized.scheduled_task).not.toBeNull();
+      expect(normalized.scheduled_task?.code).toBe("A1020");
+    });
   });
 
   describe("Docs fixtures validation", () => {
