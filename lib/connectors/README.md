@@ -193,9 +193,11 @@ lib/connectors/
 
 **Plain Text:** Connector sends `Prefer: outlook.body-content-type="text"` header. If Graph returns HTML anyway, strips tags to text with dependency-free converter.
 
-**Fingerprint:** id + received_at + subject + **body_text** (full body, not bodyPreview) + **domains** (not full addresses) + categories
+**Fingerprint:** id + received_at + subject + **body_text** (full body redacted, not bodyPreview) + **domains** (not full addresses) + categories
 
-**NOT fingerprinted:** isRead (read status), raw email addresses (only domains)
+**Redacted:** All text fields (subject, body_preview, body_text) have email addresses replaced with `[email-domain]`
+
+**NOT fingerprinted:** isRead (read status), raw email addresses (only domains; addresses stored in from/to/cc fields only)
 
 ### Graph DriveItem
 ```typescript
@@ -220,8 +222,8 @@ lib/connectors/
 - Internal P6 task_id NOT in fingerprint
 
 **Graph Mail:**
-- Fingerprint: id + received_at + subject + **body_text** (full body including quoted history, NOT bodyPreview) + **participant domains** + categories
-- Raw addresses stored but NOT fingerprinted as content (RLS + 30-day purge)
+- Fingerprint: id + received_at + subject + **body_text redacted** (full body including quoted history, NOT bodyPreview) + **participant domains** + categories
+- Raw addresses stored in from/to/cc fields only (RLS + 30-day purge); text fields redacted
 - Model layer maps addresses → company+role
 - Body stored as plain text; HTML stripped if Graph ignores Prefer header
 
