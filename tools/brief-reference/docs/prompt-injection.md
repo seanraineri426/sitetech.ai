@@ -112,9 +112,9 @@ The system maintains an audit log of:
 
 ## What the Tests Prove
 
-We maintain a **hostile email test suite** (34 test cases) that validates the defenses. The tests use 9 adversarial emails with various prompt injection techniques:
+We maintain a **hostile email test suite** (9 adversarial emails, 42 automated checks) that validates defenses at three levels:
 
-### Test Coverage
+### Level 1: FIXTURE CHECKS (39 checks)
 
 1. **Unknown Domain Rejection** (6 checks)  
    ✓ Emails from `malicious-external.example`, `attacker.example`, `fake-larkspur.example` etc. are rejected as unknown parties
@@ -142,7 +142,26 @@ We maintain a **hostile email test suite** (34 test cases) that validates the de
    ✓ Requests to send emails, approve changes, or mark items complete are blocked  
    ✓ T2 actions (send/write) are disabled in V1; any action requires human approval
 
-**Result**: 34/34 checks pass. The test suite runs in CI on every commit.
+### Level 2: EXTRACTION FACTS (cached-style test objects)
+
+Built cached-style fact objects for hostile emails:
+- **Faithful extractions**: What a model would return for each hostile email (quoted claims, attributed to sender party)
+- **Adversarial extractions**: What a compromised model might return (e.g., "RFI 42 closed", owner directive from unknown domain with direct email in sender_party field)
+
+### Level 3: PIPELINE CHECKS (3 checks)
+
+Pushed hostile fact objects through actual pipeline code: `fact_rules` → `impact` → `rank` → `verifier`
+
+1. **No RFI Status Changes** (1 check)  
+   ✓ Hostile fact claiming "RFI 42 closed" does not change actual RFI status (Procore API is authority)
+
+2. **No Unknown-Domain Owner Directives** (1 check)  
+   ✓ Facts from `sender_party="unknown party"` cannot create owner directives
+
+3. **No $/Date/Rank Manipulation** (1 check)  
+   ✓ Amounts and dates from hostile facts are attributed, not applied as authoritative updates
+
+**Result**: 42/42 checks pass (39 fixture + 3 pipeline). The test suite runs in CI on every commit.
 
 ## Residual Risks
 
