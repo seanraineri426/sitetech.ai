@@ -36,21 +36,30 @@ def main():
     if result.stderr:
         print("STDERR:", result.stderr, file=sys.stderr)
     
-    # Check the result
-    if "11/11" in result.stdout and "0 must-not-flag" in result.stdout.lower() or "must_not_flag_violations\": 0" in result.stdout:
-        if "fabricated_refs\": 0" in result.stdout or "0 fabricated" in result.stdout:
-            print()
-            print("=" * 70)
-            print("✓ SCORER VALIDATION PASSED")
-            print("  - Scorer correctly identifies 11/11 findings")
-            print("  - 0 must-not-flag violations detected")
-            print("  - 0 fabricated refs detected")
-            print("=" * 70)
-            return 0
+    # Check the result - gate must PASS for gold standard
+    gate_passed = '"gate": "PASS"' in result.stdout
+    has_11_11 = "11/11" in result.stdout or '"recall_must_surface": "11/11"' in result.stdout
+    has_zero_violations = '"must_not_flag_violations": 0' in result.stdout
+    has_zero_fabricated = '"fabricated_refs": 0' in result.stdout
+    
+    if gate_passed and has_11_11 and has_zero_violations and has_zero_fabricated:
+        print()
+        print("=" * 70)
+        print("✓ SCORER VALIDATION PASSED")
+        print("  - Scorer correctly identifies 11/11 findings")
+        print("  - 0 must-not-flag violations detected")
+        print("  - 0 fabricated refs detected")
+        print("  - Gate: PASS")
+        print("=" * 70)
+        return 0
     
     print()
     print("=" * 70)
     print("❌ SCORER VALIDATION FAILED")
+    print(f"  Gate passed: {gate_passed}")
+    print(f"  Has 11/11: {has_11_11}")
+    print(f"  Zero violations: {has_zero_violations}")
+    print(f"  Zero fabricated: {has_zero_fabricated}")
     print("=" * 70)
     return 1
 

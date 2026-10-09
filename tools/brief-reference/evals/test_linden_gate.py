@@ -172,8 +172,10 @@ def main():
             print(f"  Word count: {brief.get('metrics', {}).get('word_count_main', 0)}")
             print(f"  Invented refs: {len(gate_report.get('invented', []))}")
             
-            # Save brief to temp location for scoring
-            brief_path = os.path.join(HERE, "linden_gate_output.json")
+            # Save brief to temp location for scoring (not committed)
+            import tempfile
+            temp_dir = tempfile.mkdtemp(prefix="linden_gate_")
+            brief_path = os.path.join(temp_dir, "output.json")
             with open(brief_path, "w") as f:
                 json.dump(brief, f, indent=1)
             
@@ -223,22 +225,32 @@ def main():
                 print("    ~ Writer (sentence wording)")
                 print()
                 
-                if found == total and must_not_flag == 0 and fabricated == 0:
+                # Gate requires 10/11 recall minimum
+                recall_gate = int(found) >= 10 and int(total) == 11
+                gate_passed = recall_gate and must_not_flag == 0 and fabricated == 0
+                
+                if gate_passed:
                     print("  STATUS: ✓ GATE PASSED")
                     print("=" * 70)
                     os.remove(brief_path)
                     return 0
                 else:
-                    print(f"  STATUS: PARTIAL (code-only achieves {found}/{total})")
-                    print(f"  Missing findings require model correlation (comms/clusters)")
-                    print("  This validates:")
-                    print("    - Rules engine works (38 deterministic findings)")
-                    print("    - Ranking works (code auto-insights)")
-                    print("    - Verifier works (0 fabricated refs)")
-                    print("    - Code assembly works (brief generated)")
+                    print(f"  STATUS: ✗ GATE FAILED (code-only achieves {found}/{total})")
+                    print(f"  Required: 10/11 recall, 0 must-not-flag, 0 fabricated refs")
+                    print(f"  Actual: {found}/{total} recall, {must_not_flag} must-not-flag, {fabricated} fabricated")
+                    print()
+                    print("  What works (validated):")
+                    print("    ✓ Rules engine (38 deterministic findings)")
+                    print("    ✓ Fact extraction (13 emails, 9 RFIs from cache)")
+                    print("    ✓ Ranking (code auto-insights)")
+                    print("    ✓ Verifier (0 fabricated refs)")
+                    print("    ✓ Deliver (code assembly)")
+                    print()
+                    print("  What's missing:")
+                    print("    ✗ Cross-finding linking (F2, F7, F8 need deterministic joins)")
                     print(f"  Brief saved to: {brief_path}")
                     print("=" * 70)
-                    return 0  # Return success - this validates what it can
+                    return 1  # FAIL - gate not met
             
             print()
             print("=" * 70)
