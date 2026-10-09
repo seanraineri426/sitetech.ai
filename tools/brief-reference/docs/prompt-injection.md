@@ -146,9 +146,12 @@ Monkeypatch real stage functions to obey an injection, then assert the matching 
 
 **Result**: 18/18 checks pass. Hostile emails with obedient instructions are injected into the pipeline; code stages (fact_rules, rank, verify, deliver) block all attempts to change records, values, status, top items, or add hostile recipients/phrases. LLM stages (comms, cluster, writer) are stubbed with empty outputs (code fallbacks write the brief). Party resolution correctly labels all non-project senders as 'unknown party'.
 
-**Sender party enforcement**: After fixing two bugs in fact_rules.py, unknown senders cannot create or suppress findings:
-- email_slip_rules skips emails from senders that don't resolve to a project party via party_for_record
-- _received_later only allows received_on_site facts from project parties to suppress earlier slip findings
+**Sender party enforcement**: Three stages gate on sender party (party_for_record):
+- email_slip_rules skips emails from senders that don't resolve to a project party
+- _received_later (called by email_slip_rules) only allows received_on_site facts from project parties to suppress earlier slip findings
+- delivery_complete_for (called by fact_rules, rank, verifier) only allows emails from project parties to confirm material receipt
+
+**Strict-gate trade-off**: Real schedule slips reported by senders not in project_parties are currently dropped. If a vendor outside the configured parties list sends a legitimate delay notice, the brief won't surface it. This is the current security posture; future iterations may add an "unknown sender" signal category.
 
 **Known limitation** (printed, not asserted): Party resolution is domain-only. An email from the exact owner domain (larkspurdev.example) with a mismatched display name ("Gus Moreno (Bayline Steel)") resolves to the owner party. The code cannot distinguish this spoof from a real owner email without SPF/DKIM/display-name verification.
 
@@ -234,12 +237,14 @@ We state risks honestly:
 
 The SiteTech Daily Project Brief system is architected to resist prompt injection attacks through:
 - Separation of extraction (model) from decision-making (code)
-- Domain-based sender verification (unknown domains rejected)
-- Number verification against cited records
+- Domain-based sender verification (unlisted domains labeled 'unknown party', cannot create/suppress findings)
+- Number verification against cited records (token-boundary matching, no substring matches)
 - No auto-execute actions (human approval required)
 - Full citation and audit trail
 
-Our test suite validates these defenses with 10 hostile email cases (including spoofed domain). All 11 checks pass.
+Test suite validates these defenses with 18 checks across 10 hostile emails plus 4 mutation regression checks.
+
+**Known limitation**: Party resolution is domain-only. An email from the exact owner domain with a mismatched display name ("Attacker Name <attacker@owner-domain.example>") resolves to the owner party. The code cannot distinguish this from a legitimate owner email without SPF/DKIM/display-name verification.
 
 **Residual risks** exist (social engineering, model errors, upstream compromise) and are mitigated through confidence labels, citation visibility, and PM review. The system is designed to assist, not replace, human judgment.
 

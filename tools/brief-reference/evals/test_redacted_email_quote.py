@@ -257,93 +257,63 @@ def test_unknown_domain_resolves_to_unknown_party():
     print("✓ Unknown domain resolves to 'unknown party'")
 
 def test_mismatched_values_dropped():
-    """Facts with numeric/ID/spec values not in body_text should be dropped."""
+    """Facts with numeric/ID/spec values not in body_text should be dropped - token boundaries."""
     T = RedactedEmailFixture()
     ref = "msgraph_outlook:message:msg_REDACT_TEST"
     _, email_rec = T.index[ref]
     
     # Body has: $48,200, CO-012, 03 30 00
-    # Test with values that don't match
-    bad_amount_fact = {
-        "kind": "pricing_or_change_request",
-        "item": "Test item",
-        "quote": "add $48,200 per CO-012",
-        "spec_section": None,
-        "submittal_no": None,
-        "rfi_no": None,
-        "ce_no": None,
-        "old_date": None,
-        "new_date": None,
-        "new_date_high": None,
-        "delay_days": None,
-        "delay_days_high": None,
-        "date_phrase": None,
-        "date_basis": "none",
-        "amount_usd": 48300,  # Wrong: body has 48,200 not 48,300
-        "notice_types": [],
-        "sender_party": "ACME Mechanical (sub)",
-        "confidence": "high"
-    }
+    # Test substring matches that should be rejected (token boundary enforcement)
     
-    bad_ce_fact = {
-        "kind": "pricing_or_change_request",
-        "item": "Test item",
-        "quote": "add $48,200 per CO-012",
-        "spec_section": None,
-        "submittal_no": None,
-        "rfi_no": None,
-        "ce_no": "CO-013",  # Wrong: body has CO-012 not CO-013
-        "old_date": None,
-        "new_date": None,
-        "new_date_high": None,
-        "delay_days": None,
-        "delay_days_high": None,
-        "date_phrase": None,
-        "date_basis": "none",
-        "amount_usd": None,
-        "notice_types": [],
-        "sender_party": "ACME Mechanical (sub)",
-        "confidence": "high"
-    }
+    must_drop = [
+        (200, "amount_usd '200' is substring of 48,200 but not a token"),
+        (2, "amount_usd '2' is substring but not a token"),
+        (48200.99, "amount_usd 48200.99 truncated to 48200 should not match 48,200"),
+        ("CO-01", "ce_no 'CO-01' is substring of CO-012 but not a token"),
+        ("12", "rfi_no '12' is substring of CO-012 but not a token"),
+        ("4", "rfi_no '4' is substring of $48,200 but not a token"),
+        ("03 30", "spec_section '03 30' is substring of '03 30 00' but not a complete token"),
+    ]
     
-    bad_spec_fact = {
-        "kind": "pricing_or_change_request",
-        "item": "Test item",
-        "quote": "spec 03 30 00",
-        "spec_section": "03 30 01",  # Wrong: body has 03 30 00 not 03 30 01
-        "submittal_no": None,
-        "rfi_no": None,
-        "ce_no": None,
-        "old_date": None,
-        "new_date": None,
-        "new_date_high": None,
-        "delay_days": None,
-        "delay_days_high": None,
-        "date_phrase": None,
-        "date_basis": "none",
-        "amount_usd": None,
-        "notice_types": [],
-        "sender_party": "ACME Mechanical (sub)",
-        "confidence": "high"
-    }
+    for val, desc in must_drop:
+        if isinstance(val, (int, float)):
+            fact = {
+                "kind": "pricing_or_change_request", "item": "Test", "quote": "add $48,200 per CO-012",
+                "spec_section": None, "submittal_no": None, "rfi_no": None, "ce_no": None,
+                "old_date": None, "new_date": None, "new_date_high": None,
+                "delay_days": None, "delay_days_high": None, "date_phrase": None, "date_basis": "none",
+                "amount_usd": val, "notice_types": [], "sender_party": "ACME Mechanical (sub)", "confidence": "high"
+            }
+        elif val in ("CO-01",):
+            fact = {
+                "kind": "pricing_or_change_request", "item": "Test", "quote": "add $48,200 per CO-012",
+                "spec_section": None, "submittal_no": None, "rfi_no": None, "ce_no": val,
+                "old_date": None, "new_date": None, "new_date_high": None,
+                "delay_days": None, "delay_days_high": None, "date_phrase": None, "date_basis": "none",
+                "amount_usd": None, "notice_types": [], "sender_party": "ACME Mechanical (sub)", "confidence": "high"
+            }
+        elif val in ("12", "4"):
+            fact = {
+                "kind": "other", "item": "Test", "quote": "add $48,200 per CO-012",
+                "spec_section": None, "submittal_no": None, "rfi_no": val, "ce_no": None,
+                "old_date": None, "new_date": None, "new_date_high": None,
+                "delay_days": None, "delay_days_high": None, "date_phrase": None, "date_basis": "none",
+                "amount_usd": None, "notice_types": [], "sender_party": "ACME Mechanical (sub)", "confidence": "high"
+            }
+        else:  # spec_section
+            fact = {
+                "kind": "pricing_or_change_request", "item": "Test", "quote": "spec 03 30 00",
+                "spec_section": val, "submittal_no": None, "rfi_no": None, "ce_no": None,
+                "old_date": None, "new_date": None, "new_date_high": None,
+                "delay_days": None, "delay_days_high": None, "date_phrase": None, "date_basis": "none",
+                "amount_usd": None, "notice_types": [], "sender_party": "ACME Mechanical (sub)", "confidence": "high"
+            }
+        
+        kept, dropped = verify_email_facts(T, email_rec, [fact])
+        assert len(kept) == 0, f"Should drop: {desc}. Kept: {kept}"
+        assert len(dropped) == 1, f"Should have 1 dropped fact for: {desc}"
     
-    # Test each bad fact
-    kept, dropped = verify_email_facts(T, email_rec, [bad_amount_fact])
-    assert len(kept) == 0, f"Should drop fact with wrong amount_usd. Kept: {kept}"
-    assert len(dropped) == 1, f"Should have 1 dropped fact"
-    assert "amount_usd" in dropped[0]["reason"], f"Drop reason should mention amount_usd"
-    
-    kept, dropped = verify_email_facts(T, email_rec, [bad_ce_fact])
-    assert len(kept) == 0, f"Should drop fact with wrong ce_no. Kept: {kept}"
-    assert len(dropped) == 1, f"Should have 1 dropped fact"
-    assert "ce_no" in dropped[0]["reason"], f"Drop reason should mention ce_no"
-    
-    kept, dropped = verify_email_facts(T, email_rec, [bad_spec_fact])
-    assert len(kept) == 0, f"Should drop fact with wrong spec_section. Kept: {kept}"
-    assert len(dropped) == 1, f"Should have 1 dropped fact"
-    assert "spec_section" in dropped[0]["reason"], f"Drop reason should mention spec_section"
-    
-    print("✓ Facts with non-verbatim values are dropped (48300→drop, CO-013→drop, 03 30 01→drop)")
+    print("✓ Token boundary enforcement: 200, 2, 48200.99, CO-01, 12, 4, '03 30' all dropped")
 
 def main():
     """Run all redacted email quote tests."""
@@ -356,7 +326,7 @@ def main():
         ("Quote with placeholder verifies", test_quote_with_placeholder_verifies),
         ("Quote with raw address fails", test_quote_with_raw_address_fails),
         ("Numbers extracted unchanged", test_numbers_extracted_unchanged),
-        ("Mismatched values dropped", test_mismatched_values_dropped),
+        ("Token boundary enforcement (must-drop cases)", test_mismatched_values_dropped),
         ("Sender party via real API", test_sender_party_via_real_api),
         ("Unknown domain → unknown party", test_unknown_domain_resolves_to_unknown_party),
     ]

@@ -34,7 +34,8 @@ MATERIAL_RECEIVED_RE = __import__("re").compile(
     r"\b(?:on[ -]?site\s+and\s+inventoried|delivered\s+and\s+tagged|received\s+and\s+(?:inventoried|tagged)|"
     r"ignore\s+this\s+(?:notice|delay)|can\s+ignore\s+this\s+notice)\b",
     __import__("re").I)
-ORDER_KEY_RE = __import__("re").compile(r"\b(?:PO|SO|order|shipment|sales\s+order)[-#:\s]*([A-Za-z0-9\-]+)\b", __import__("re").I)
+# Requires at least one digit; optional letters + optional hyphen + digits (e.g. PO-123, CO12, 12345)
+ORDER_KEY_RE = __import__("re").compile(r"\b(?:PO|SO|order|shipment|sales\s+order)[-#:\s]*([A-Z]*-?\d+)\b", __import__("re").I)
 
 RFI_STALE_CLAIM_RE = __import__("re").compile(
     r"\bRFI\s*#?\s*(\d+)\b[\s\S]{0,80}?\b(?:overdue|unanswered|still\s+open|past\s+due|awaiting\s+(?:your\s+)?(?:answer|response)|no\s+answer)\b|"
@@ -80,6 +81,7 @@ def _order_keys(text):
 
 def delivery_complete_for(T, email_ref):
     """Suppress delivery-delay when a delivery_log OR a later email/Procore record shows the same material received/on-site."""
+    from ..parties import party_for_record
     if email_ref not in T.index: return None
     rec = T.index[email_ref][1]; text = _email_text(rec)
     keys = _order_keys(text)
@@ -93,11 +95,14 @@ def delivery_complete_for(T, email_ref):
         if keys and any(k.lower() in blob.lower() for k in keys): return d
         if d.get("order_number") and str(d["order_number"]).lower() in text.lower(): return d
     # Later email in the same thread (or naming the same PO/SO) that clearly says received / on site / delivered.
+    # Only emails from project parties may confirm receipt.
     emails = T.emails["emails"] if isinstance(T.emails, dict) else (T.emails or [])
     conv = rec.get("conversation_id"); recv_at = rec.get("received_at") or ""
     for e in emails:
         if e.get("ref") == email_ref: continue
         if (e.get("received_at") or "") <= recv_at: continue
+        # Only project parties may confirm delivery
+        if not party_for_record(T.project, e): continue
         et = _email_text(e)
         if not MATERIAL_RECEIVED_RE.search(et): continue
         same_thread = conv and e.get("conversation_id") == conv

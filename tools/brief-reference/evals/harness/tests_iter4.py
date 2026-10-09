@@ -315,5 +315,27 @@ noise_body = "The construction noise from your site woke our baby again. Please 
 res.append(ok(not NOTICE_RE.search("Noise complaint\n" + noise_body),
               "parent noise complaint is not formal notice language"))
 
+# Test: delivery_complete_for rejects unknown senders and ordinary words as order numbers
+def test_delivery_complete_unknown_sender():
+    T = FixtureTools("2026-10-06", "2026-10-05", fixture_dir=FX)
+    # Add email from unknown sender with "when" (ordinary word) that old regex would match
+    unknown_email = {
+        "id": "msg_UNKNOWN_DELIV", "ref": "msgraph_outlook:message:msg_UNKNOWN_DELIV",
+        "mailbox": T.project["project_mailbox"], "conversation_id": "conv_E101",
+        "received_at": "2026-10-06T10:00:00-04:00",
+        "from": {"name": "Dispatcher", "email": "a@unknown-freight.example"},
+        "to": [{"name": "Priya", "email": "pnair@ironbridgebuild.example"}], "cc": [],
+        "subject": "Delivery update", "body_text": "PO when delivered on site.", "attachments": []
+    }
+    T.emails["emails"].append(unknown_email)
+    T.index[unknown_email["ref"]] = ("email", T._email(unknown_email, body=True))
+    # Check that msg_E101 (real email from fixture) is NOT suppressed by this unknown-sender email
+    result = delivery_complete_for(T, "msgraph_outlook:message:msg_E101")
+    # Should return None or not the unknown email (unknown sender cannot confirm, "when" not an order key)
+    return result is None or result.get("ref") != unknown_email["ref"]
+
+res.append(ok(test_delivery_complete_unknown_sender(),
+              "delivery_complete_for: rejects unknown senders + word-only order keys"))
+
 print(f"{sum(res)}/{len(res)} passed")
 sys.exit(0 if all(res) else 1)

@@ -207,7 +207,7 @@ if failed > 0:
     print("    (Expected: OS namespace isolation in CI blocks all paths)")
     sys.exit(1)
 else:
-    print(f"✓ PYTHON PATCH BLOCKS COMMON PATHS ({passed}/{passed})")
+    print(f"✓ {passed}/{passed} BLOCKED + LOCALHOST ALLOWED")
     if bypass_blocked < bypass_tested:
         print(f"  Note: {bypass_tested - bypass_blocked} bypass(es) not blocked by Python patch alone")
         print("  CI guarantee: OS network namespace (sudo unshare -n) blocks all paths")

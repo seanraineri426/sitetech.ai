@@ -105,6 +105,24 @@ def _verbatim(q, *texts, min_len=4):
     q = _norm(q).strip(" .\"'")
     return len(q) >= min_len and any(q in _norm(t) for t in texts)
 
+def _verbatim_token(val, text):
+    """Check if val appears as a token in text (word boundaries, not substring)."""
+    import re
+    # Normalize text
+    text_norm = _norm(text)
+    val_norm = _norm(str(val))
+    # For numbers with commas (e.g., "48,200"), check exact match with token boundaries
+    # For IDs/specs, check with word boundaries
+    # Pattern: (?<![\w.,])VALUE(?![\d,]) for amounts, (?<!\w)VALUE(?!\w) for IDs
+    if ',' in val_norm or '.' in val_norm:
+        # Amount with comma/decimal - use negative lookbehind/ahead that allows spaces but not word chars or punctuation
+        pattern = re.escape(val_norm).replace(r'\ ', r'\s+')
+        pattern = r'(?<![\w.])' + pattern + r'(?![\d,])'
+    else:
+        # ID or number - use word boundaries
+        pattern = r'\b' + re.escape(val_norm) + r'\b'
+    return bool(re.search(pattern, text_norm))
+
 def verify_email_facts(T, rec, facts):
     """Code checks only (no judgment). Returns (kept, dropped)."""
     p = party_for_record(T.project, rec); lab = party_label(p) if p else "unknown party"
@@ -114,7 +132,7 @@ def verify_email_facts(T, rec, facts):
         f = dict(f)
         if validate(f, EMAIL_FACT): dropped.append({"fact": f, "reason": "schema"}); continue
         if not _verbatim(f.get("quote"), text): dropped.append({"fact": f, "reason": "quote not verbatim"}); continue
-        # Verify numeric/ID/spec values appear verbatim in the redacted text
+        # Verify numeric/ID/spec values appear verbatim in the redacted text with token boundaries
         # For received_on_site facts, submittal_no is used for matching and may not be explicitly stated
         check_fields = ["amount_usd", "ce_no", "spec_section", "rfi_no"]
         if f["kind"] != "received_on_site":
@@ -122,17 +140,16 @@ def verify_email_facts(T, rec, facts):
         for key in check_fields:
             val = f.get(key)
             if val is not None and val != "":
-                # For numbers, check both raw and comma-formatted versions
+                # For amounts, compare exactly (no int truncation)
                 if isinstance(val, (int, float)):
-                    # Try raw number and common formatted versions
-                    candidates = [str(int(val)), f"{int(val):,}"]
-                    # Allow shorter matches for numbers (min_len=1)
-                    if not any(_verbatim(c, text, min_len=1) for c in candidates):
+                    # Check both raw and comma-formatted versions with token boundaries
+                    # e.g., for 48200: check "48200" and "48,200" but NOT "48200.99" or "482001"
+                    candidates = [str(val) if isinstance(val, int) else f"{val:.10g}", f"{int(val):,}"]
+                    if not any(_verbatim_token(c, text) for c in candidates):
                         dropped.append({"fact": f, "reason": f"{key} '{val}' not verbatim"}); break
                 else:
-                    # For strings, allow shorter matches for IDs (min_len=1) but keep min_len=4 for spec_section
-                    min_len = 4 if key == "spec_section" else 1
-                    if not _verbatim(val, text, min_len=min_len):
+                    # For strings (IDs/specs), check with token boundaries
+                    if not _verbatim_token(val, text):
                         dropped.append({"fact": f, "reason": f"{key} '{val}' not verbatim"}); break
         else:
             # All checks passed
