@@ -78,16 +78,8 @@ export function redactAddresses(text: string): string {
             
             // Don't redact if '@' is at the start (like @channel) or no local part
             if (firstAtIndex > 0) {
-              // Find last '@' that is followed by a domain char (handles trailing '@' and address chains)
-              let lastAtIndex = piece.lastIndexOf('@');
-              while (lastAtIndex > firstAtIndex && !/^[A-Z0-9\p{L}\p{N}\p{Cf}\p{M}]/iu.test(piece.slice(lastAtIndex + 1, lastAtIndex + 3))) {
-                lastAtIndex = piece.lastIndexOf('@', lastAtIndex - 1);
-              }
-              
-              // If no valid '@' found, skip this piece
-              if (lastAtIndex === -1 || lastAtIndex < firstAtIndex) {
-                continue;
-              }
+              // Find last '@' for the domain
+              const lastAtIndex = piece.lastIndexOf('@');
               
               // Extract valid domain characters after '@'
               // Domain chars: letters, numbers, dots, marks, format chars (no hyphen, no underscore)
