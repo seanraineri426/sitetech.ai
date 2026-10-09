@@ -404,6 +404,78 @@ describe("Microsoft Graph mappers", () => {
       
       expect(redacted).toBe(text);
     });
+
+    it("redacts adjacent addresses separated by /", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      const text = "Contact bob@x.com/carol@x.com.";
+      const redacted = redactAddresses(text);
+      
+      expect(redacted).not.toContain("@");
+      expect(redacted).toContain("[email-x.com]");
+    });
+
+    it("redacts adjacent addresses separated by comma", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      const text = "bob@x.com,carol@y.com.";
+      const redacted = redactAddresses(text);
+      
+      expect(redacted).not.toContain("@");
+      expect(redacted).toContain("[email-x.com]");
+      expect(redacted).toContain("[email-y.com]");
+    });
+
+    it("redacts adjacent addresses separated by semicolon", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      const text = "To: bob@x.com;carol@gc.c";
+      const redacted = redactAddresses(text);
+      
+      expect(redacted).not.toContain("@");
+      expect(redacted).toContain("[email-x.com]");
+      expect(redacted).toContain("[email-gc.c]");
+    });
+
+    it("allows sentence-ending period after address", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      const text = "Contact bob@x.com.";
+      const redacted = redactAddresses(text);
+      
+      expect(redacted).toBe("Contact [email-x.com].");
+    });
+
+    it("preserves bare @ in phrases", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      expect(redactAddresses("price @ $5")).toBe("price @ $5");
+      expect(redactAddresses("RFI @ Level 3")).toBe("RFI @ Level 3");
+      expect(redactAddresses("@channel")).toBe("@channel");
+    });
+
+    it("linear performance: 200KB text + bare @", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      const text = "a".repeat(200_000) + " @";
+      const t0 = performance.now();
+      redactAddresses(text);
+      const elapsed = performance.now() - t0;
+      
+      expect(elapsed).toBeLessThan(50);
+    });
+
+    it("linear performance: 100K 'a.' pairs + address", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      const text = "a.".repeat(100_000) + " x@y";
+      const t0 = performance.now();
+      const result = redactAddresses(text);
+      const elapsed = performance.now() - t0;
+      
+      expect(elapsed).toBeLessThan(50);
+      expect(result).toContain("[email-y]");
+    });
   });
 
   describe("size caps and null byte stripping", () => {
