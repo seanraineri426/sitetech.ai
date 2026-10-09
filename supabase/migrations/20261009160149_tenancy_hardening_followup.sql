@@ -147,11 +147,11 @@ begin
     if func_schema = 'public' then
       -- Check if this function is part of an extension (e.g., pgTAP)
       -- Extension functions should keep their default privileges
-      select p.oid, (p.proextconfig is not null or exists (
+      select p.oid, exists (
         select 1 from pg_depend d 
         where d.objid = p.oid 
           and d.deptype = 'e'
-      ))
+      )
       into func_oid, is_extension_func
       from pg_proc p
       join pg_namespace n on n.oid = p.pronamespace
