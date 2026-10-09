@@ -123,20 +123,44 @@ function buildEmailFingerprintPayload(
 }
 
 /**
- * Redact email addresses from text for storage in raw records.
- * Replaces user@domain.com with [email-$1] to preserve domain while ensuring
+ * Redact email addresses from text.
+ * Replaces user@domain.com with [email-domain.com] to preserve domain while ensuring
  * the output doesn't match email regex patterns.
  * 
- * Uses negative lookahead/lookbehind to avoid quadratic behavior on text with no '@'.
- * Limits local part to 64 chars, domain labels to 63 chars, and TLD to 2-63 chars.
+ * Currently used in emailToRawRecord to redact subject and body_preview before storage.
+ * Also available for future model-facing paths.
  * 
- * Note: This helper exists for future model-facing paths.
+ * Uses negative lookahead/lookbehind to avoid quadratic behavior on text with no '@'.
+ * Limits local part to 256 chars (RFC 5321 max), domain labels to 63 chars, and TLD to 2-63 chars.
+ * Relaxed trailing lookahead allows digits and underscores after the address.
  */
 export function redactAddresses(text: string): string {
-  return text.replace(
-    /(?<![A-Z0-9._%+-])[A-Z0-9._%+-]{1,64}@([A-Z0-9-]{1,63}(?:\.[A-Z0-9-]{1,63})*\.[A-Z]{2,63})(?![A-Z0-9-])/gi,
+  // Quick check: if there's no '@', skip entirely for performance
+  if (!text.includes('@')) return text;
+  
+  // Primary pattern: well-formed addresses (relaxed lookahead allows digits/underscores)
+  let result = text.replace(
+    /(?<![A-Z0-9._%+-])[A-Z0-9._%+-]{1,256}@([A-Z0-9-]{1,63}(?:\.[A-Z0-9-]{1,63})*\.[A-Z]{2,63})(?![A-Z._%-])/gi,
     '[email-$1]'
   );
+  
+  // Fallback: catch truncated or malformed addresses (e.g., "bob@gc.c" in previews)
+  // Only runs if there are still '@' signs left after primary pass
+  if (result.includes('@')) {
+    result = result.replace(
+      /\S*@\S*/g,
+      (match) => {
+        // If already redacted, leave it
+        if (match.startsWith('[email-')) return match;
+        // Otherwise redact, preserving any domain-like suffix
+        const atIndex = match.indexOf('@');
+        const domain = match.slice(atIndex + 1);
+        return `[email-${domain}]`;
+      }
+    );
+  }
+  
+  return result;
 }
 
 /**

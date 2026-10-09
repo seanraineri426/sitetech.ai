@@ -21,6 +21,32 @@ describe("comments / tags", () => {
   it("<header> must not eat the body", () => { const o = htmlToText("<header>Logo</header><p>Body text</p>"); console.log("header:", JSON.stringify(o)); expect(o).toContain("Body text"); });
   it("<header> with no </head... drops nothing", () => { const o = htmlToText("<header><p>Body text</p>"); console.log("header2:", JSON.stringify(o)); expect(o).toContain("Body text"); });
   it("<link> must not add a bullet", () => { expect(htmlToText("<link rel=x>Hi")).toBe("Hi"); });
+  
+  it("Turkish İ does not corrupt indices", () => {
+    const withDot = 'İ'.repeat(7) + '</p><style></style><p>Important: notice due 10/15</p>';
+    const withoutDot = 'I'.repeat(7) + '</p><style></style><p>Important: notice due 10/15</p>';
+    const o1 = htmlToText(withDot);
+    const o2 = htmlToText(withoutDot);
+    console.log("Turkish İ:", JSON.stringify(o1));
+    // Both should preserve their respective characters and the important text
+    expect(o1).toContain("İİİİİİİ");
+    expect(o1).toContain("Important: notice due 10/15");
+    expect(o2).toContain("IIIIIII");
+    expect(o2).toContain("Important: notice due 10/15");
+    // Structure should match (same number of lines and content positions)
+    expect(o1.split('\n').length).toBe(o2.split('\n').length);
+  });
+  
+  it("Turkish Outlook sample: sender İnşaat Co", () => {
+    const html = `<html><head><style>body{font-family:Calibri}</style></head><!--[if gte mso 9]><xml><o:PixelsPerInch>96</o:PixelsPerInch></xml><![endif]--><body><p>From: İnşaat Co <info@insaat.tr></p><p>Subject: Construction update</p><p>The project is on schedule.</p></body></html>`;
+    const o = htmlToText(html);
+    console.log("Turkish Outlook:", JSON.stringify(o));
+    expect(o).toContain("İnşaat Co");
+    expect(o).toContain("Construction update");
+    expect(o).toContain("project is on schedule");
+    expect(o).not.toContain("Calibri");
+    expect(o).not.toContain("PixelsPerInch");
+  });
 });
 describe("timing", () => {
   it("1MB of <!--", () => { const ms = time(() => htmlToText("<!--".repeat(250_000))); console.log("1MB <!--", ms.toFixed(0), "ms"); expect(ms).toBeLessThan(200); });
@@ -37,6 +63,26 @@ describe("timing", () => {
   it("redactAddresses on 200KB with no @", () => {
     for (const n of [25_000, 50_000, 100_000, 200_000]) { const ms = time(() => redactAddresses("a".repeat(n))); console.log("redact", n, ms.toFixed(0), "ms"); }
     expect(time(() => redactAddresses("a".repeat(200_000)))).toBeLessThan(500);
+  });
+  
+  it("nested < quadratic fix: 800KB '<' through mapper", () => {
+    const ms = time(() => mapGraphMessageToNormalized({ ...base, body: { contentType: "html", content: "<".repeat(800_000) } }, "mb"));
+    console.log("800KB '<'", ms.toFixed(0), "ms"); expect(ms).toBeLessThan(200);
+  });
+  
+  it("nested < quadratic fix: 800KB '<a' through mapper", () => {
+    const ms = time(() => mapGraphMessageToNormalized({ ...base, body: { contentType: "html", content: "<a".repeat(400_000) } }, "mb"));
+    console.log("800KB '<a'", ms.toFixed(0), "ms"); expect(ms).toBeLessThan(200);
+  });
+  
+  it("nested < quadratic fix: 100K <b>x</b> pairs", () => {
+    const ms = time(() => htmlToText("<b>x</b>".repeat(100_000)));
+    console.log("100K <b>x</b>", ms.toFixed(0), "ms"); expect(ms).toBeLessThan(200);
+  });
+  
+  it("nested < quadratic fix: 200K <br>", () => {
+    const ms = time(() => htmlToText("<br>".repeat(200_000)));
+    console.log("200K <br>", ms.toFixed(0), "ms"); expect(ms).toBeLessThan(200);
   });
 });
 describe("entities", () => {
@@ -72,6 +118,19 @@ describe("addresses", () => {
     expect(redactAddresses("ping bob+rfi@sub.y.co.uk now")).toBe("ping [email-sub.y.co.uk] now");
     expect(redactAddresses("First.Last@mail.gc-builders.com")).toBe("[email-mail.gc-builders.com]");
     expect(redactAddresses("<carol_99%x@z.io>")).toBe("<[email-z.io]>");
+  });
+  
+  it("redact address followed by digit", () => {
+    // Digits after the TLD are not part of the domain, so they're left behind
+    expect(redactAddresses("See alice@example.com2 for details")).toBe("See [email-example.com]2 for details");
+    expect(redactAddresses("Contact bob@test.org9")).toBe("Contact [email-test.org]9");
+  });
+  
+  it("redact truncated addresses in body preview", () => {
+    // Fallback catches truncated addresses
+    expect(redactAddresses("From: bob@gc.c")).toBe("From: [email-gc.c]");
+    expect(redactAddresses("Reply to: alice@exa")).toBe("Reply to: [email-exa]");
+    expect(redactAddresses("bob@")).toBe("[email-]");
   });
   it("raw_records allowlistedPayload contains no address anywhere", () => {
     const n = mapGraphMessageToNormalized({ ...base, subject: "RE: RFI 12 from dave@sub.x.com",

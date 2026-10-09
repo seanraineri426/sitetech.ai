@@ -314,6 +314,27 @@ describe("Microsoft Graph fetchers", () => {
       const [, requestInit] = mockFetch.mock.calls[1];
       expect(requestInit.headers).toHaveProperty("Prefer", 'outlook.body-content-type="text"');
     });
+
+    it("resume from $skiptoken nextLink sends Prefer + Authorization", async () => {
+      const checkpoint = "https://graph.microsoft.com/v1.0/users/user%40example.com/mailFolders/inbox/messages/delta?$skiptoken=abc123xyz";
+      mockFetch.mockResolvedValueOnce(mockTokenResponse);
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          value: [],
+          "@odata.deltaLink": "https://graph.microsoft.com/v1.0/users/user%40example.com/mailFolders/inbox/messages/delta?$deltatoken=final",
+        }),
+      });
+
+      await fetchMailFolderDelta(client, "user@example.com", "inbox", checkpoint);
+
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      const [url, requestInit] = mockFetch.mock.calls[1];
+      expect(String(url)).toBe(checkpoint);
+      expect(requestInit.method).toBe("GET");
+      expect(requestInit.headers).toHaveProperty("Prefer", 'outlook.body-content-type="text"');
+      expect(requestInit.headers).toHaveProperty("Authorization", "Bearer token-123");
+    });
   });
 
   describe("shouldResync (410 detection)", () => {

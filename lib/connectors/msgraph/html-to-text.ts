@@ -81,8 +81,8 @@ function tagEndsAt(html: string, pos: number, tagName: string): boolean {
  * Linear-time HTML tag/content stripper using indexOf scans.
  */
 export function htmlToText(html: string): string {
-  // Compute lowercase ONCE for all tag comparisons
-  const lower = html.toLowerCase();
+  // ASCII-only lowercase (preserves length, unlike toLowerCase which changes İ→i̇)
+  const lower = html.replace(/[A-Z]/g, c => String.fromCharCode(c.charCodeAt(0) + 32));
   
   let result = '';
   let pos = 0;
@@ -109,16 +109,26 @@ export function htmlToText(html: string): string {
         !tagStart.startsWith('<script') &&
         !tagStart.startsWith('<style') &&
         !tagStart.startsWith('<head')) {
-      const nextGt = html.indexOf('>', ltPos);
-      const nextSpace = html.indexOf(' ', ltPos);
-      const boundary = nextGt === -1 ? nextSpace : (nextSpace === -1 ? nextGt : Math.min(nextGt, nextSpace));
       const innerLt = html.indexOf('<', ltPos + 1);
       
-      if (innerLt !== -1 && (boundary === -1 || innerLt < boundary)) {
-        // There's a nested '<' before any boundary, output '<' as text
-        result += '<';
-        pos = ltPos + 1;
-        continue;
+      if (innerLt !== -1) {
+        // Check if there's a '>' or whitespace in the range [ltPos+1, innerLt)
+        // to determine if this is a valid tag or malformed
+        let hasValidBoundary = false;
+        for (let i = ltPos + 1; i < innerLt; i++) {
+          const ch = html[i];
+          if (ch === '>' || ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r') {
+            hasValidBoundary = true;
+            break;
+          }
+        }
+        
+        if (!hasValidBoundary) {
+          // No boundary between ltPos and innerLt, so nested '<', output '<' as text
+          result += '<';
+          pos = ltPos + 1;
+          continue;
+        }
       }
     }
     
