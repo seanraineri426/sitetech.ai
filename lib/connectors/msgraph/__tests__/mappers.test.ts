@@ -476,6 +476,153 @@ describe("Microsoft Graph mappers", () => {
       expect(elapsed).toBeLessThan(50);
       expect(result).toContain("[email-y]");
     });
+
+    it("URL with encoded addresses leaves no local parts", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      const text = "https://list.example.com/u?e=bob@x.com%26ref=carol@y.com%26z";
+      const result = redactAddresses(text);
+      
+      expect(result).not.toContain("bob@");
+      expect(result).not.toContain("carol@");
+      expect(result).not.toContain("@x.com%");
+      expect(result).not.toContain("@y.com%");
+    });
+
+    it("addresses separated by underscore with suffix", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      expect(redactAddresses("a@x.com_|b@y.com_")).not.toContain("@");
+    });
+
+    it("addresses separated by dash with suffix", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      expect(redactAddresses("a@x.com-|b@y.com-")).not.toContain("@");
+    });
+
+    it("addresses separated by various punctuation", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      const separators = [":", "<", ">", "'", '"', "(", "&", "=", "?"];
+      for (const sep of separators) {
+        const text = `a@x.com${sep}b@y.com`;
+        const result = redactAddresses(text);
+        expect(result).not.toContain("@");
+      }
+    });
+
+    it("multiple @ in one address uses last domain", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      expect(redactAddresses("a@b@c@d.com")).toBe("[email-d.com]");
+    });
+
+    it("construction text: rebar sizes unchanged", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      expect(redactAddresses("rebar #5@10 vs #5@12")).toBe("rebar #5@10 vs #5@12");
+    });
+
+    it("construction text: lumber o.c. unchanged", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      expect(redactAddresses('2x4@16" o.c.')).toBe('2x4@16" o.c.');
+    });
+
+    it("construction text: angle iron unchanged", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      expect(redactAddresses("L4x4x1/4@24")).toBe("L4x4x1/4@24");
+    });
+
+    it("construction text: cost code unchanged", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      expect(redactAddresses("CO#12@$4,500")).toBe("CO#12@$4,500");
+    });
+
+    it("construction text: price per unit unchanged", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      expect(redactAddresses("3@ $1,200")).toBe("3@ $1,200");
+    });
+
+    it("construction text: grid reference unchanged", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      expect(redactAddresses("beam B-3@grid C/4")).toBe("beam B-3@grid C/4");
+    });
+
+    it("construction text: meeting time unchanged", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      expect(redactAddresses("meeting@2pm")).toBe("meeting@2pm");
+    });
+
+    it("construction text: rebar spacing unchanged", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      expect(redactAddresses("#4@16 EW")).toBe("#4@16 EW");
+    });
+
+    it("construction text: steel beam unchanged", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      expect(redactAddresses("W12x26@16")).toBe("W12x26@16");
+    });
+
+    it("construction text: quantity pricing unchanged", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      expect(redactAddresses("5ea@$40")).toBe("5ea@$40");
+    });
+
+    it("construction text: elevation unchanged", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      expect(redactAddresses('T/O slab@+12\'-0"')).toBe('T/O slab@+12\'-0"');
+    });
+
+    it("truncated addresses at end of string are redacted", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      expect(redactAddresses("bob@gc.c")).toBe("[email-gc.c]");
+      expect(redactAddresses("bob@gc")).toBe("[email-gc]");
+    });
+
+    it("Unicode local parts redacted", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      const result = redactAddresses("josé@x.com");
+      expect(result).toBe("[email-x.com]");
+      expect(result).not.toContain("josé");
+    });
+
+    it("Unicode domains preserved", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      expect(redactAddresses("user@почта.рф")).toBe("[email-почта.рф]");
+    });
+
+    it("full-width @ normalized and redacted", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      const result = redactAddresses("bob＠x.com");
+      expect(result).not.toContain("bob");
+      expect(result).toContain("[email-x.com]");
+    });
+
+    it("linear performance: 200KB of a@b_ repeated", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      const text = "a@b_".repeat(50_000); // 200KB
+      const t0 = performance.now();
+      redactAddresses(text);
+      const elapsed = performance.now() - t0;
+      
+      expect(elapsed).toBeLessThan(50);
+    });
   });
 
   describe("size caps and null byte stripping", () => {

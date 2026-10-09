@@ -131,88 +131,86 @@ function buildEmailFingerprintPayload(
  * Also available for future model-facing paths.
  * 
  * Uses negative lookahead/lookbehind to avoid quadratic behavior on text with no '@'.
- * Limits local part to 256 chars (RFC 5321 max), domain labels to 63 chars, and TLD to 2-63 chars.
+ * Supports Unicode local parts and domains. Limits local part to 256 chars (RFC 5321 max).
  * Trailing lookahead allows sentence-ending periods but rejects addresses followed by dot+alnum.
  */
 export function redactAddresses(text: string): string {
-  // Quick check: if there's no '@', skip entirely for performance
-  if (!text.includes('@')) return text;
+  // Normalize full-width @ (U+FF20) to regular @ for detection
+  const normalized = text.replace(/\uff20/gu, '@');
   
-  // Primary pattern: well-formed addresses
-  // Lookahead (?![A-Z_%-]|\.[A-Z0-9-]) allows sentence-ending '.' but rejects '.com2' style
-  let result = text.replace(
-    /(?<![A-Z0-9._%+-])[A-Z0-9._%+-]{1,256}@([A-Z0-9-]{1,63}(?:\.[A-Z0-9-]{1,63})*\.[A-Z]{2,63})(?![A-Z_%-]|\.[A-Z0-9-])/gi,
-    '[email-$1]'
+  // Quick check: if there's no '@', skip entirely for performance
+  if (!normalized.includes('@')) return text;
+  
+  // Primary pattern: well-formed addresses with Unicode support
+  // Build pattern programmatically to handle Unicode properties
+  const localPartChar = String.raw`[A-Z0-9._%+\-\p{L}\p{N}]`;
+  const lookbehindChar = String.raw`[A-Z0-9._%+\-@\p{L}\p{N}]`; // Include @ to prevent matching in middle of multi-@ sequences
+  const domainChar = String.raw`[A-Z0-9\-\p{L}]`;
+  const tldChar = String.raw`[A-Z\p{L}]`;
+  const notAfterChar = String.raw`(?![A-Z_%\-\p{L}\p{N}]|\.${domainChar})`;
+  
+  const primaryPattern = new RegExp(
+    String.raw`(?<!${lookbehindChar})${localPartChar}{1,256}@(${domainChar}{1,63}(?:\.${domainChar}{1,63})*\.${tldChar}{2,63})${notAfterChar}`,
+    'giu'
   );
+  
+  let result = normalized.replace(primaryPattern, '[email-$1]');
   
   // Linear token-based fallback for remaining '@' (truncated, malformed, or adjacent addresses)
   if (result.includes('@')) {
     // Split on whitespace, keeping separators
-    const parts = result.split(/(\s+)/);
+    const parts = result.split(/(\s+)/u);
     
     for (let i = 0; i < parts.length; i++) {
-      const part = parts[i];
-      // Skip whitespace and parts without '@'
-      if (!part.trim() || !part.includes('@')) continue;
+      const token = parts[i];
+      // Skip whitespace and tokens without '@'
+      if (!token.trim() || !token.includes('@')) continue;
       
-      // Process token by splitting on delimiters [/,;] and handling each segment
-      const segments = part.split(/([/,;])/); // Keep delimiters
-      for (let j = 0; j < segments.length; j++) {
-        const segment = segments[j];
-        if (!segment.includes('@')) continue;
+      // Split token on any character outside [A-Za-z0-9._%+\-@] or Unicode letters/numbers, keeping separators
+      const piecePattern = /([^A-Za-z0-9._%+\-@\p{L}\p{N}])/u;
+      const pieces = token.split(piecePattern);
+      
+      for (let j = 0; j < pieces.length; j++) {
+        const piece = pieces[j];
+        if (!piece.includes('@')) continue;
         
-        // Find the last '@' in the segment
-        const lastAtIndex = segment.lastIndexOf('@');
+        // Find first '@' to check for local part
+        const firstAtIndex = piece.indexOf('@');
         
-        // Don't redact if '@' is at the start (like @channel) or has no local part
-        if (lastAtIndex === 0 || lastAtIndex === -1) continue;
+        // Don't redact if '@' is at the start (like @channel) or no local part
+        if (firstAtIndex === 0) continue;
         
-        // Check if there's a non-whitespace character before '@'
-        let hasLocalPart = false;
-        for (let k = lastAtIndex - 1; k >= 0; k--) {
-          if (segment[k] !== ' ' && segment[k] !== '\t') {
-            hasLocalPart = true;
-            break;
-          }
-        }
+        // Find last '@' for the domain
+        const lastAtIndex = piece.lastIndexOf('@');
         
-        // Don't redact bare '@' like "price @ $5"
-        if (!hasLocalPart) continue;
+        // Extract text after the last '@'
+        const afterAt = piece.slice(lastAtIndex + 1);
         
-        // Extract domain-ish part: text after last '@' until first non-[A-Za-z0-9.-]
-        let domainEnd = lastAtIndex + 1;
-        while (domainEnd < segment.length) {
-          const ch = segment[domainEnd];
-          if (!/[A-Za-z0-9.-]/.test(ch)) break;
-          domainEnd++;
-        }
+        // Skip if nothing after '@' (bare '@' or trailing '@')
+        if (!afterAt) continue;
         
-        let domain = segment.slice(lastAtIndex + 1, domainEnd);
+        // Only redact if:
+        // 1. Text after '@' starts with a letter (Unicode-aware)
+        // 2. AND either contains a '.' OR piece is at the end of the entire input
+        if (!/^[\p{L}]/u.test(afterAt)) continue;
+        
+        const hasDot = afterAt.includes('.');
+        const isAtEnd = (i === parts.length - 1) && (j === pieces.length - 1);
+        
+        if (!hasDot && !isAtEnd) continue;
+        
+        // Extract domain: text after last '@' until we run out of piece
+        let domain = afterAt;
         // Strip trailing '.'
         if (domain.endsWith('.')) {
           domain = domain.slice(0, -1);
         }
         
-        // Find the start of the local part (before '@')
-        let localStart = lastAtIndex - 1;
-        while (localStart >= 0) {
-          const ch = segment[localStart];
-          // Stop at punctuation that's not part of email local parts
-          if (!/[A-Za-z0-9._%+-]/.test(ch)) {
-            localStart++;
-            break;
-          }
-          localStart--;
-        }
-        if (localStart < 0) localStart = 0;
-        
-        // Replace the address part with redacted form
-        const before = segment.slice(0, localStart);
-        const after = segment.slice(domainEnd);
-        segments[j] = before + '[email-' + domain + ']' + after;
+        // Replace entire piece with redacted form
+        pieces[j] = '[email-' + domain + ']';
       }
       
-      parts[i] = segments.join('');
+      parts[i] = pieces.join('');
     }
     
     result = parts.join('');
