@@ -46,37 +46,84 @@ function stripNullBytes(text: string): string {
 }
 
 /**
- * Pre-cap text at max length with whitespace boundary cutting.
+ * Pre-cap text at max length with whitespace/tag boundary cutting.
  * Cuts on whitespace boundary (look back up to 512 chars) to avoid splitting addresses.
+ * For text with no whitespace, backs off past address-like tokens.
  * Checks for surrogate pairs at boundary.
  * Does NOT append truncation marker (used before redaction).
+ * 
+ * @param text - Text to cap
+ * @param maxChars - Maximum length
+ * @param isHtml - If true, prefer cutting after '>' tag boundary
+ * @returns Capped text
  */
-function preCapText(text: string, maxChars: number): string {
+function preCapText(text: string, maxChars: number, isHtml = false): string {
   if (text.length <= maxChars) {
     return text;
   }
   
   let cutPos = maxChars;
   
-  // Look back up to 512 chars for the last whitespace
-  const searchStart = Math.max(0, cutPos - 512);
-  let lastWhitespace = -1;
-  for (let i = cutPos - 1; i >= searchStart; i--) {
-    const char = text[i];
-    if (char === ' ' || char === '\t' || char === '\n' || char === '\r') {
-      lastWhitespace = i;
-      break;
+  // For HTML, try to cut after last '>' before limit
+  if (isHtml) {
+    const searchStart = Math.max(0, cutPos - 512);
+    let lastTagClose = -1;
+    for (let i = cutPos - 1; i >= searchStart; i--) {
+      if (text[i] === '>') {
+        lastTagClose = i + 1;
+        break;
+      }
+    }
+    if (lastTagClose !== -1) {
+      cutPos = lastTagClose;
+    } else {
+      // No '>' found, fall through to text rules
     }
   }
   
-  if (lastWhitespace !== -1) {
-    cutPos = lastWhitespace;
+  // Look back up to 512 chars for the last whitespace
+  if (!isHtml || cutPos === maxChars) {
+    const searchStart = Math.max(0, cutPos - 512);
+    let lastWhitespace = -1;
+    for (let i = cutPos - 1; i >= searchStart; i--) {
+      const char = text[i];
+      if (char === ' ' || char === '\t' || char === '\n' || char === '\r') {
+        lastWhitespace = i;
+        break;
+      }
+    }
+    
+    if (lastWhitespace !== -1) {
+      cutPos = lastWhitespace;
+    } else {
+      // No whitespace within 512 chars - back off past any address-like token
+      // Find start of token containing '@' or address characters at/near cut
+      let tokenStart = cutPos;
+      const addressChar = /[\p{L}\p{N}._%+\-@\p{Cf}]/u;
+      
+      // Scan backward from cut to find start of address-like token
+      for (let i = cutPos - 1; i >= Math.max(0, cutPos - 1024); i--) {
+        if (addressChar.test(text[i])) {
+          tokenStart = i;
+        } else {
+          // Found non-address char, stop
+          break;
+        }
+      }
+      
+      // Cut before the token if we found one
+      if (tokenStart < cutPos) {
+        cutPos = tokenStart;
+      }
+    }
   }
   
   // Check if we're about to split a surrogate pair
-  const charCode = text.charCodeAt(cutPos - 1);
-  if (charCode >= 0xD800 && charCode <= 0xDBFF) {
-    cutPos--;
+  if (cutPos > 0) {
+    const charCode = text.charCodeAt(cutPos - 1);
+    if (charCode >= 0xD800 && charCode <= 0xDBFF) {
+      cutPos--;
+    }
   }
   
   return text.slice(0, cutPos);
@@ -102,25 +149,15 @@ function capText(text: string, maxChars: number): string {
   }
   
   // Check if cut point falls inside a [email-...] placeholder
-  // Scan back 270 chars for last '[', check if it starts [email- whose ] is at/after cut
-  const searchStart = Math.max(0, cutPos - 270);
-  let lastBracket = -1;
-  for (let i = cutPos - 1; i >= searchStart; i--) {
-    if (text[i] === '[') {
-      lastBracket = i;
-      break;
-    }
-  }
+  // Use lastIndexOf('[email-', cutPos) to find placeholder start (handles domains > 253 chars)
+  const lastEmailStart = text.lastIndexOf('[email-', cutPos);
   
-  if (lastBracket !== -1 && lastBracket + 7 <= text.length) {
-    // Check if this '[' starts '[email-'
-    if (text.substring(lastBracket, lastBracket + 7) === '[email-') {
-      // Find the closing ']'
-      const closeIndex = text.indexOf(']', lastBracket + 7);
-      if (closeIndex === -1 || closeIndex >= cutPos) {
-        // No close bracket, or it's at/after our cut point - move cut before '['
-        cutPos = lastBracket;
-      }
+  if (lastEmailStart !== -1) {
+    // Found a placeholder start before cut, check if it closes before cutPos
+    const closeIndex = text.indexOf(']', lastEmailStart + 7);
+    if (closeIndex === -1 || closeIndex >= cutPos) {
+      // No close bracket, or it's at/after our cut point - move cut before '['
+      cutPos = lastEmailStart;
     }
   }
   
@@ -130,22 +167,29 @@ function capText(text: string, maxChars: number): string {
 /**
  * Extract body text from Graph message body.
  * Converts HTML to text if content type is HTML.
- * Pre-caps at 4x limit with whitespace boundary before processing.
+ * Pre-caps at 4x limit with whitespace/tag boundary before processing.
  * Strips null bytes but does NOT append truncation marker (caller must cap after redaction).
+ * 
+ * @returns Object with text and truncated flag, or null
  */
-function extractBodyText(body: GraphMessage["body"]): string | null {
+function extractBodyText(body: GraphMessage["body"]): { text: string; truncated: boolean } | null {
   if (!body?.content) {
     return null;
   }
 
   let text: string;
+  let truncated = false;
 
   if (body.contentType === "text") {
     // Pre-cap text at 4x limit with whitespace boundary (before strip/redact)
-    text = preCapText(body.content, MAX_BODY_CHARS * 4);
+    const originalLength = body.content.length;
+    text = preCapText(body.content, MAX_BODY_CHARS * 4, false);
+    truncated = text.length < originalLength;
   } else {
-    // Cap raw HTML at 4x the text limit before conversion (whitespace boundary)
-    const cappedHtml = preCapText(body.content, MAX_BODY_CHARS * 4);
+    // Cap raw HTML at 4x the text limit before conversion (tag boundary)
+    const originalLength = body.content.length;
+    const cappedHtml = preCapText(body.content, MAX_BODY_CHARS * 4, true);
+    truncated = cappedHtml.length < originalLength;
     text = htmlToText(cappedHtml);
   }
 
@@ -153,7 +197,7 @@ function extractBodyText(body: GraphMessage["body"]): string | null {
   text = stripNullBytes(text);
 
   // Note: Final capping with truncation marker happens AFTER redaction in the mapper
-  return text;
+  return { text, truncated };
 }
 
 /**
@@ -196,17 +240,23 @@ export function mapGraphMessageToNormalized(
   message: GraphMessage,
   mailbox: string
 ): NormalizedEmail {
-  // Extract body text (null bytes stripped, NOT capped yet)
-  const bodyText = extractBodyText(message.body);
+  // Extract body text (null bytes stripped, pre-capped if > 4x limit)
+  const bodyResult = extractBodyText(message.body);
   
-  // Redact addresses in all text fields BEFORE capping
+  // Redact addresses in all text fields BEFORE final capping
   const redactedSubject = redactAddresses(message.subject);
   const redactedBodyPreview = redactAddresses(message.bodyPreview);
-  let redactedBodyText = bodyText ? redactAddresses(bodyText) : null;
+  let redactedBodyText = bodyResult ? redactAddresses(bodyResult.text) : null;
   
   // Cap body text AFTER redaction (so placeholder-aware cut works)
+  // If pre-cap already truncated, append marker even if under MAX_BODY_CHARS
   if (redactedBodyText) {
-    redactedBodyText = capText(redactedBodyText, MAX_BODY_CHARS);
+    if (redactedBodyText.length > MAX_BODY_CHARS) {
+      redactedBodyText = capText(redactedBodyText, MAX_BODY_CHARS);
+    } else if (bodyResult && bodyResult.truncated) {
+      // Pre-cap fired but result is under MAX_BODY_CHARS - still needs marker
+      redactedBodyText = redactedBodyText + ' [truncated]';
+    }
   }
   
   // Fingerprint uses redacted body text

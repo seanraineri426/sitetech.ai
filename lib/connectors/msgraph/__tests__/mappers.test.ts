@@ -1312,7 +1312,7 @@ CO #12 @ $4,500, beam B-3@grid C/4`;
   });
 
   describe("redactAddresses - capping after redaction", () => {
-    it.skip("caps body_text after redaction, placeholder-aware", { timeout: 30000 }, () => {
+    it("caps body_text after redaction, placeholder-aware", { timeout: 30000 }, () => {
       // Body text that's definitely over the cap after redaction
       // Create a body that will be over MAX_BODY_CHARS after redaction
       const body = "x".repeat(MAX_BODY_CHARS + 1000) + " contact alice@example.com for details";
@@ -1338,7 +1338,7 @@ CO #12 @ $4,500, beam B-3@grid C/4`;
       expect(normalized.body_text!.endsWith(" [truncated]")).toBe(true);
       
       // Should not contain '@' with local part before it
-      const match = normalized.body_text!.match(/[a-z0-9._%+-]+@/i);
+      const match = normalized.body_text!.match(/(?<![a-z0-9._%+-])[a-z0-9._%+-]+@/i);
       expect(match).toBeNull();
       
       // Should not have split placeholders - count complete [email-...] patterns
@@ -1462,12 +1462,194 @@ CO #12 @ $4,500, beam B-3@grid C/4`;
 
       // Should not have address fragments like "alice@" or "x@y"
       expect(normalized.body_text).toBeTruthy();
-      const atMatch = normalized.body_text!.match(/[a-z0-9._%+-]+@/i);
+      const atMatch = normalized.body_text!.match(/(?<![a-z0-9._%+-])[a-z0-9._%+-]+@/i);
       expect(atMatch).toBeNull();
       
       // Should not have bare x@y pattern
       const bareMatch = normalized.body_text!.match(/\w@\w/i);
       expect(bareMatch).toBeNull();
+    });
+
+    it("24 positions around 800K pre-cap: text no-whitespace, no leaked local parts", { timeout: 60000 }, () => {
+      const preCapLimit = MAX_BODY_CHARS * 4; // 800K
+      const positions = [
+        preCapLimit - 100, preCapLimit - 50, preCapLimit - 20, preCapLimit - 10,
+        preCapLimit - 5, preCapLimit - 1, preCapLimit, preCapLimit + 1,
+        preCapLimit + 5, preCapLimit + 10, preCapLimit + 20, preCapLimit + 50,
+        preCapLimit + 100, preCapLimit + 200, preCapLimit + 500, preCapLimit + 1000,
+        preCapLimit + 2000, preCapLimit + 5000, preCapLimit + 10000, preCapLimit + 20000,
+        preCapLimit + 50000, preCapLimit + 100000, preCapLimit + 150000, preCapLimit + 200000,
+      ];
+
+      positions.forEach((pos) => {
+        // Create text with NO whitespace and address straddling the position
+        // Ensure body is always longer than preCapLimit to trigger truncation
+        const beforeLen = Math.max(0, pos - 25);
+        const before = "x".repeat(beforeLen);
+        const after = "y".repeat(Math.max(100, preCapLimit - beforeLen + 100));
+        const body = before + "john.smith@acmemech.com" + after;
+
+        const normalized = mapGraphMessageToNormalized({
+          id: "msg1",
+          conversationId: "conv1",
+          receivedDateTime: "2024-01-01T00:00:00Z",
+          sentDateTime: "2024-01-01T00:00:00Z",
+          subject: "Test",
+          bodyPreview: "",
+          from: { emailAddress: { name: "Bob", address: "bob@test.com" } },
+          toRecipients: [],
+          ccRecipients: [],
+          body: { contentType: "text", content: body },
+          hasAttachments: false,
+          importance: "normal",
+          isRead: false,
+          categories: [],
+        }, "mb1");
+
+        expect(normalized.body_text).toBeTruthy();
+        
+        // Must not contain partial address like "john.smi", "john.smith", or "john.smith@"
+        expect(normalized.body_text).not.toContain("john.smi");
+        expect(normalized.body_text).not.toContain("john.smith");
+        
+        // Must not have local part before @
+        const localPartMatch = normalized.body_text!.match(/(?<![a-z0-9._%+-])[a-z0-9._%+-]+@/i);
+        expect(localPartMatch).toBeNull();
+        
+        // Must end with truncation marker
+        expect(normalized.body_text!.endsWith(" [truncated]")).toBe(true);
+      });
+    });
+
+    it("24 positions around 800K pre-cap: HTML no-whitespace, no leaked local parts", { timeout: 60000 }, () => {
+      const preCapLimit = MAX_BODY_CHARS * 4; // 800K
+      const positions = [
+        preCapLimit - 100, preCapLimit - 50, preCapLimit - 20, preCapLimit - 10,
+        preCapLimit - 5, preCapLimit - 1, preCapLimit, preCapLimit + 1,
+        preCapLimit + 5, preCapLimit + 10, preCapLimit + 20, preCapLimit + 50,
+        preCapLimit + 100, preCapLimit + 200, preCapLimit + 500, preCapLimit + 1000,
+        preCapLimit + 2000, preCapLimit + 5000, preCapLimit + 10000, preCapLimit + 20000,
+        preCapLimit + 50000, preCapLimit + 100000, preCapLimit + 150000, preCapLimit + 200000,
+      ];
+
+      positions.forEach((pos) => {
+        // Create HTML with NO whitespace and address straddling the position
+        // Ensure body is always longer than preCapLimit to trigger truncation
+        const beforeLen = Math.max(0, pos - 30);
+        const before = "<p>" + "x".repeat(beforeLen) + "</p>";
+        const afterLen = Math.max(100, preCapLimit - beforeLen + 100);
+        const after = "<p>" + "y".repeat(afterLen) + "</p>";
+        const body = before + "<p>john.smith@acmemech.com</p>" + after;
+
+        const normalized = mapGraphMessageToNormalized({
+          id: "msg1",
+          conversationId: "conv1",
+          receivedDateTime: "2024-01-01T00:00:00Z",
+          sentDateTime: "2024-01-01T00:00:00Z",
+          subject: "Test",
+          bodyPreview: "",
+          from: { emailAddress: { name: "Bob", address: "bob@test.com" } },
+          toRecipients: [],
+          ccRecipients: [],
+          body: { contentType: "html", content: body },
+          hasAttachments: false,
+          importance: "normal",
+          isRead: false,
+          categories: [],
+        }, "mb1");
+
+        expect(normalized.body_text).toBeTruthy();
+        
+        // Must not contain partial address like "john.smi", "john.smith", or "john.smith@"
+        expect(normalized.body_text).not.toContain("john.smi");
+        expect(normalized.body_text).not.toContain("john.smith");
+        
+        // Must not have local part before @
+        const localPartMatch = normalized.body_text!.match(/(?<![a-z0-9._%+-])[a-z0-9._%+-]+@/i);
+        expect(localPartMatch).toBeNull();
+        
+        // Must end with truncation marker
+        expect(normalized.body_text!.endsWith(" [truncated]")).toBe(true);
+      });
+    });
+
+    it("50MB no-whitespace HTML maps in bounded time with marker", { timeout: 10000 }, () => {
+      // 50MB HTML with no whitespace
+      const hugeHtml = "<p>" + "x".repeat(50 * 1024 * 1024 - 7) + "</p>";
+      
+      const times = [performance.now()];
+      
+      const normalized = mapGraphMessageToNormalized({
+        id: "msg1",
+        conversationId: "conv1",
+        receivedDateTime: "2024-01-01T00:00:00Z",
+        sentDateTime: "2024-01-01T00:00:00Z",
+        subject: "Test",
+        bodyPreview: "",
+        from: { emailAddress: { name: "Bob", address: "bob@test.com" } },
+        toRecipients: [],
+        ccRecipients: [],
+        body: { contentType: "html", content: hugeHtml },
+        hasAttachments: false,
+        importance: "normal",
+        isRead: false,
+        categories: [],
+      }, "mb1");
+      times.push(performance.now());
+      
+      const elapsed = times[1] - times[0];
+      console.log("50MB no-whitespace HTML", elapsed.toFixed(0), "ms");
+      expect(elapsed).toBeLessThan(1500);
+      
+      // Must have truncation marker
+      expect(normalized.body_text).toBeTruthy();
+      expect(normalized.body_text!.endsWith(" [truncated]")).toBe(true);
+    });
+
+    it("400-char domain placeholder straddling 200K cut has no partial placeholder", () => {
+      // Create a 400-char domain address
+      const longDomain = "a".repeat(390) + ".com";
+      const address = "user@" + longDomain;
+      
+      // Place it so the placeholder straddles the MAX_BODY_CHARS cut
+      const beforeLen = MAX_BODY_CHARS - 100;
+      const before = "x".repeat(beforeLen);
+      const after = "y".repeat(200);
+      const body = before + " " + address + " " + after;
+
+      const normalized = mapGraphMessageToNormalized({
+        id: "msg1",
+        conversationId: "conv1",
+        receivedDateTime: "2024-01-01T00:00:00Z",
+        sentDateTime: "2024-01-01T00:00:00Z",
+        subject: "Test",
+        bodyPreview: "",
+        from: { emailAddress: { name: "Bob", address: "bob@test.com" } },
+        toRecipients: [],
+        ccRecipients: [],
+        body: { contentType: "text", content: body },
+        hasAttachments: false,
+        importance: "normal",
+        isRead: false,
+        categories: [],
+      }, "mb1");
+
+      expect(normalized.body_text).toBeTruthy();
+      
+      // No partial [email- without closing ]
+      const openPattern = /\[email-/g;
+      const openMatches = (normalized.body_text!.match(openPattern) || []).length;
+      const completePattern = /\[email-[^\]]+\]/g;
+      const completeMatches = (normalized.body_text!.match(completePattern) || []).length;
+      expect(completeMatches).toBe(openMatches);
+      
+      // No domain fragment after last complete placeholder
+      const lastBracket = normalized.body_text!.lastIndexOf(']');
+      if (lastBracket !== -1) {
+        const afterLast = normalized.body_text!.substring(lastBracket + 1);
+        // Should not contain 10+ consecutive 'a's (parts of long domain)
+        expect(afterLast).not.toMatch(/a{10,}/);
+      }
     });
 
     it("250-char domain placeholder straddling 200K cut has no partial placeholder", () => {
@@ -1517,7 +1699,7 @@ CO #12 @ $4,500, beam B-3@grid C/4`;
       }
     });
 
-    it.skip("addresses at key positions around cut: no exposed '@', no split placeholders", { timeout: 60000 }, () => {
+    it("addresses at key positions around cut: no exposed '@', no split placeholders", { timeout: 60000 }, () => {
       // Test addresses at key positions around the MAX_BODY_CHARS boundary
       // Reduced from 24 to 8 positions for performance
       const positions = [
@@ -1554,7 +1736,7 @@ CO #12 @ $4,500, beam B-3@grid C/4`;
         }, "mb1");
 
         // No '@' with local part before it
-        const atMatch = normalized.body_text!.match(/[a-z0-9._%+-]+@/i);
+        const atMatch = normalized.body_text!.match(/(?<![a-z0-9._%+-])[a-z0-9._%+-]+@/i);
         expect(atMatch).toBeNull();
 
         // No split placeholders - count complete [email-...] patterns
