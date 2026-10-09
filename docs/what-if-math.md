@@ -30,12 +30,10 @@ The model parses the user's plain-English question into a structured JSON scenar
 
 ```json
 {
-  "activityId": "A2310",
-  "activityName": "L3 shaft framing",
-  "slipDays": 21,
-  "confidence": "high",
-  "matchReason": "Exact match on activity name 'shaft framing' and location 'L3'",
-  "alternativeMatches": []
+  "activityId": "A1000",
+  "slipWorkingDays": 15,
+  "mode": "extend",
+  "eventDate": "2026-10-09"
 }
 ```
 
@@ -197,14 +195,18 @@ All computation is deterministic code over the latest successful P6 XER snapshot
 
 ```json
 {
-  "activityId": "A2310",
-  "activityName": "L3 shaft framing",
-  "originalEarlyFinish": "2026-10-15",
-  "newEarlyFinish": "2026-11-13",
-  "slipWorkingDays": 21,
-  "floatConsumed": 3.0,
-  "remainingFloat": 0,
-  "onCriticalPath": false
+  "primaryActivity": {
+    "activityId": "A1000",
+    "activityName": "L3 shaft framing",
+    "newEarlyFinish": "2026-11-06",
+    "floatConsumed": 7,
+    "remainingFloat": -8
+  },
+  "projectCompletion": {
+    "newDate": "2026-12-17",
+    "slipCalendarDays": 10
+  },
+  "dollarImpact": 120000
 }
 ```
 
@@ -242,19 +244,19 @@ All computation is deterministic code over the latest successful P6 XER snapshot
 - Both working days and calendar days are reported in the result
 
 **Example (from computed fixture):**
-- Activity A2310 slips 8 working days
-- Float on A2310: 3 days
-- Propagated delay to completion activity A3000: 2 working days (after absorbing float along the chain)
-- Completion slip: 2 working days = 4 calendar days (counting calendar days between original Nov 19 and new Nov 23)
-- $ impact: 4 calendar days × $12,000/calendar day = **$48,000**
+- Activity A1100 (L3 MEP rough-in) slips 12 working days
+- Float on A1100: 7 days
+- Slip beyond float: 5 working days
+- Completion slip: 5 working days = 7 calendar days (counting calendar days between original Dec 7 and new Dec 14)
+- $ impact: 7 calendar days × $12,000/calendar day = **$84,000**
 
 **Output:**
 
 ```json
 {
-  "dollarImpact": 48000,
-  "completionSlipWorkingDays": 2,
-  "completionSlipCalendarDays": 4,
+  "dollarImpact": 84000,
+  "completionSlipWorkingDays": 5,
+  "completionSlipCalendarDays": 7,
   "dailyDelayCost": 12000,
   "dailyDelayCostUnit": "calendar_day",
   "dailyDelayCostSource": "project_settings"
@@ -310,50 +312,58 @@ The computation returns a structured result that the model uses to generate a pl
 ```json
 {
   "scenario": {
-    "activityId": "A2310",
+    "activityId": "A1000",
     "activityName": "L3 shaft framing",
-    "slipWorkingDays": 21
+    "slipWorkingDays": 15
   },
   "impacts": {
     "primaryActivity": {
-      "activityId": "A2310",
+      "activityId": "A1000",
       "activityName": "L3 shaft framing",
-      "originalEarlyFinish": "2026-10-22",
-      "newEarlyFinish": "2026-11-20",
-      "slipWorkingDays": 21,
-      "floatConsumed": 3.0,
-      "remainingFloat": -18.0,
+      "originalEarlyFinish": "2026-10-16",
+      "newEarlyFinish": "2026-11-06",
+      "slipWorkingDays": 15,
+      "floatConsumed": 7,
+      "remainingFloat": -8,
       "onCriticalPath": true
     },
     "successors": [
       {
-        "activityId": "A2320",
+        "activityId": "A1100",
         "activityName": "L3 MEP rough-in",
-        "propagatedDelay": 18.0,
-        "p6TotalFloat": 3.0,
-        "resultingFloat": -15.0,
+        "propagatedDelay": 15,
+        "p6TotalFloat": 7,
+        "resultingFloat": -8,
         "onCriticalPath": true
       },
       {
         "activityId": "A3000",
-        "activityName": "Exterior envelope closeout",
-        "propagatedDelay": 15.0,
-        "p6TotalFloat": 0.0,
-        "resultingFloat": -15.0,
+        "activityName": "Interior finishes and closeout (completion)",
+        "propagatedDelay": 8,
+        "p6TotalFloat": 0,
+        "resultingFloat": -8,
         "onCriticalPath": true
+      },
+      {
+        "activityId": "A1200",
+        "activityName": "L3 corridor ceiling close-in",
+        "propagatedDelay": 15,
+        "p6TotalFloat": 19,
+        "resultingFloat": 4,
+        "onCriticalPath": false
       }
     ],
     "projectCompletion": {
-      "originalDate": "2026-11-19",
-      "newDate": "2026-12-14",
-      "slipWorkingDays": 15,
-      "slipCalendarDays": 25
+      "originalDate": "2026-12-07",
+      "newDate": "2026-12-17",
+      "slipWorkingDays": 8,
+      "slipCalendarDays": 10
     }
   },
   "dollars": {
-    "dollarImpact": 300000,
-    "completionSlipWorkingDays": 15,
-    "completionSlipCalendarDays": 25,
+    "dollarImpact": 120000,
+    "completionSlipWorkingDays": 8,
+    "completionSlipCalendarDays": 10,
     "dailyDelayCost": 12000,
     "dailyDelayCostUnit": "calendar_day",
     "dailyDelayCostSource": "project_settings"
@@ -361,11 +371,11 @@ The computation returns a structured result that the model uses to generate a pl
   "notices": [
     {
       "noticeType": "delay_time_extension",
-      "noticeInfo": "If this happens: notice period per settings is 7 business days (§8.3), deadline Dec 3. Confirm with PX.",
-      "eventDate": "2026-11-20",
+      "noticeInfo": "If this happens: notice period per settings is 7 business days (§8.3), deadline Oct 20. Confirm with PX.",
+      "eventDate": "2026-10-09",
       "noticePeriodDays": 7,
       "calendarOrBusiness": "business",
-      "noticeDeadline": "2026-12-03",
+      "noticeDeadline": "2026-10-20",
       "deadlineSource": "project_settings_contract_section_8.3"
     }
   ],
@@ -373,10 +383,24 @@ The computation returns a structured result that the model uses to generate a pl
     {
       "actionId": "schedule-slip-recovery",
       "actionName": "Vendor slip recovery options",
-      "targetActivityId": "A2310",
+      "targetActivityId": "A1000",
       "reason": "Activity slips and consumes float"
     },
     {
+      "actionId": "outgoing-delay-notice",
+      "actionName": "Outgoing delay notice to owner (A11)",
+      "targetActivityId": null,
+      "reason": "Project completion slips by 10 calendar days, triggering delay notice requirement"
+    }
+  ],
+  "sourceData": {
+    "scheduleSnapshot": "P6_XER_2026-10-08_05-12",
+    "scheduleDataDate": "2026-10-08",
+    "projectSettings": "project_12345_settings_v3",
+    "computedAt": "2026-10-09T18:27:42Z"
+  },
+  "estimateLabel": "estimate, confirm in P6"
+}
       "actionId": "outgoing-delay-notice",
       "actionName": "Outgoing delay notice to owner (A11)",
       "targetActivityId": null,
@@ -454,13 +478,13 @@ The model generates a plain-English explanation of the what-if result, constrain
 
 > If **L3 shaft framing** slips **15 working days** (3 weeks), here's what happens:
 >
-> - The activity finishes **Nov 12** instead of **Oct 22**, consuming its **3 days of float**. Resulting float: **-12 days** (now critical).
-> - **L3 MEP rough-in** receives **12 working days** of propagated delay, consuming its **3 days of float**. Resulting float: **-9 days** (critical).
-> - **Exterior envelope closeout** (already critical) receives **9 working days** of delay.
-> - **Project completion** slips **9 working days = 15 calendar days** (from Nov 19 to Dec 4).
-> - **$ impact: $180,000** (15 calendar days × $12,000/calendar day delay cost).
+> - The activity finishes **Nov 6** instead of **Oct 16**, consuming its **7 days of float**. Resulting float: **-8 days** (now critical).
+> - **L3 MEP rough-in** receives **15 working days** of propagated delay, consuming its **7 days of float**. Resulting float: **-8 days** (critical).
+> - **Interior finishes and closeout (completion)** (already critical) receives **8 working days** of delay.
+> - **Project completion** slips **8 working days = 10 calendar days** (from Dec 7 to Dec 17).
+> - **$ impact: $120,000** (10 calendar days × $12,000/calendar day delay cost).
 >
-> **If this happens:** notice period per settings is 7 business days (§8.3), deadline Dec 1. Confirm with PX.
+> **If this happens:** notice period per settings is 7 business days (§8.3), deadline Oct 20. Confirm with PX.
 >
 > **What would you like to do?**
 > - Review outgoing delay notice requirements (A11)
@@ -468,7 +492,20 @@ The model generates a plain-English explanation of the what-if result, constrain
 > - Show me the propagation chain
 
 **Confirmation prompt (always included):**
-> Is **L3 shaft framing** (activity A2310) the right activity? [Yes] [No, show alternatives]
+> Is **L3 shaft framing** (activity A1000) the right activity? [Yes] [No, show alternatives]
+
+**Example 2 (critical activity, no float):**
+
+> If **Curtain wall install** slips **15 working days** (3 weeks), here's what happens:
+>
+> - The activity finishes **Nov 30** instead of **Nov 5**, consuming its **0 days of float** (already critical). Resulting float: **-15 days**.
+> - **Perimeter sealant and flashing** receives **15 working days** of propagated delay, consuming **0 days of float** (critical). Resulting float: **-15 days**.
+> - **Envelope water testing** receives **15 working days** of propagated delay.
+> - **Interior finishes and closeout (completion)** receives **15 working days** of propagated delay.
+> - **Project completion** slips **15 working days = 22 calendar days** (from Dec 7 to Dec 29).
+> - **$ impact: $264,000** (22 calendar days × $12,000/calendar day delay cost).
+>
+> **If this happens:** notice period per settings is 7 business days (§8.3), deadline Oct 20. Confirm with PX.
 
 ---
 
@@ -487,18 +524,18 @@ Every number displayed in the what-if result must include a citation (tap to see
 
 **Example citation card (shown on tap):**
 
-> **$ impact: $312,000**
+> **$ impact: $120,000**
 >
 > **Source:**  
-> - Critical path slip: 26 days (from schedule impact walk, P6 XER snapshot P6_XER_2026-10-08_05-12)
+> - Critical path slip: 10 calendar days (from schedule impact walk, P6 XER snapshot P6_XER_2026-10-08_05-12)
 > - Schedule data date: Oct 8, 2026
 > - Daily delay cost: $12,000/calendar day (from project settings)
-> - Computation: 26 days × $12,000/day = $312,000
+> - Computation: 10 calendar days × $12,000/day = $120,000
 > - **Note:** This is an estimate. Confirm in P6 (constraints and resource leveling not applied).
 >
 > [View schedule snapshot] [View project settings]
 
-**Citation links (PM):** Link to the schedule snapshot summary for M2. Direct deep-links to Procore activities or P6 web UI rows are desirable for M3 but require deep-link support from those tools.
+**Citation links (PM):** Link to the schedule snapshot summary for M2. Direct deep-links to P6 web UI rows are desirable for M3 but require deep-link support from those tools.
 
 ---
 
@@ -553,7 +590,7 @@ Reference fixture: `docs/what-if-examples/fixture.json`. All numbers computed by
 2. ✅ **Shutdown periods (PM):** Use P6 calendars in the XER (they carry non-work periods) plus project holidays from settings. No separate manual calendar for M2.
 3. ✅ **Activity matching (PM):** Normalize case, spaces, and hyphens ("curtainwall" = "curtain wall"). Confidence enum stays internal; user only sees Confirm chip or picker.
 4. ✅ **Successor display (PM):** Show impacted activities. Successors ordered: critical-path activities first, then rest by least float (ascending).
-5. ✅ **Citation links (PM):** Link to schedule snapshot summary for M2. Direct deep-links to Procore/P6 desirable for M3 but require tool support. Every citation shows the schedule snapshot's data date.
+5. ✅ **Citation links (PM):** Link to schedule snapshot summary for M2. Direct deep-links to P6 desirable for M3 but require tool support. Every citation shows the schedule snapshot's data date.
 6. ✅ **Acceleration savings (PM):** Do not compute $ savings for acceleration (negative slip). Delay impact only. (Savings are less common and harder to justify; delay impact is the primary use case.)
 7. ✅ **Cache results (PM):** Not needed for M2; 500ms is fast enough. May revisit for M3.
 8. ✅ **Notice threshold (PM):** Handled by action routing. A6 escalates to PX same day if deadline < 2 business days.
@@ -572,4 +609,4 @@ Reference fixture: `docs/what-if-examples/fixture.json`. All numbers computed by
 - **v1.1 (Oct 9, 2026, 18:07 UTC):** PM resolved 9 OPEN questions. Applied CTO guardrail (NOT building schedule engine).
 - **v1.2 (Oct 9, 2026, 18:14 UTC):** Lead review at 1966299 (first round). Renamed "slip propagation". Added Data requirements section. P6 XER only. Fixed FS+1 convention, SF flag, notice deadline calculation. Created fixture and compute script.
 - **v1.3 (Oct 9, 2026, 18:56 UTC):** Lead review at 4069227 (second round). Rebuilt fixture with contiguous activities. Fixed propagate_slip to honor shared float. Added Jul 5, 2027 holiday. Updated all examples/test cases with computed numbers. Fixed working→calendar day $ conversion. Removed CPM references. Data requirements match main migration. Added Due/escalation to A1/A2/A4/A5/A7/A8. Fixed A6 escalation, flagged A11 CEO escalation OPEN. requires_procore on all actions. Party enum gc_vendor OPEN, cure_default display label clarified. A4 email mode consistent across precondition/eval.
-- **v1.4 (Oct 9, 2026, 19:20 UTC):** Reference fixture & compute (sha256 verified). Replaced all examples with reference numbers from fixture (A1000/A1100/A1200/A2000/A2100/A2200/A3000). Added verbatim rules from compute.py docstring (counting rule, shift vs extend, FS/SS/FF/SF, lag calendar, no max(0) float clamp, completion slip, $, notice). Marked OPEN: notice event date source, lag calendar (successor vs predecessor), no negative float constraints. Removed early/late columns from Data requirements (exist on main), use project_holidays, removed delay_cost_unit and driving_path defaults. TC1-TC17 updated with exact reference numbers. Added check.py for fixture validation. Note: A4 closed-RFI path needs Procore.
+- **v1.4 (Oct 9, 2026, 19:20 UTC):** Reference fixture & compute (sha256 verified). Replaced all examples with reference numbers from fixture (A1000/A1100/A1200/A2000/A2100/A2200/A3000). Added verbatim rules from compute.py docstring (counting rule, shift vs extend, FS/SS/FF/SF, lag calendar, no max(0) float clamp, completion slip, $, notice). Marked OPEN: notice event date source, lag calendar (successor vs predecessor), no negative float constraints. Removed early/late columns from Data requirements (exist on main), use project_holidays, removed delay_cost_unit and driving_path defaults. TC1-TC17 updated with exact reference numbers. Added check.py for fixture validation.
