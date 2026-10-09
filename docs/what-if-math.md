@@ -301,7 +301,7 @@ The computation returns a structured result that the model uses to generate a pl
 - `scenario` (object): echoes the input scenario (activityId, activityName, slipDays)
 - `impacts` (object): computation results
   - `primaryActivity` (object): the activity the user asked about
-  - `successors` (array of objects): impacted successor activities (up to 10 shown by default; more available on request)
+  - `successors` (array of objects): impacted successor activities (**PROPOSED:** up to 10 shown by default; more available on request. Not yet decided by PM.)
   - `projectCompletion` (object): project finish date impact (if any)
 - `dollars` (object): $ impact breakdown
 - `notices` (array of objects): triggered notice requirements (from contract notice periods)
@@ -339,7 +339,7 @@ The what-if result is displayed as:
 - Hover: full activity details (id, original dates, new dates, float consumed, $ impact if on critical path)
 - **Result labeled:** All charts and outputs include the label **"estimate, confirm in P6"** to remind users this is NOT a full schedule recalculation
 
-**Successor display:** Show the primary activity + up to 10 immediate successors by default. User can expand to see full critical path if needed. (Full critical path can be 50+ activities; showing all by default risks overwhelming the UI.)
+**Successor display (PROPOSED by Agent Engineer, not yet decided):** Show the primary activity + up to 10 immediate successors by default. User can expand to see full critical path if needed. (Full critical path can be 50+ activities; showing all by default risks overwhelming the UI.)
 
 ---
 
@@ -396,7 +396,7 @@ Every number displayed in the what-if result must include a citation (tap to see
 >
 > [View schedule snapshot] [View project settings]
 
-**Citation links:** Link to the schedule snapshot summary for M2. Direct deep-links to Procore activities or P6 web UI rows are desirable for M3 but require deep-link support from those tools.
+**Citation links (PROPOSED by Agent Engineer, not yet decided):** Link to the schedule snapshot summary for M2. Direct deep-links to Procore activities or P6 web UI rows are desirable for M3 but require deep-link support from those tools.
 
 ---
 
@@ -436,7 +436,7 @@ Each test case includes:
 - **Successor depth:** walk up to 100 levels deep (typical max for construction schedules)
 - **UI render time:** < 1s to show the summary card + chart after computation completes
 - **Concurrent requests:** support 10 concurrent what-if scenarios per project (users exploring different options)
-- **Caching:** Not needed for M2; 500ms is fast enough. May revisit for M3 if performance requires it.
+- **Caching (PROPOSED by Agent Engineer, not yet decided):** Not needed for M2; 500ms is fast enough. May revisit for M3 if performance requires it.
 
 ---
 
@@ -444,14 +444,14 @@ Each test case includes:
 
 **Most OPEN items have been resolved as of Oct 9, 2026 (PM answers in PR #17 comments + CTO guardrail).** The following have been answered and incorporated into the spec above:
 
-1. ✅ **CPM float walk / Relationship types:** Support FS, SS, FF with lags in M2 (from P6 XER). SF (start-to-finish, rare) is treated as FS with "check in P6" flag.
-2. ✅ **Shutdown periods:** Use P6 calendars in the XER (they carry non-work periods) plus project holidays from settings. No separate manual calendar for M2.
-3. ✅ **Activity matching:** Normalize case, spaces, and hyphens ("curtainwall" = "curtain wall"). Confidence enum stays internal; user only sees Confirm chip or picker.
-4. ✅ **Successor display:** Show primary + up to 10 immediate successors by default; user can expand for full critical path. (All impacted activities can be 50+; showing a limited set by default avoids overwhelming the UI.)
-5. ✅ **Citation links:** Link to schedule snapshot summary for M2. Direct deep-links to Procore/P6 desirable for M3 but require tool support.
-6. ✅ **Acceleration savings:** Do not compute $ savings for acceleration (negative slip). Delay impact only. (Savings are less common and harder to justify; delay impact is the primary use case.)
-7. ✅ **Cache CPM results:** Not needed for M2; 500ms is fast enough. May revisit for M3.
-8. ✅ **Notice threshold:** Handled by action routing. A6 escalates to PX same day if deadline < 2 business days.
+1. ✅ **CPM float walk / Relationship types (PM):** Support FS, SS, FF with lags in M2 (from P6 XER). SF (start-to-finish, rare) is treated as FS with "check in P6" flag.
+2. ✅ **Shutdown periods (PM):** Use P6 calendars in the XER (they carry non-work periods) plus project holidays from settings. No separate manual calendar for M2.
+3. ✅ **Activity matching (PM):** Normalize case, spaces, and hyphens ("curtainwall" = "curtain wall"). Confidence enum stays internal; user only sees Confirm chip or picker.
+4. 🔧 **Successor display (PROPOSED by Agent Engineer, not yet decided):** Show primary + up to 10 immediate successors by default; user can expand for full critical path. (All impacted activities can be 50+; showing a limited set by default avoids overwhelming the UI.)
+5. 🔧 **Citation links (PROPOSED by Agent Engineer, not yet decided):** Link to schedule snapshot summary for M2. Direct deep-links to Procore/P6 desirable for M3 but require tool support.
+6. 🔧 **Acceleration savings (PROPOSED by Agent Engineer, not yet decided):** Do not compute $ savings for acceleration (negative slip). Delay impact only. (Savings are less common and harder to justify; delay impact is the primary use case.)
+7. 🔧 **Cache CPM results (PROPOSED by Agent Engineer, not yet decided):** Not needed for M2; 500ms is fast enough. May revisit for M3.
+8. 🔧 **Notice threshold (PROPOSED by Agent Engineer, not yet decided):** Handled by action routing. A6 escalates to PX same day if deadline < 2 business days.
 9. ✅ **CTO guardrail applied:** We are NOT building a schedule engine. Float and dates come from P6 file; what-if pushes slips forward using P6 dependencies, lags, and calendars. Constraints and resource leveling stay in P6. Result labeled "estimate, confirm in P6".
 
 **One remaining consideration for M3 (not blocking M2):**

@@ -245,7 +245,7 @@
 - Activity is not yet complete
 - Slip > 0 days
 - Responsible party is a vendor or sub (not GC or owner)
-- **Slip threshold:** fire when the slip leaves ≤ 5 working days of float or hits the critical path (0 float). Per-project setting can change the 5-day threshold.
+- **Slip threshold:** fire when the slip leaves ≤ 5 working days of float OR hits the critical path (0 float). Per-project setting can change the 5-day threshold.
 
 **Output:**
 - Recovery options card (read-only, shows 3 options):
@@ -601,7 +601,7 @@ This audit trail is used for:
 5. ✅ **A4 (Change $ captured):** Three stages (Raised, Submitted, Approved), never summed; dollars from CE/proposal amount, not estimate
 6. ✅ **A4 (Reason codes):** Project-specific via source mapping; unmapped = blank
 7. ✅ **A4 (ROM $):** Only when stated in source; never model estimate
-8. ✅ **A5 (Slip threshold):** Fire when slip leaves ≤ 5 working days of float (configurable per-project)
+8. ✅ **A5 (Slip threshold):** Fire when slip leaves ≤ 5 working days of float OR hits the critical path (configurable per-project)
 9. ✅ **A5 (Resequence verification):** Only suggest activities whose P6 predecessors are complete/unaffected; labeled "guidance, check in P6"
 10. ✅ **A7 (Owner decision sources):** Meeting decisions marked open, emails to owner, RFIs/submittals with owner ball-in-court
 11. ✅ **A7 (Blocking threshold):** Procurement activity start minus lead time ≤ 21 days
@@ -612,7 +612,7 @@ This audit trail is used for:
 16. ✅ **A10 (Transcript quality):** No threshold; process all; unlabeled speakers → "confirm owner"
 17. ✅ **A10 (Category mapping):** Model tags + PM reviews; untagged → New business
 18. ✅ **A10 (Distribution tracking):** Sent-item detection or one-tap confirm
-19. ✅ **Minimum $ threshold:** None by default; rank by $; always show if float ≤ 5 days or notice deadline involved; optional per-project setting
+19. ✅ **Minimum $ threshold:** None by default; rank by $; always show if float ≤ 5 days OR critical path OR notice deadline involved; optional per-project setting
 20. ✅ **Due dates / escalation:** Defined per action:
     - **A1:** answer-by = activity start − 5 working days
     - **A2:** release-by date (activity start − lead time)
