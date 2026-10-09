@@ -20,6 +20,10 @@ def norm(s): return re.sub(r"\s+", " ", (s or "").replace("\u2019", "'").replace
 
 def record_text(T, ref):
     t, r = T.index[ref]
+    # For emails, only check subject + body_text (not full JSON which includes from.email)
+    if t == "email":
+        return norm(r.get("subject") or "") + " " + norm(r.get("body_text") or "")
+    # For other record types, include full JSON
     return norm(json.dumps(r, ensure_ascii=False).replace("\\n", " ")) + " " + norm(r.get("body_text") or "") + " " + norm(r.get("text") or "")
 
 def quote_ok(T, ref, quote):

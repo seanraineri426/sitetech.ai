@@ -3,9 +3,10 @@
 The stored email body_text has addresses redacted to [email-<domain>] format.
 This test verifies that:
 1. Quotes spanning the placeholder verify as supported
-2. Quotes with raw addresses do NOT verify
-3. Numbers, CO refs, and spec refs are extracted unchanged
-4. Sender party resolution works via placeholder domain
+2. Quotes with raw addresses do NOT verify  
+3. Numbers, CO refs, and spec refs are extracted unchanged via verify_email_facts
+4. Sender party resolution works via party_for_record/party_for_domain (real API)
+5. Unknown domains resolve to "unknown party"
 """
 import sys
 import os
@@ -15,14 +16,16 @@ sys.path.insert(0, HERE)
 
 from harness.fixture_tools import FixtureTools
 from harness.ranker import quote_ok
+from harness.email_facts import verify_email_facts
+from harness.parties import party_for_record, party_for_domain, label as party_label
 
-# Create a minimal fixture with one redacted email
+# Create a minimal fixture with redacted emails
 class RedactedEmailFixture(FixtureTools):
     def __init__(self):
         super().__init__("2026-10-06", "2026-10-05", fixture_dir=os.path.join(HERE, "fixture"))
         
-        # Add test email with redacted address
-        test_email = {
+        # Add test email with redacted address from known party
+        known_party_email = {
             "id": "msg_REDACT_TEST",
             "ref": "msgraph_outlook:message:msg_REDACT_TEST",
             "mailbox": "lindenyard@larkspurdev.example",
@@ -44,15 +47,39 @@ class RedactedEmailFixture(FixtureTools):
             "attachments": []
         }
         
+        # Add test email with redacted address from unknown party
+        unknown_party_email = {
+            "id": "msg_UNKNOWN_TEST",
+            "ref": "msgraph_outlook:message:msg_UNKNOWN_TEST",
+            "mailbox": "lindenyard@larkspurdev.example",
+            "conversation_id": "conv_UNKNOWN_TEST",
+            "received_at": "2026-10-06T10:00:00-04:00",
+            "from": {
+                "name": "Jane Doe",
+                "email": "jane@unknown-vendor.example"
+            },
+            "to": [
+                {
+                    "name": "Priya Chen",
+                    "email": "pchen@ironbridgebuild.example"
+                }
+            ],
+            "cc": [],
+            "subject": "Material delivery update",
+            "body_text": "Per [email-unknown-vendor.example]: delivery scheduled for next week.",
+            "attachments": []
+        }
+        
         # Add to index
-        self.index[test_email["ref"]] = ("email", test_email)
+        self.index[known_party_email["ref"]] = ("email", known_party_email)
+        self.index[unknown_party_email["ref"]] = ("email", unknown_party_email)
         
-        # Add acmemech.example as a known party in project
-        if "parties" not in self.project:
-            self.project["parties"] = []
+        # Add acmemech.example as a known party in project_parties
+        if "project_parties" not in self.project:
+            self.project["project_parties"] = []
         
-        self.project["parties"].append({
-            "role": "subcontractor",
+        self.project["project_parties"].append({
+            "role": "sub",
             "name": "ACME Mechanical",
             "domain": "acmemech.example"
         })
@@ -74,51 +101,106 @@ def test_quote_with_raw_address_fails():
     T = RedactedEmailFixture()
     ref = "msgraph_outlook:message:msg_REDACT_TEST"
     
-    # Quote with raw address
+    # Quote with raw address (the bug: quote_ok matches from.email in JSON)
     quote = "Per john@acmemech.example: the #5@10 rebar"
     
     result = quote_ok(T, ref, quote)
-    assert not result, f"Quote with raw address should NOT verify: {quote}"
+    # This will fail until quote_ok is fixed to only check subject + body_text
+    assert not result, f"Quote with raw address should NOT verify (bug: matches from.email in JSON): {quote}"
     print("✓ Quote with raw address does NOT verify")
 
 def test_numbers_extracted_unchanged():
-    """Dollar amounts, CO refs, and spec refs should be extractable."""
+    """Verify numbers/CO refs/spec refs are in body_text unchanged (not redacted)."""
     T = RedactedEmailFixture()
     ref = "msgraph_outlook:message:msg_REDACT_TEST"
     
     _, email_rec = T.index[ref]
     body = email_rec["body_text"]
     
-    # Check that numbers/refs are in the body as-is
-    assert "$48,200" in body, "Dollar amount should be unchanged"
-    assert "CO-012" in body, "CO reference should be unchanged"
-    assert "03 30 00" in body, "Spec reference should be unchanged"
+    # Verify numbers/refs are present in body text exactly as-is
+    assert "$48,200" in body, "Dollar amount should be in body unchanged"
+    assert "CO-012" in body, "CO reference should be in body unchanged"
+    assert "03 30 00" in body, "Spec reference should be in body unchanged"
     
-    print("✓ Numbers extracted unchanged: $48,200, CO-012, 03 30 00")
+    # Create a fully schema-compliant fact (all required fields)
+    test_fact = {
+        "kind": "pricing_or_change_request",
+        "item": "Rebar spacing revision per CO-012",
+        "quote": "add $48,200 per CO-012 (spec 03 30 00)",
+        "spec_section": "03 30 00",
+        "submittal_no": "",
+        "rfi_no": "",
+        "ce_no": "CO-012",
+        "old_date": None,
+        "new_date": None,
+        "new_date_high": None,
+        "delay_days": None,
+        "delay_days_high": None,
+        "date_phrase": "",
+        "date_basis": "none",
+        "amount_usd": 48200,
+        "notice_types": [],
+        "sender_party": "ACME Mechanical (sub)",
+        "confidence": "high"
+    }
+    
+    # Run verify_email_facts to confirm it preserves the values
+    kept, dropped = verify_email_facts(T, email_rec, [test_fact])
+    
+    assert len(kept) == 1, f"Should keep 1 fact, got {len(kept)}. Dropped: {dropped}"
+    
+    kept_fact = kept[0]
+    assert kept_fact["amount_usd"] == 48200, f"Amount should be 48200, got {kept_fact.get('amount_usd')}"
+    assert kept_fact["ce_no"] == "CO-012", f"CE no should be CO-012, got {kept_fact.get('ce_no')}"
+    assert kept_fact["spec_section"] == "03 30 00", f"Spec should be 03 30 00, got {kept_fact.get('spec_section')}"
+    
+    print("✓ Numbers extracted unchanged via verify_email_facts: $48,200, CO-012, 03 30 00")
 
-def test_sender_party_resolves_via_placeholder():
-    """Sender party should resolve via domain from placeholder."""
+def test_sender_party_via_real_api():
+    """Use real party_for_record/party_for_domain to resolve sender."""
     T = RedactedEmailFixture()
     ref = "msgraph_outlook:message:msg_REDACT_TEST"
     
     _, email_rec = T.index[ref]
-    body = email_rec["body_text"]
     
-    # Extract domain from placeholder
-    import re
-    match = re.search(r'\[email-([^\]]+)\]', body)
-    assert match, "Should find email placeholder"
-    domain = match.group(1)
-    assert domain == "acmemech.example", f"Domain should be acmemech.example, got {domain}"
+    # Use real party_for_record
+    party = party_for_record(T.project, email_rec)
+    assert party is not None, "party_for_record should find the party"
+    assert party["name"] == "ACME Mechanical", f"Party name should be ACME Mechanical, got {party['name']}"
+    assert party["role"] == "sub", f"Party role should be sub, got {party['role']}"
+    assert party["domain"] == "acmemech.example", f"Party domain should be acmemech.example, got {party['domain']}"
     
-    # Check that this domain is in project parties
-    party = next((p for p in T.project.get("parties", []) 
-                  if p.get("domain", "").lower() == domain.lower()), None)
-    assert party is not None, f"Domain {domain} should resolve to a party"
-    assert party["role"] == "subcontractor", f"Party should be subcontractor, got {party['role']}"
-    assert party["name"] == "ACME Mechanical", f"Party should be ACME Mechanical, got {party['name']}"
+    # Use party_label
+    label = party_label(party)
+    assert label == "ACME Mechanical (sub)", f"Party label should be 'ACME Mechanical (sub)', got {label}"
     
-    print(f"✓ Sender party resolves: {party['name']} ({party['role']}) via {domain}")
+    # Use party_for_domain directly
+    party_via_domain = party_for_domain(T.project, "acmemech.example")
+    assert party_via_domain is not None, "party_for_domain should find the party"
+    assert party_via_domain["name"] == "ACME Mechanical"
+    
+    print(f"✓ Sender party via real API: {label}")
+
+def test_unknown_domain_resolves_to_unknown_party():
+    """Unknown domain should resolve to 'unknown party'."""
+    T = RedactedEmailFixture()
+    ref = "msgraph_outlook:message:msg_UNKNOWN_TEST"
+    
+    _, email_rec = T.index[ref]
+    
+    # Use real party_for_record
+    party = party_for_record(T.project, email_rec)
+    assert party is None, f"party_for_record should return None for unknown domain, got {party}"
+    
+    # Use party_label
+    label = party_label(party)
+    assert label == "unknown party", f"Party label should be 'unknown party', got {label}"
+    
+    # Verify domain is not in project_parties
+    party_via_domain = party_for_domain(T.project, "unknown-vendor.example")
+    assert party_via_domain is None, "party_for_domain should return None for unknown domain"
+    
+    print("✓ Unknown domain resolves to 'unknown party'")
 
 def main():
     """Run all redacted email quote tests."""
@@ -131,7 +213,8 @@ def main():
         ("Quote with placeholder verifies", test_quote_with_placeholder_verifies),
         ("Quote with raw address fails", test_quote_with_raw_address_fails),
         ("Numbers extracted unchanged", test_numbers_extracted_unchanged),
-        ("Sender party resolves via placeholder", test_sender_party_resolves_via_placeholder),
+        ("Sender party via real API", test_sender_party_via_real_api),
+        ("Unknown domain → unknown party", test_unknown_domain_resolves_to_unknown_party),
     ]
     
     passed = 0
