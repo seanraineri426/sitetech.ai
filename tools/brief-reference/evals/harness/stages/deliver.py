@@ -296,7 +296,7 @@ def run(T, R, cfg, read_out, rules_out, rank_out, verify_out, run_id, run_dir):
                      "schema_version": "1.0", "brief_id": f"brief-{T.project['project_id']}-{T.as_of.isoformat()}-{run_id}", "run_id": run_id, "version": 1,
                      "org_id": T.project["org_id"], "project_id": T.project["project_id"], "project_name": T.project["name"], "as_of": T.as_of.isoformat(),
                      "coverage": {"window_start": _local_iso(T, "00:00:00"), "window_end": _local_iso(T, "23:59:59"), "cutoff_at": cfg["fixture"]["cutoff_at"]},
-                     "generated_at": dt.datetime.now().astimezone().isoformat(timespec="seconds"),
+                     "generated_at": cfg.get("generated_at") or dt.datetime.now().astimezone().isoformat(timespec="seconds"),
                      "compare_to": {"as_of": T.compare_to.isoformat(), "brief_id": None, "basis": "prior_business_day_snapshot"},
                      "freshness": fr, "closed_since_last": rules_out["closed_since_last"],
                      "metrics": {"word_count_main": 0, "items_flagged_total": len(ins), "llm_cost_usd": None,

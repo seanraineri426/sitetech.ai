@@ -15,17 +15,37 @@ const eslintConfig = defineConfig([
     "tools/brief-reference/**",
   ]),
   {
-    files: ["app/**/*", "lib/**/*"],
+    files: ["**/*.{js,jsx,ts,tsx,mjs,cjs}"],
+    ignores: ["tools/brief-reference/**"],
     rules: {
+      // Block all imports from brief-reference (static imports, require, dynamic imports)
       "no-restricted-imports": [
         "error",
         {
           patterns: [
             {
-              group: ["**/tools/brief-reference/**", "tools/brief-reference/**"],
-              message: "Production code in app/ and lib/ must not import from tools/brief-reference/. This is a reference implementation only."
+              group: [
+                "**/tools/brief-reference/**",
+                "tools/brief-reference/**",
+                "../tools/brief-reference/**",
+                "../../tools/brief-reference/**",
+                "../../../tools/brief-reference/**"
+              ],
+              message: "Production code must not import from tools/brief-reference/. This is a reference implementation only."
             }
           ]
+        }
+      ],
+      // Block dynamic imports and require() targeting brief-reference
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "ImportExpression[source.value=/brief-reference/]",
+          message: "Dynamic import() from tools/brief-reference/ is forbidden"
+        },
+        {
+          selector: "CallExpression[callee.name='require'][arguments.0.value=/brief-reference/]",
+          message: "require() from tools/brief-reference/ is forbidden"
         }
       ]
     }

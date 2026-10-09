@@ -1,2 +1,2 @@
-jsonschema
-PyYAML
+jsonschema>=4.20
+pyyaml>=6.0

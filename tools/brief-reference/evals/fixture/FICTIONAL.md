@@ -13,7 +13,7 @@ Every project, company, person, email address, phone number, dollar amount, date
 - `harness_fixture.yaml` (new file): Linden Yard's run settings (as_of, compare_to, simulated sync/cutoff times), moved out of
   `harness/config.yaml` so nothing project-specific is left in the harness config. Other fixtures may omit it (settings are then derived).
 
-## Answer-key additions 2026-10-06 (iteration 3, `expected_findings.json`; schema `schemas/answer_key.schema.json`)
+## Answer-key additions 2026-10-06 (iteration 3, `expected_findings.json`; schema `schemas/expected_findings.schema.json`)
 Only fields that encode rules already in DAILY_BRIEF_SPEC.md or existing key entries; no expected value was loosened. The pre-change key
 is kept outside the repo tree for diffing only. Each added field carries a `*_basis` note in the key itself.
 | Field | Added | Basis |

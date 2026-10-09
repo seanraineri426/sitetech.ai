@@ -1,7 +1,12 @@
 # SiteTech Intelligence Layer: MVP Daily Project Brief
 
 Owner: AI and Agent Systems Engineer · v0.1 · 2026-10-06
-This folder holds the reasoning layer that turns synced project records into a cited, ranked Daily Project Brief. It **builds on** the integrations engineer's `get_*` tools (`../integrations/sitetech-tool-layer.json`) and the CTO's stack (Next.js + Supabase + Vercel, Procore DMSA, Microsoft Graph, Inngest, a model-agnostic LLM layer). **All example and fixture data is fictional.**
+This folder holds the reasoning layer that turns synced project records into a cited, ranked Daily Project Brief. It **builds on** the integrations engineer's `get_*` tools (documented in `tools/tool_schemas.json`) and the CTO's stack (Next.js + Supabase + Vercel, Procore DMSA, Microsoft Graph, Inngest, a model-agnostic LLM layer). **All example and fixture data is fictional.**
+
+## Money Representation
+
+**Python (this reference implementation):** Dollar amounts use whole-dollar floats (e.g., `42000.0` = $42,000).  
+**TypeScript (production port):** Dollar amounts will use integer cents (e.g., `4200000` = $42,000.00) to avoid floating-point precision issues.
 
 **Core idea in one line:** *rules find, models connect, code checks.* Deterministic rules write a `findings` table (record IDs plus `days_overdue`). Models rank and connect findings into insights. A verifier drops any claim that lacks a resolvable record ID. Then a closed-book writer and a deterministic renderer produce the page.
 

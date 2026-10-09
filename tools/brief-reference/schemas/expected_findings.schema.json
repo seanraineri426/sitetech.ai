@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "answer_key.schema.json",
+  "$id": "expected_findings.schema.json",
   "title": "Daily Brief eval answer key (expected_findings.json), any fixture",
   "description": "Iteration 3 (2026-10-06). Read by evals/score_brief.py. Every check is driven by these fields; nothing in the scorer is project-specific. Constructs with gate=true must pass for the scorer GATE; others are informational. Optional sibling files in the fixture dir: _ref_index.json (fabricated-ref check), reference_ranking.json (top-7 overlap).",
   "type": "object",

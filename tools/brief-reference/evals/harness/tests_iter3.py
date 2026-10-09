@@ -72,10 +72,10 @@ k_st = copy.deepcopy(KEY); k_st["status_items"] = [{"id": "S1", "checks": [{"typ
 rs = SB.score(b8, k_st)
 res.append(ok(rs["summary"]["status_items_ok"] == "1/1" and rs["status_items"][1]["ok"] is None, "status items: machine checks scored; prose-only item human-judged (skipped)"))
 res.append(ok(SB.score(brief([top(1, ["x:rfi:1"])], fresh=FR), KEY)["summary"]["recall"] == 0.5, "recall_min default (miss at most one) -> 1/2 fails gate"))
-ak = json.load(open(os.path.join(os.path.dirname(EVALS), "schemas", "answer_key.schema.json")))
+ak = json.load(open(os.path.join(os.path.dirname(EVALS), "schemas", "expected_findings.schema.json")))
 import jsonschema
 res.append(ok(not list(jsonschema.Draft202012Validator(ak).iter_errors(KEY)) and not list(jsonschema.Draft202012Validator(ak).iter_errors(json.load(open(os.path.join(EVALS, "fixture", "expected_findings.json"))))),
-              "answer_key.schema.json validates the synthetic key and the Linden Yard key"))
+              "expected_findings.schema.json validates the synthetic key and the Linden Yard key"))
 
 # ---------------- B. notice windows: configured periods only ----------------
 T = FixtureTools(); E105 = "msgraph_outlook:message:msg_E105"

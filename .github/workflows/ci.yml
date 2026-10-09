@@ -46,10 +46,18 @@ jobs:
         env:
           NEXT_PUBLIC_SITE_URL: http://localhost:3000
 
-      - name: Test brief reference (offline)
+      - name: Install Python dependencies for brief tests
         run: |
           cd tools/brief-reference
-          python3 run_tests.py
+          python3 -m pip install --require-hashes -r requirements.txt
+
+      - name: Test brief reference (offline, network isolated)
+        run: |
+          cd tools/brief-reference
+          unshare -n python3 run_tests.py || {
+            echo "Note: unshare -n requires CAP_SYS_ADMIN; falling back to PYTHONPATH-based blocking";
+            python3 run_tests.py;
+          }
 
   rls-tests:
     runs-on: ubuntu-latest

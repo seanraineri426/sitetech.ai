@@ -76,7 +76,7 @@ The fact matcher is a **heuristic**: it finds numbers and dates in text, with k/
 Current result on the hand-built example brief: `python3 evals/score_brief.py examples/brief_linden_yard_2026-10-06.json` gives recall 11/11, rank 7/7, top-7 overlap 7/7, 0 false alarms, 0 fabricated refs, S 5/5, freshness 3/3, 586 words, **GATE: PASS**. That example was written by hand to the spec. It proves the scorer and the answer key agree. It is not a model result.
 
 ### 3.1 Answer-key fields the scorer understands (any fixture; iteration 3)
-`score_brief.py` has no project-specific code. Everything is driven by the key (schema: `schemas/answer_key.schema.json`):
+`score_brief.py` has no project-specific code. Everything is driven by the key (schema: `schemas/expected_findings.schema.json`):
 - `findings[].required_elements: [{section, value, scope?, gate?}]`: a string or ISO date (also matched as M/D) that must appear in a named
   section. `management_attention` = top items + action items; `decisions` = new + unresolved; also `top_items`, `action_items`, `status`,
   `freshness`, `gaps`, or any `sections` key. Default scope `related` (only the finding's matched/citing units and the action items that

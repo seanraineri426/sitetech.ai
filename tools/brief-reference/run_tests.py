@@ -61,7 +61,7 @@ def check_no_holdout_material():
     # Get all tracked files from git
     result = subprocess.run(
         ["git", "ls-files"],
-        cwd=os.path.dirname(os.path.dirname(__file__)),  # repo root
+        cwd=os.path.dirname(os.path.dirname(os.path.dirname(__file__))),  # repo root
         capture_output=True,
         text=True
     )
@@ -91,7 +91,7 @@ def check_no_holdout_material():
                     continue
                 if 'tools/brief-reference/examples/' in file_path:
                     continue
-                if 'tools/brief-reference/evals/schemas/' in file_path:
+                if 'tools/brief-reference/schemas/' in file_path:
                     continue
                 found.append((file_path, pattern))
                 break
@@ -107,7 +107,7 @@ def check_no_holdout_material():
     linden_files = [
         'expected_findings.json',
         'reference_ranking.json',
-        'answer_key.schema.json',
+        'expected_findings.schema.json',
         'p3_comms_key.py',
         'brief_linden_yard_2026-10-06.json'
     ]
@@ -115,9 +115,16 @@ def check_no_holdout_material():
     for expected_file in linden_files:
         matches = [f for f in all_files if expected_file in f]
         for match in matches:
-            if not ('tools/brief-reference/evals/fixture/' in match or 
-                   'tools/brief-reference/examples/' in match or
-                   'tools/brief-reference/evals/schemas/' in match):
+            # Allow in fixture, examples, and schemas directories
+            allowed_paths = [
+                'tools/brief-reference/evals/fixture/',
+                'tools/brief-reference/examples/',
+                'tools/brief-reference/schemas/',
+                'brief-reference/evals/fixture/',
+                'brief-reference/examples/',
+                'brief-reference/schemas/'
+            ]
+            if not any(allowed in match for allowed in allowed_paths):
                 print(f"\n❌ ERROR: {expected_file} found outside Linden fixture: {match}")
                 return False
     

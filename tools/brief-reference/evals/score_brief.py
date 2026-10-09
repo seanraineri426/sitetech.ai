@@ -5,7 +5,7 @@ matching; human audit confirms), must-not-flag violations, status items, freshne
 Human-judged metrics (citation support, action usefulness) are NOT computed here; see EVALS.md section 4.
 
 Generic (iteration 3): nothing here is specific to one project. Every check is driven by answer-key fields defined in
-schemas/answer_key.schema.json (documented in EVALS.md section 3.1):
+schemas/expected_findings.schema.json (documented in EVALS.md section 3.1):
   findings[].required_elements   [{section, value, scope?, gate?}]   a string/date that must appear in a named brief section
   findings[].expected_label / forbidden_label (+ label_gate)          confidence label of the matched brief unit
   must_not_flag[] (traps)        {ref | check:{type:text_pattern, pattern}, scope: anywhere | top_items_only}
