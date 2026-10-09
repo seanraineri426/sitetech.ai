@@ -1,7 +1,9 @@
 /**
  * ESLint boundary enforcement test.
  * 
- * Runs `pnpm lint` on the bypass attempts file via subprocess and verifies errors.
+ * Runs eslint on the bypass attempts file via subprocess and verifies errors.
+ * 
+ * Asserts exact rule IDs and error counts to catch boundary regressions.
  */
 import { describe, it, expect } from 'vitest';
 import { execSync } from 'child_process';
@@ -15,7 +17,7 @@ describe('ESLint architectural boundary', () => {
     let exitCode = 0;
     try {
       // Use --no-ignore to lint the file despite being in globalIgnores
-      execSync(`pnpm eslint --no-ignore ${bypassFile}`, { 
+      execSync(`./node_modules/.bin/eslint --no-ignore ${bypassFile}`, { 
         cwd: join(__dirname, '..'),
         encoding: 'utf-8',
         stdio: 'pipe'
@@ -29,28 +31,39 @@ describe('ESLint architectural boundary', () => {
     // Should fail (exit code 1)
     expect(exitCode).toBe(1);
     
-    // Expected errors on these lines
-    const expectedErrorLines = [
-      12,  // static import
-      15,  // relative static import  
-      18,  // deep relative import
-      21,  // wildcard import
-      24,  // type-only import
-      28,  // dynamic import with string literal
-      35,  // dynamic import with template literal
-      41,  // require() with string literal
-      48,  // require() with template literal
-      53,  // relative import via alias
+    // Expected errors with rule IDs for brief-reference boundary violations
+    const expectedErrors = [
+      { line: 12, rule: 'no-restricted-imports', message: 'tools/brief-reference' },
+      { line: 15, rule: 'no-restricted-imports', message: 'tools/brief-reference' },
+      { line: 18, rule: 'no-restricted-imports', message: 'tools/brief-reference' },
+      { line: 21, rule: 'no-restricted-imports', message: 'tools/brief-reference' },
+      { line: 24, rule: 'no-restricted-imports', message: 'tools/brief-reference' },
+      { line: 28, rule: 'no-restricted-syntax', message: 'Dynamic import() with string literal from tools/brief-reference/' },
+      { line: 35, rule: 'no-restricted-syntax', message: 'Dynamic import() with template literal' },
+      { line: 35, rule: 'no-restricted-syntax', message: 'Dynamic import() must use string literals only' },
+      { line: 41, rule: 'no-restricted-syntax', message: 'require() with string literal from tools/brief-reference/' },
+      { line: 48, rule: 'no-restricted-syntax', message: 'require() with template literal' },
+      { line: 48, rule: 'no-restricted-syntax', message: 'require() must use string literals only' },
+      { line: 53, rule: 'no-restricted-imports', message: 'tools/brief-reference' },
     ];
     
-    // Verify errors reported on expected lines
-    for (const line of expectedErrorLines) {
-      const lineError = new RegExp(`${line}:\\d+\\s+error`, 'i');
-      expect(output, `Expected error on line ${line}`).toMatch(lineError);
+    // Verify each expected error is present with correct rule ID and message
+    for (const { line, rule, message } of expectedErrors) {
+      const lineErrorPattern = new RegExp(`${line}:\\d+\\s+error.*${rule}`, 'i');
+      expect(output, `Expected ${rule} error on line ${line}`).toMatch(lineErrorPattern);
+      expect(output, `Expected message "${message}" on line ${line}`).toContain(message);
     }
     
-    // Check key error messages present
-    expect(output).toContain('brief-reference');
-    expect(output).toContain('template literal');
+    // Assert exact error count for brief-reference boundary rules
+    const noRestrictedImportsCount = (output.match(/no-restricted-imports/g) || []).length;
+    const noRestrictedSyntaxCount = (output.match(/no-restricted-syntax/g) || []).length;
+    
+    expect(noRestrictedImportsCount, 'no-restricted-imports violations').toBe(6);
+    expect(noRestrictedSyntaxCount, 'no-restricted-syntax violations').toBe(6);
+    
+    // Verify total error count (18 errors from reviewer measurement)
+    const errorMatch = output.match(/(\d+)\s+errors?,\s+(\d+)\s+warnings?/);
+    expect(errorMatch).toBeTruthy();
+    expect(parseInt(errorMatch![1]), 'total error count').toBe(18);
   });
 });
