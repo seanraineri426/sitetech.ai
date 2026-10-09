@@ -301,16 +301,42 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
-                },"submittals": {
+                },"schedule_activities": {
                   Row: {
-                    "approver_responses": Json | null,"buffer_time_days": number | null,"created_at": string,"current_revision": number | null,"due_date": string | null,"external_id": string,"id": string,"lead_time_days": number | null,"number": string,"org_id": string,"project_id": string,"raw_record_id": string,"received_date": string | null,"required_on_site_date": string | null,"review_time_days": number | null,"scheduled_task": Json | null,"spec_section": string | null,"status": string,"title": string,"updated_at": string
+                    "baseline_finish": string | null,"baseline_start": string | null,"created_at": string,"early_finish": string | null,"early_start": string | null,"external_id": string,"free_float_days": number | null,"id": string,"import_id": string | null,"late_finish": string | null,"late_start": string | null,"name": string,"org_id": string,"predecessors": (string)[],"project_id": string,"raw_record_id": string | null,"status": string | null,"task_code": string,"task_id": string | null,"total_float_days": number | null,"updated_at": string,"wbs_path": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "approver_responses"?: Json | null,"buffer_time_days"?: number | null,"created_at"?: string,"current_revision"?: number | null,"due_date"?: string | null,"external_id": string,"id"?: string,"lead_time_days"?: number | null,"number": string,"org_id": string,"project_id": string,"raw_record_id": string,"received_date"?: string | null,"required_on_site_date"?: string | null,"review_time_days"?: number | null,"scheduled_task"?: Json | null,"spec_section"?: string | null,"status": string,"title": string,"updated_at"?: string
+                    "baseline_finish"?: string | null,"baseline_start"?: string | null,"created_at"?: string,"early_finish"?: string | null,"early_start"?: string | null,"external_id": string,"free_float_days"?: number | null,"id"?: string,"import_id"?: string | null,"late_finish"?: string | null,"late_start"?: string | null,"name": string,"org_id": string,"predecessors"?: (string)[],"project_id": string,"raw_record_id"?: string | null,"status"?: string | null,"task_code": string,"task_id"?: string | null,"total_float_days"?: number | null,"updated_at"?: string,"wbs_path"?: string | null
                   }
                   Update: {
-                    "approver_responses"?: Json | null,"buffer_time_days"?: number | null,"created_at"?: string,"current_revision"?: number | null,"due_date"?: string | null,"external_id"?: string,"id"?: string,"lead_time_days"?: number | null,"number"?: string,"org_id"?: string,"project_id"?: string,"raw_record_id"?: string,"received_date"?: string | null,"required_on_site_date"?: string | null,"review_time_days"?: number | null,"scheduled_task"?: Json | null,"spec_section"?: string | null,"status"?: string,"title"?: string,"updated_at"?: string
+                    "baseline_finish"?: string | null,"baseline_start"?: string | null,"created_at"?: string,"early_finish"?: string | null,"early_start"?: string | null,"external_id"?: string,"free_float_days"?: number | null,"id"?: string,"import_id"?: string | null,"late_finish"?: string | null,"late_start"?: string | null,"name"?: string,"org_id"?: string,"predecessors"?: (string)[],"project_id"?: string,"raw_record_id"?: string | null,"status"?: string | null,"task_code"?: string,"task_id"?: string | null,"total_float_days"?: number | null,"updated_at"?: string,"wbs_path"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "schedule_activities_org_project_fk"
+      columns: ["project_id","org_id"]
+isOneToOne: false
+      referencedRelation: "projects"
+      referencedColumns: ["id","org_id"]
+    },{
+      foreignKeyName: "schedule_activities_raw_record_id_fkey"
+      columns: ["raw_record_id"]
+isOneToOne: false
+      referencedRelation: "raw_records"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"submittals": {
+                  Row: {
+                    "approver_responses": Json | null,"buffer_time_days": number | null,"created_at": string,"current_revision": number | null,"due_date": string | null,"external_id": string,"id": string,"lead_time_days": number | null,"number": string,"org_id": string,"project_id": string,"raw_record_id": string,"received_date": string | null,"required_on_site_date": string | null,"review_time_days": number | null,"schedule_activity_id": string | null,"schedule_match_confidence": number | null,"schedule_match_method": Database["public"]['Enums']["schedule_match_method"] | null,"scheduled_task": Json | null,"spec_section": string | null,"status": string,"title": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "approver_responses"?: Json | null,"buffer_time_days"?: number | null,"created_at"?: string,"current_revision"?: number | null,"due_date"?: string | null,"external_id": string,"id"?: string,"lead_time_days"?: number | null,"number": string,"org_id": string,"project_id": string,"raw_record_id": string,"received_date"?: string | null,"required_on_site_date"?: string | null,"review_time_days"?: number | null,"schedule_activity_id"?: string | null,"schedule_match_confidence"?: number | null,"schedule_match_method"?: Database["public"]['Enums']["schedule_match_method"] | null,"scheduled_task"?: Json | null,"spec_section"?: string | null,"status": string,"title": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "approver_responses"?: Json | null,"buffer_time_days"?: number | null,"created_at"?: string,"current_revision"?: number | null,"due_date"?: string | null,"external_id"?: string,"id"?: string,"lead_time_days"?: number | null,"number"?: string,"org_id"?: string,"project_id"?: string,"raw_record_id"?: string,"received_date"?: string | null,"required_on_site_date"?: string | null,"review_time_days"?: number | null,"schedule_activity_id"?: string | null,"schedule_match_confidence"?: number | null,"schedule_match_method"?: Database["public"]['Enums']["schedule_match_method"] | null,"scheduled_task"?: Json | null,"spec_section"?: string | null,"status"?: string,"title"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -324,6 +350,12 @@ isOneToOne: false
       columns: ["raw_record_id"]
 isOneToOne: false
       referencedRelation: "raw_records"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "submittals_schedule_activity_id_fkey"
+      columns: ["schedule_activity_id"]
+isOneToOne: false
+      referencedRelation: "schedule_activities"
       referencedColumns: ["id"]
     }
                   ]
@@ -382,7 +414,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "company_role": "owner"|"architect_engineer"|"gc"|"sub","connection_status": "pending"|"active"|"error"|"disconnected","contract_kind": "owner_gc"|"gc_sub","day_basis": "calendar"|"business","integration_provider": "procore"|"msgraph"|"p6_upload","notice_type": "delay_time_extension"|"cost_change_claim"|"differing_site_condition"|"change_directive_dispute"|"cure_default"|"injury_property_damage"|"other","received_at_source": "graph"|"forwarded_text","sync_kind": "backfill"|"incremental"|"reconcile"|"purge","sync_status": "queued"|"running"|"succeeded"|"failed"|"partial"
+            "company_role": "owner"|"architect_engineer"|"gc"|"sub","connection_status": "pending"|"active"|"error"|"disconnected","contract_kind": "owner_gc"|"gc_sub","day_basis": "calendar"|"business","integration_provider": "procore"|"msgraph"|"p6_upload","notice_type": "delay_time_extension"|"cost_change_claim"|"differing_site_condition"|"change_directive_dispute"|"cure_default"|"injury_property_damage"|"other","received_at_source": "graph"|"forwarded_text","schedule_match_method": "task_code"|"name_spec"|"manual","sync_kind": "backfill"|"incremental"|"reconcile"|"purge","sync_status": "queued"|"running"|"succeeded"|"failed"|"partial"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -498,7 +530,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "company_role": ["owner", "architect_engineer", "gc", "sub"],"connection_status": ["pending", "active", "error", "disconnected"],"contract_kind": ["owner_gc", "gc_sub"],"day_basis": ["calendar", "business"],"integration_provider": ["procore", "msgraph", "p6_upload"],"notice_type": ["delay_time_extension", "cost_change_claim", "differing_site_condition", "change_directive_dispute", "cure_default", "injury_property_damage", "other"],"received_at_source": ["graph", "forwarded_text"],"sync_kind": ["backfill", "incremental", "reconcile", "purge"],"sync_status": ["queued", "running", "succeeded", "failed", "partial"]
+            "company_role": ["owner", "architect_engineer", "gc", "sub"],"connection_status": ["pending", "active", "error", "disconnected"],"contract_kind": ["owner_gc", "gc_sub"],"day_basis": ["calendar", "business"],"integration_provider": ["procore", "msgraph", "p6_upload"],"notice_type": ["delay_time_extension", "cost_change_claim", "differing_site_condition", "change_directive_dispute", "cure_default", "injury_property_damage", "other"],"received_at_source": ["graph", "forwarded_text"],"schedule_match_method": ["task_code", "name_spec", "manual"],"sync_kind": ["backfill", "incremental", "reconcile", "purge"],"sync_status": ["queued", "running", "succeeded", "failed", "partial"]
           }
         }
 } as const

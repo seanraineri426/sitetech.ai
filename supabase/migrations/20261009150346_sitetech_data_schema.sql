@@ -16,6 +16,7 @@ create type public.contract_kind as enum ('owner_gc', 'gc_sub');
 create type public.notice_type as enum ('delay_time_extension', 'cost_change_claim', 'differing_site_condition', 'change_directive_dispute', 'cure_default', 'injury_property_damage', 'other');
 create type public.day_basis as enum ('calendar', 'business');
 create type public.company_role as enum ('owner', 'architect_engineer', 'gc', 'sub');
+create type public.schedule_match_method as enum ('task_code', 'name_spec', 'manual');
 
 -- ============================================================================
 -- EXTEND PROJECTS TABLE
@@ -171,6 +172,9 @@ create table public.submittals (
   status text not null,
   spec_section text null,
   scheduled_task jsonb null,
+  schedule_activity_id uuid null,
+  schedule_match_method public.schedule_match_method null,
+  schedule_match_confidence numeric null,
   required_on_site_date date null,
   lead_time_days int null,
   review_time_days int null,
@@ -182,11 +186,18 @@ create table public.submittals (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint submittals_org_project_fk foreign key (project_id, org_id) references public.projects(id, org_id),
-  constraint submittals_unique_external unique (org_id, project_id, external_id)
+  constraint submittals_unique_external unique (org_id, project_id, external_id),
+  constraint submittals_confidence_range check (schedule_match_confidence is null or (schedule_match_confidence >= 0 and schedule_match_confidence <= 1)),
+  constraint submittals_activity_requires_method check (schedule_activity_id is null or schedule_match_method is not null),
+  constraint submittals_name_spec_requires_confidence check (schedule_match_method != 'name_spec' or schedule_match_confidence is not null)
 );
 
 comment on table public.submittals is 'Submittal entities (service role writes only)';
 comment on column public.submittals.approver_responses is 'Per-revision array of {revision, approver {id,name}, response, responded_at}, no emails';
+comment on column public.submittals.scheduled_task is 'JSONB with {id, name, code} where code is possible P6 activity code (not personal data)';
+comment on column public.submittals.schedule_activity_id is 'Join key to schedule_activities for comparing vendor dates to activity dates and float';
+comment on column public.submittals.schedule_match_method is 'How the schedule activity was matched: task_code (exact), name_spec (fuzzy), or manual';
+comment on column public.submittals.schedule_match_confidence is 'Match confidence 0-1; required for name_spec, optional for task_code/manual; rules apply dollar exposure only when method is task_code or manual';
 
 -- ============================================================================
 -- EMAILS TABLE
@@ -214,6 +225,45 @@ create table public.emails (
 );
 
 comment on table public.emails is 'Email entities; addresses stored only here under RLS and 30-day purge (service role writes only)';
+
+-- ============================================================================
+-- SCHEDULE ACTIVITIES TABLE
+-- ============================================================================
+
+create table public.schedule_activities (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid not null,
+  project_id uuid not null,
+  raw_record_id uuid null references public.raw_records on delete set null,
+  external_id text not null,
+  task_id text null,
+  task_code text not null,
+  name text not null,
+  wbs_path text null,
+  early_start date null,
+  early_finish date null,
+  late_start date null,
+  late_finish date null,
+  baseline_start date null,
+  baseline_finish date null,
+  total_float_days numeric null,
+  free_float_days numeric null,
+  status text null,
+  predecessors text[] not null default '{}',
+  import_id uuid null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint schedule_activities_org_project_fk foreign key (project_id, org_id) references public.projects(id, org_id),
+  constraint schedule_activities_unique_external unique (org_id, project_id, external_id)
+);
+
+comment on table public.schedule_activities is 'P6 XER schedule activities (service role writes only)';
+comment on column public.schedule_activities.external_id is 'Format: {proj_short_name}:{task_code}';
+comment on column public.schedule_activities.task_id is 'P6 internal ID, secondary only';
+
+-- Add foreign key from submittals to schedule_activities (must be after schedule_activities is created)
+alter table public.submittals add constraint submittals_schedule_activity_id_fkey 
+  foreign key (schedule_activity_id) references public.schedule_activities(id) on delete set null;
 
 -- ============================================================================
 -- PROJECT NOTICE PERIODS TABLE (settings)
@@ -305,6 +355,10 @@ create index idx_emails_org_project on public.emails(org_id, project_id);
 create index idx_emails_external_lookup on public.emails(org_id, project_id, external_id);
 create index idx_emails_received_at on public.emails(received_at);
 
+create index idx_schedule_activities_org_project on public.schedule_activities(org_id, project_id);
+create index idx_schedule_activities_early_start on public.schedule_activities(org_id, project_id, early_start);
+create index idx_schedule_activities_external_lookup on public.schedule_activities(org_id, project_id, external_id);
+
 create index idx_project_notice_periods_org_project on public.project_notice_periods(org_id, project_id);
 
 create index idx_project_holidays_org_project on public.project_holidays(org_id, project_id);
@@ -322,6 +376,7 @@ alter table public.raw_records enable row level security;
 alter table public.rfis enable row level security;
 alter table public.submittals enable row level security;
 alter table public.emails enable row level security;
+alter table public.schedule_activities enable row level security;
 alter table public.project_notice_periods enable row level security;
 alter table public.project_holidays enable row level security;
 alter table public.project_parties enable row level security;
@@ -432,6 +487,17 @@ create policy "Org members can view emails"
 -- No insert/update/delete policies for authenticated - service role only
 
 -- ============================================================================
+-- RLS POLICIES: schedule_activities (service role writes only)
+-- ============================================================================
+
+create policy "Org members can view schedule activities"
+  on public.schedule_activities for select
+  to authenticated
+  using (public.is_org_member(org_id));
+
+-- No insert/update/delete policies for authenticated - service role only
+
+-- ============================================================================
 -- RLS POLICIES: project_notice_periods (settings, owner/admin writes)
 -- ============================================================================
 
@@ -518,6 +584,7 @@ revoke insert, update, delete on public.raw_records from anon;
 revoke insert, update, delete on public.rfis from anon;
 revoke insert, update, delete on public.submittals from anon;
 revoke insert, update, delete on public.emails from anon;
+revoke insert, update, delete on public.schedule_activities from anon;
 revoke insert, update, delete on public.project_notice_periods from anon;
 revoke insert, update, delete on public.project_holidays from anon;
 revoke insert, update, delete on public.project_parties from anon;

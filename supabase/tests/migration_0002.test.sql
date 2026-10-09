@@ -2,7 +2,7 @@
 -- Tests: cross-org isolation, RLS policies, constraints, service role writes
 
 begin;
-select plan(68);
+select plan(81);
 
 -- Setup test data
 set role postgres;
@@ -65,6 +65,11 @@ insert into public.submittals (id, org_id, project_id, raw_record_id, external_i
 -- Add emails
 insert into public.emails (id, org_id, project_id, raw_record_id, external_id, subject, from_address, received_at, received_at_source) values
   ('33333333-3333-3333-3333-333333333333', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-aaaa-aaaa-aaaa-333333333333', '11111111-1111-1111-1111-000000001111', 'email-1', 'Test Email', 'test@example.com', now(), 'graph');
+
+-- Add schedule activities
+insert into public.schedule_activities (id, org_id, project_id, external_id, task_code, name, early_start, early_finish) values
+  ('77777777-7777-7777-7777-777777777777', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-aaaa-aaaa-aaaa-333333333333', 'PROJA:A1010', 'A1010', 'Foundation Work', '2026-01-15', '2026-02-15'),
+  ('88888888-8888-8888-8888-888888888888', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '44444444-bbbb-bbbb-bbbb-444444444444', 'PROJB:B2020', 'B2020', 'Steel Erection', '2026-03-01', '2026-04-01');
 
 -- Add project notice periods
 insert into public.project_notice_periods (id, org_id, project_id, contract_kind, notice_type, days, day_basis) values
@@ -161,7 +166,18 @@ set local "request.jwt.claim.sub" = '22222222-2222-2222-2222-222222222222';
 select is((select count(*)::int from public.emails), 0, 'User in Org B sees only Org B emails (zero in this case)');
 reset role;
 
--- Test 15-16: project_notice_periods
+-- Test 15-16: schedule_activities
+set role authenticated;
+set local "request.jwt.claim.sub" = '11111111-1111-1111-1111-111111111111';
+select is((select count(*)::int from public.schedule_activities), 1, 'User in Org A sees only Org A schedule activities');
+reset role;
+
+set role authenticated;
+set local "request.jwt.claim.sub" = '22222222-2222-2222-2222-222222222222';
+select is((select count(*)::int from public.schedule_activities), 1, 'User in Org B sees only Org B schedule activities');
+reset role;
+
+-- Test 17-18: project_notice_periods
 set role authenticated;
 set local "request.jwt.claim.sub" = '11111111-1111-1111-1111-111111111111';
 select is((select count(*)::int from public.project_notice_periods), 1, 'User in Org A sees only Org A project notice periods');
@@ -323,11 +339,22 @@ select throws_ok(
 );
 reset role;
 
+-- Test 34: Authenticated cannot insert schedule_activities
+set role authenticated;
+set local "request.jwt.claim.sub" = '11111111-1111-1111-1111-111111111111';
+select throws_ok(
+  $$insert into public.schedule_activities (org_id, project_id, external_id, task_code, name) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-aaaa-aaaa-aaaa-333333333333', 'PROJA:NEW', 'NEW', 'New Activity')$$,
+  '42501',
+  null,
+  'Authenticated cannot insert schedule_activities'
+);
+reset role;
+
 -- ============================================================================
 -- ANON ROLE TESTS
 -- ============================================================================
 
--- Test 34-43: Anon cannot see any new tables
+-- Test 35-45: Anon cannot see any new tables
 set role anon;
 select is((select count(*)::int from public.integration_connections), 0, 'Anon cannot see integration_connections');
 select is((select count(*)::int from public.project_sources), 0, 'Anon cannot see project_sources');
@@ -336,6 +363,7 @@ select is((select count(*)::int from public.raw_records), 0, 'Anon cannot see ra
 select is((select count(*)::int from public.rfis), 0, 'Anon cannot see rfis');
 select is((select count(*)::int from public.submittals), 0, 'Anon cannot see submittals');
 select is((select count(*)::int from public.emails), 0, 'Anon cannot see emails');
+select is((select count(*)::int from public.schedule_activities), 0, 'Anon cannot see schedule_activities');
 select is((select count(*)::int from public.project_notice_periods), 0, 'Anon cannot see project_notice_periods');
 select is((select count(*)::int from public.project_holidays), 0, 'Anon cannot see project_holidays');
 select is((select count(*)::int from public.project_parties), 0, 'Anon cannot see project_parties');
@@ -345,7 +373,7 @@ reset role;
 -- CONSTRAINT TESTS
 -- ============================================================================
 
--- Test 44: project_id from another org is rejected (project_sources)
+-- Test 45: project_id from another org is rejected (project_sources)
 set role postgres;
 select throws_ok(
   $$insert into public.project_sources (org_id, project_id, connection_id, source_project_id) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '44444444-bbbb-bbbb-bbbb-444444444444', '11111111-1111-1111-1111-000000000001', 'wrong-org-proj')$$,
@@ -385,7 +413,17 @@ select throws_ok(
 );
 reset role;
 
--- Test 48: notice_type enum matches exactly 7 values
+-- Test 48: project_id from another org is rejected (schedule_activities)
+set role postgres;
+select throws_ok(
+  $$insert into public.schedule_activities (org_id, project_id, external_id, task_code, name) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '44444444-bbbb-bbbb-bbbb-444444444444', 'WRONG:CODE', 'CODE', 'Wrong Org Activity')$$,
+  '23503',
+  null,
+  'project_id from another org rejected (schedule_activities)'
+);
+reset role;
+
+-- Test 49: notice_type enum matches exactly 7 values
 set role postgres;
 select is(
   (select count(*)::int from pg_enum where enumtypid = 'public.notice_type'::regtype),
@@ -532,6 +570,74 @@ reset role;
 set role postgres;
 prepare conn_diff_org as insert into public.integration_connections (org_id, provider, status, display_name, external_account_id) values ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'procore', 'active', 'Procore Org B', 'procore-a');
 select lives_ok('conn_diff_org', 'integration_connections same external_account_id in different org is allowed');
+reset role;
+
+-- Test 69: submittal confidence must be between 0 and 1 (too high)
+set role postgres;
+select throws_ok(
+  $$insert into public.submittals (org_id, project_id, raw_record_id, external_id, number, title, status, schedule_match_confidence) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-aaaa-aaaa-aaaa-333333333333', '11111111-1111-1111-1111-000000001111', 'sub-conf-high', 'S999', 'Test', 'pending', 1.5)$$,
+  '23514',
+  null,
+  'submittal confidence must be between 0 and 1 (rejects > 1)'
+);
+reset role;
+
+-- Test 70: submittal confidence must be between 0 and 1 (negative)
+set role postgres;
+select throws_ok(
+  $$insert into public.submittals (org_id, project_id, raw_record_id, external_id, number, title, status, schedule_match_confidence) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-aaaa-aaaa-aaaa-333333333333', '11111111-1111-1111-1111-000000001111', 'sub-conf-neg', 'S998', 'Test', 'pending', -0.1)$$,
+  '23514',
+  null,
+  'submittal confidence must be between 0 and 1 (rejects negative)'
+);
+reset role;
+
+-- Test 71: submittal with activity_id requires match_method
+set role postgres;
+select throws_ok(
+  $$insert into public.submittals (org_id, project_id, raw_record_id, external_id, number, title, status, schedule_activity_id) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-aaaa-aaaa-aaaa-333333333333', '11111111-1111-1111-1111-000000001111', 'sub-no-method', 'S997', 'Test', 'pending', '77777777-7777-7777-7777-777777777777')$$,
+  '23514',
+  null,
+  'submittal with activity_id requires match_method'
+);
+reset role;
+
+-- Test 72: submittal with name_spec method requires confidence
+set role postgres;
+select throws_ok(
+  $$insert into public.submittals (org_id, project_id, raw_record_id, external_id, number, title, status, schedule_activity_id, schedule_match_method) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-aaaa-aaaa-aaaa-333333333333', '11111111-1111-1111-1111-000000001111', 'sub-name-spec', 'S996', 'Test', 'pending', '77777777-7777-7777-7777-777777777777', 'name_spec')$$,
+  '23514',
+  null,
+  'submittal with name_spec method requires confidence'
+);
+reset role;
+
+-- Test 73: submittal with task_code method can have null confidence
+set role postgres;
+prepare sub_task_code_no_conf as insert into public.submittals (org_id, project_id, raw_record_id, external_id, number, title, status, schedule_activity_id, schedule_match_method) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-aaaa-aaaa-aaaa-333333333333', '11111111-1111-1111-1111-000000001111', 'sub-task-code', 'S995', 'Test', 'pending', '77777777-7777-7777-7777-777777777777', 'task_code');
+select lives_ok('sub_task_code_no_conf', 'submittal with task_code method can have null confidence');
+reset role;
+
+-- Test 74: submittal with manual method can have null confidence
+set role postgres;
+prepare sub_manual_no_conf as insert into public.submittals (org_id, project_id, raw_record_id, external_id, number, title, status, schedule_activity_id, schedule_match_method) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-aaaa-aaaa-aaaa-333333333333', '11111111-1111-1111-1111-000000001111', 'sub-manual', 'S994', 'Test', 'pending', '77777777-7777-7777-7777-777777777777', 'manual');
+select lives_ok('sub_manual_no_conf', 'submittal with manual method can have null confidence');
+reset role;
+
+-- Test 75: submittal with name_spec method and confidence is allowed
+set role postgres;
+prepare sub_name_spec_with_conf as insert into public.submittals (org_id, project_id, raw_record_id, external_id, number, title, status, schedule_activity_id, schedule_match_method, schedule_match_confidence) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-aaaa-aaaa-aaaa-333333333333', '11111111-1111-1111-1111-000000001111', 'sub-name-spec-ok', 'S993', 'Test', 'pending', '77777777-7777-7777-7777-777777777777', 'name_spec', 0.85);
+select lives_ok('sub_name_spec_with_conf', 'submittal with name_spec method and confidence is allowed');
+reset role;
+
+-- Test 76: schedule_activities unique key enforced
+set role postgres;
+select throws_ok(
+  $$insert into public.schedule_activities (org_id, project_id, external_id, task_code, name) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-aaaa-aaaa-aaaa-333333333333', 'PROJA:A1010', 'DUPLICATE', 'Duplicate')$$,
+  '23505',
+  null,
+  'schedule_activities unique key enforced (org_id, project_id, external_id)'
+);
 reset role;
 
 select * from finish();
