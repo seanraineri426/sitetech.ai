@@ -197,7 +197,7 @@
 - Source is from owner or owner's representative (verified by project parties list from settings)
 - **For closed RFIs:** fire only if the RFI's cost/schedule impact field = yes, OR the answer contains wording from a fixed cost-adding list (add, provide additional, revise to include, relocate, upgrade), AND no CE is already linked or title-matched. Clarification RFIs do not fire this action.
 - No existing change event already linked to this source (checked against Procore CE records by description match or manual link)
-- **Procore connection check:** If Procore is not connected, show: "Procore not connected, confirm there's no existing change event" rather than drafting
+- **Procore connection check:** If Procore is not connected, the draft is still created but includes a **"Confirm no existing change event"** chip that the PM must tap before approval (email-only mode)
 - **Email redaction:** Stored email body, subject, and preview replace addresses with `[email-<domain>]` placeholders. Quotes in the draft are matched against the redacted body.
 
 **Output:**
@@ -233,7 +233,7 @@
 - Negative: email from sub (not owner) → no action
 - Negative: existing CE already linked → no action
 - Negative: clarification RFI with no cost → no action
-- Edge: Procore not connected → shows connection warning, not a draft
+- Edge: Procore not connected → draft created with "Confirm no existing CE" chip
 
 ---
 
@@ -300,9 +300,9 @@
 
 **Required inputs:**
 - Notice source: email or letter
-- Notice type: delay/time extension, cost/change claim, differing site condition, change directive dispute, **cure notice**, injury/property damage
+- Notice type: delay/time extension, cost/change claim, differing site condition, change directive dispute, **cure notice** (stored as `cure_default`), injury/property damage
 - Sender party (counterparty), date received
-- **Notice period lookup:** keyed on `contract_kind` (from sender's party role: owner_gc, gc_sub, gc_vendor) + `counterparty_name` + `notice_type`. Returns days, calendar vs. business days, contract section.
+- **Notice period lookup:** keyed on `contract_kind` (from sender's party role: owner_gc, gc_sub; **🔶 gc_vendor OPEN - not in current enum**) + `counterparty_name` + `notice_type`. Returns days, calendar vs. business days, contract section.
 - Owner pass-through requirement: determined by `owner_gc` contract row (if notice is from sub/vendor and owner_gc contract requires pass-through)
 - Project time zone, holidays (from project settings)
 
@@ -710,10 +710,18 @@ The model receives only redacted email body/subject/preview (addresses → `[ema
 
 ### Procore dependencies and email mode
 
-**Requires Procore field:** Each action has a `requires_procore` boolean. Set to `true` for:
-- **A1** (RFI overdue escalation) - requires Procore RFI data
-- **A2** (Submittal chase) - requires Procore submittal data
-- **A3** (Fabrication hold) - requires Procore submittal + ASI data
+**Requires Procore field:** Each action has a `requires_procore` boolean:
+- **A1** (RFI overdue escalation) - `true` (requires Procore RFI data)
+- **A2** (Submittal chase) - `true` (requires Procore submittal data)
+- **A3** (Fabrication hold) - `true` (requires Procore submittal + ASI data)
+- **A4** (Change event draft) - `false` (works in email-only mode; shows "Confirm no existing CE" chip when Procore not connected)
+- **A5** (Schedule slip recovery) - `false` (uses P6 XER schedule data)
+- **A6** (Notice response) - `false` (email/letter-based)
+- **A7** (Owner decision request) - `false` (meeting/email/RFI-based)
+- **A8** (Meeting commitment followup) - `false` (meeting transcript-based)
+- **A9** (Meeting change event draft) - `false` (meeting transcript-based; same email-only mode as A4)
+- **A10** (OAC minutes draft) - `false` (meeting transcript-based)
+- **A11** (Outgoing delay notice) - `false` (what-if scenario or schedule update-based)
 
 **A4 email mode:** A4 (change event draft) works in email-only mode when Procore is not connected. Instead of checking for existing CEs in Procore, the draft shows a **"Confirm no existing change event"** chip that the PM must tap before approval. The draft includes source quotes and ROM $ (if stated), ready for the PM to create the CE manually.
 
@@ -770,4 +778,5 @@ The model receives only redacted email body/subject/preview (addresses → `[ema
 
 - **v1.0 (Oct 9, 2026, 14:00 UTC):** Initial registry draft for M2 (A1–A10). Open questions noted inline.
 - **v1.1 (Oct 9, 2026, 18:07 UTC):** PM resolved all 20 OPEN questions. Applied 4 decisions (change $ tracking, slip threshold, CTO guardrail, email redaction).
-- **v1.2 (Oct 9, 2026, 18:14 UTC):** Lead review at 1966299. Added A11 (outgoing delay notice). Fixed $ calculation (critical-path days × delay cost; float days not converted to $). Added Data requirements, write-path approvals, scorecard outcomes, Procore dependencies. Rebuilt all examples from fixture (docs/what-if-examples/). Added 2 OPEN questions for PM/PX. All action rules deterministic and testable.
+- **v1.2 (Oct 9, 2026, 18:14 UTC):** Lead review at 1966299 (first round). Added A11 (outgoing delay notice). Fixed $ calculation (critical-path days × delay cost; float days not converted to $). Added Data requirements, write-path approvals, scorecard outcomes, Procore dependencies. Rebuilt all examples from fixture. Added 2 OPEN questions for PM/PX.
+- **v1.3 (Oct 9, 2026, 21:15 UTC):** Lead review at 4383096 (second round, complete). Added Due/escalation to A1, A2, A4, A5, A7, A8. Fixed A6 escalation wording. Flagged A11 CEO escalation OPEN. Set requires_procore on all actions (A1-A3 true, rest false). Flagged gc_vendor party enum OPEN. Clarified cure_default stored value / "cure notice" display label. Fixed A4 email mode consistency (precondition/eval). Removed CPM references. Clarified A1/A2 working-day windows (14 wd, 45 wd).

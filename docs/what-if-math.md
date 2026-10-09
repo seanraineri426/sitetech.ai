@@ -68,20 +68,53 @@ The model parses the user's plain-English question into a structured JSON scenar
 ## Data requirements
 
 **Current state (on main branch):**
+- `schedule_activities` table exists with `total_float_days` and `free_float_days` (in days, not hours)
 - `schedule_activities.predecessors` is `text[]`, which cannot hold relationship type or lag
+- Notice periods are in `project_notice_periods` table
 - No `calendars` table, no `calendar_id` on activities
-- No `remaining_duration_hrs`, `original_duration_hrs`, `actual_start`, `actual_finish` fields
-- P6 float is stored in hours in `total_float_hours`; converting to days requires `hours_per_day` (typically 8)
+- No `remaining_duration_days`, `original_duration_days`, `actual_start`, `actual_finish`, `driving_path` fields on activities
+- No `schedule_snapshots` table to track XER imports
+- **🔶 OPEN:** `hours_per_day` source (needed for fixture; propose: add to `projects` table or XER metadata)
 
 **Proposed schema changes for M2:**
 
-### schedule_relationships table (new)
+### schedule_snapshots table (new, proposed)
+```sql
+CREATE TABLE schedule_snapshots (
+  id UUID PRIMARY KEY,
+  project_id UUID REFERENCES projects(id),
+  xer_filename TEXT,
+  data_date DATE NOT NULL,
+  imported_at TIMESTAMPTZ DEFAULT NOW(),
+  import_status TEXT CHECK (import_status IN ('pending', 'success', 'failed')),
+  hours_per_day INTEGER DEFAULT 8,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+### schedule_activities additional fields (proposed)
+```sql
+ALTER TABLE schedule_activities
+  ADD COLUMN snapshot_id UUID REFERENCES schedule_snapshots(id),
+  ADD COLUMN calendar_id TEXT,
+  ADD COLUMN remaining_duration_days INTEGER,
+  ADD COLUMN original_duration_days INTEGER,
+  ADD COLUMN early_start DATE,
+  ADD COLUMN early_finish DATE,
+  ADD COLUMN late_start DATE,
+  ADD COLUMN late_finish DATE,
+  ADD COLUMN actual_start DATE,
+  ADD COLUMN actual_finish DATE,
+  ADD COLUMN driving_path BOOLEAN DEFAULT FALSE;
+```
+
+### schedule_relationships table (new, proposed)
 ```sql
 CREATE TABLE schedule_relationships (
   id UUID PRIMARY KEY,
-  schedule_snapshot_id UUID REFERENCES schedule_snapshots(id),
-  predecessor_id TEXT REFERENCES schedule_activities(activity_id),
-  successor_id TEXT REFERENCES schedule_activities(activity_id),
+  snapshot_id UUID REFERENCES schedule_snapshots(id),
+  predecessor_activity_id TEXT,
+  successor_activity_id TEXT,
   type TEXT CHECK (type IN ('FS', 'SS', 'FF', 'SF')),
   lag_hours INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW()
@@ -94,32 +127,22 @@ ALTER TABLE schedule_activities ADD COLUMN relationships jsonb;
 -- Format: [{"pred_id": "A100", "type": "FS", "lag_hrs": 0}, ...]
 ```
 
-### schedule_calendars table (new)
+### schedule_calendars table (new, proposed)
 ```sql
 CREATE TABLE schedule_calendars (
   id UUID PRIMARY KEY,
-  schedule_snapshot_id UUID REFERENCES schedule_snapshots(id),
+  snapshot_id UUID REFERENCES schedule_snapshots(id),
   calendar_id TEXT,
   calendar_name TEXT,
-  work_days INTEGER[] CHECK (ALL(work_days BETWEEN 1 AND 7)), -- 1=Mon, 7=Sun
+  work_days INTEGER[],
   holidays DATE[],
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
-```
-
-### schedule_activities additional fields
-```sql
-ALTER TABLE schedule_activities
-  ADD COLUMN calendar_id TEXT,
-  ADD COLUMN remaining_duration_hrs INTEGER,
-  ADD COLUMN original_duration_hrs INTEGER,
-  ADD COLUMN actual_start DATE,
-  ADD COLUMN actual_finish DATE,
-  ADD COLUMN driving_path BOOLEAN DEFAULT FALSE;
+-- Note: work_days: 1=Mon, 5=Fri, 6=Sat, 7=Sun or 0=Sun (per P6 XER convention)
 ```
 
 ### Delay cost configuration
-**Current:** `projects.daily_delay_cost_usd` (assumed per calendar day)
+**Current on main:** `projects.daily_delay_cost_usd` (unit not specified)
 
 **Proposed:** Add `delay_cost_unit` to clarify:
 ```sql
@@ -129,8 +152,8 @@ ALTER TABLE projects ADD COLUMN delay_cost_unit TEXT DEFAULT 'calendar_day' CHEC
 **If delay cost is per calendar day:** slip propagation (in working days) must be converted to calendar days for $ computation. Conversion: count calendar days between original completion and new completion, accounting for non-working days.
 
 **Source tables:**
-- `delay_costs` or `project_settings` (future; today it's `projects.daily_delay_cost_usd`)
-- Notice periods: `contract_notice_periods` keyed on `(contract_kind, counterparty_name, notice_type)`
+- Delay cost: `projects.daily_delay_cost_usd` + `projects.delay_cost_unit` (proposed)
+- Notice periods: `project_notice_periods` (exists on main) keyed on `(contract_kind, counterparty_name, notice_type)`
 
 ---
 
@@ -154,7 +177,7 @@ All computation is deterministic code over the latest successful P6 XER snapshot
 
 **Algorithm (forward slip propagation):**
 
-1. **Load the latest successful P6 XER snapshot:** Use P6's calculated float values (total_float in hours), calendars, and relationships. Convert float to days using project's hours_per_day setting.
+1. **Load the latest successful P6 XER snapshot:** Use P6's calculated float values (total_float_days), calendars, and relationships.
 2. **Identify the activity:** by `activityId` from the scenario input
 3. **Apply the slip:**
    - New finish date = original early finish + `slipDays` working days (per activity's P6 calendar: skip non-working days, project holidays)
@@ -558,4 +581,4 @@ Each test case includes:
 - **v1.0 (Oct 9, 2026, 14:00 UTC):** Initial spec for M2. Open questions noted inline.
 - **v1.1 (Oct 9, 2026, 18:07 UTC):** PM resolved 9 OPEN questions. Applied CTO guardrail (NOT building schedule engine).
 - **v1.2 (Oct 9, 2026, 18:14 UTC):** Lead review at 1966299 (first round). Renamed "slip propagation". Added Data requirements section. P6 XER only. Fixed FS+1 convention, SF flag, notice deadline calculation. Created fixture and compute script.
-- **v1.3 (Oct 9, 2026, 19:45 UTC, IN PROGRESS):** Lead review at 1537ca8 (second round). Rebuilt fixture with contiguous activities (A2310 → A2320 → A3000, no gap). Fixed propagate_slip to honor shared float along paths. Added Jul 5, 2027 holiday. Updated all examples and test cases with computed numbers. Fixed working→calendar day $ conversion. Removed CPM references. Fixed "3 weeks" = 15 working days. TC6 working-day list corrected. **REMAINING:** Data requirements (match main migration), Due/escalation fields on A1/A2/A4/A5/A7/A8, tier enum fixes, A6 escalation fix, A4 email mode fix, requires_procore on all actions, party enum (gc_vendor OPEN), cure_default display label.
+- **v1.3 (Oct 9, 2026, 21:15 UTC):** Lead review at 4383096 (second round, complete). Rebuilt fixture with contiguous activities. Fixed propagate_slip to honor shared float. Added Jul 5, 2027 holiday. Updated all examples/test cases with computed numbers. Fixed working→calendar day $ conversion. Removed CPM references. Data requirements match main migration. Added Due/escalation to A1/A2/A4/A5/A7/A8. Fixed A6 escalation, flagged A11 CEO escalation OPEN. requires_procore on all actions. Party enum gc_vendor OPEN, cure_default display label clarified. A4 email mode consistent across precondition/eval.
