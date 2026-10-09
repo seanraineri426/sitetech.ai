@@ -13,7 +13,7 @@
   "window_end": "2026-10-06T23:59:59-04:00",
   "cutoff_at": "2026-10-07T04:46:00-04:00"
  },
- "generated_at": "2026-10-09T16:19:17+00:00",
+ "generated_at": "2026-10-09T16:19:45+00:00",
  "compare_to": {
   "as_of": "2026-10-05",
   "brief_id": null,
@@ -62,7 +62,7 @@
   }
  ],
  "metrics": {
-  "word_count_main": 513,
+  "word_count_main": 519,
   "items_flagged_total": 36,
   "llm_cost_usd": 0.0,
   "verifier": {
@@ -169,18 +169,18 @@
    ],
    "tag": "NEW",
    "section": "schedule_risks",
-   "headline": "Email states schedule move 11/9 -> 11/23 (14 cd) affecting A1225 Fabricate Podium Transfer Steel - Wing B (TF 3 wd)",
-   "body": "Email states schedule move 11/9 -> 11/23 (14 cd) affecting A1225 Fabricate Podium Transfer Steel - Wing B (TF 3 wd)",
+   "headline": "Email states schedule move 11/9 -> 11/23 (14 cd) affecting A1230 Erect Podium Transfer Steel - Wing B (Grid C/4-7) (TF 3 wd)",
+   "body": "Email states schedule move 11/9 -> 11/23 (14 cd) affecting A1230 Erect Podium Transfer Steel - Wing B (Grid C/4-7) (TF 3 wd)",
    "confidence": "Likely",
    "confidence_note": "schedule data is aging",
    "impact": {
-    "method": "Record facts: Email: Gus Moreno email stated date 11/23 (48 days out); A1225 TF 3 wd (XER U2 data date 9/28); A1230 TF 3 wd (XER U2 data date 9/28); slip up to 12 cd to TCO (7 wd beyond float, code) || slip 14 cd from 2026-11-09 = 10 wd (scenario input) - TF 3 wd (XER data date 2026-09-28) = 7 wd beyond float -> TCO +12 cd x $16,000/cd = $192,000",
+    "method": "Record facts: Email: Gus Moreno email stated date 11/23 (48 days out); A1230 TF 3 wd (XER U2 data date 9/28); A1225 TF 3 wd (XER U2 data date 9/28); slip up to 12 cd to TCO (7 wd beyond float, code) || slip 14 cd from 2026-11-09 = 10 wd (scenario input) - TF 3 wd (XER data date 2026-09-28) = 7 wd beyond float -> TCO +12 cd x $16,000/cd = $192,000",
     "schedule": {
      "milestone_wd": 7,
      "milestone_cd": 12,
      "activity_refs": [
-      "p6:activity:A1225",
-      "p6:activity:A1230"
+      "p6:activity:A1230",
+      "p6:activity:A1225"
      ],
      "label": "Likely",
      "condition": "if email-stated date 2026-11-23 stands"
@@ -197,7 +197,7 @@
     "company": "Ironbridge Builders (FICTIONAL)"
    },
    "action": {
-    "text": "Priya Nair to resolve: Email states schedule move 11/9 -> 11/23 (14 cd) affecting A1225 Fabricate Podium Transfer Steel - Wing B (TF 3 wd)",
+    "text": "Priya Nair to resolve: Email states schedule move 11/9 -> 11/23 (14 cd) affecting A1230 Erect Podium Transfer Steel - Wing B (Grid C/4-7) (TF 3 wd)",
     "due": "2026-11-20"
    },
    "claim_ids": [
@@ -209,12 +209,12 @@
      "label": "Email: Gus Moreno 10/6"
     },
     {
-     "ref": "p6:activity:A1225",
-     "label": "A1225 Fabricate Podium Transfer Steel - Wing B"
-    },
-    {
      "ref": "p6:activity:A1230",
      "label": "A1230 Erect Podium Transfer Steel - Wing B (Grid C/4-7)"
+    },
+    {
+     "ref": "p6:activity:A1225",
+     "label": "A1225 Fabricate Podium Transfer Steel - Wing B"
     }
    ],
    "decision_deadline": {
@@ -496,15 +496,15 @@
   "schedule_risks": [
    {
     "item_id": "T2",
-    "headline": "Email states schedule move 11/9 -> 11/23 (14 cd) affecting A1225 Fabricate Podium Transfer Steel - Wing B (TF 3 wd)",
+    "headline": "Email states schedule move 11/9 -> 11/23 (14 cd) affecting A1230 Erect Podium Transfer Steel - Wing B (Grid C/4-7) (TF 3 wd)",
     "citations": [
      {
       "ref": "msgraph_outlook:message:msg_E104",
       "label": "Email: Gus Moreno 10/6"
      },
      {
-      "ref": "p6:activity:A1225",
-      "label": "A1225 Fabricate Podium Transfer Steel - Wing B"
+      "ref": "p6:activity:A1230",
+      "label": "A1230 Erect Podium Transfer Steel - Wing B (Grid C/4-7)"
      }
     ]
    },
@@ -1211,7 +1211,7 @@
    },
    {
     "action_id": "A2",
-    "text": "Priya Nair to resolve: Email states schedule move 11/9 -> 11/23 (14 cd) affecting A1225 Fabricate Podium Transfer Steel - Wing B (TF 3 wd)",
+    "text": "Priya Nair to resolve: Email states schedule move 11/9 -> 11/23 (14 cd) affecting A1230 Erect Podium Transfer Steel - Wing B (Grid C/4-7) (TF 3 wd)",
     "owner": {
      "name": "Priya Nair",
      "role": "Senior Project Manager",
