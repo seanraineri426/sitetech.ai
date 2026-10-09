@@ -3,15 +3,12 @@
  */
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
+import { render, screen } from '@testing-library/react';
 import { notFound } from 'next/navigation';
 import PreviewPage from '../page';
 
 vi.mock('next/navigation', () => ({
   notFound: vi.fn(),
-}));
-
-vi.mock('@/components/actions/action-list', () => ({
-  ActionList: () => null,
 }));
 
 describe('Preview page', () => {
@@ -46,11 +43,13 @@ describe('Preview page', () => {
     expect(notFound).toHaveBeenCalled();
   });
 
-  it('does not call notFound in development with ENABLE_DESIGN_PREVIEW=1', () => {
+  it('renders preview with real action cards in development with ENABLE_DESIGN_PREVIEW=1', () => {
     process.env = { ...originalEnv, NODE_ENV: 'development', ENABLE_DESIGN_PREVIEW: '1' };
     
-    PreviewPage();
+    render(<PreviewPage />);
     
     expect(notFound).not.toHaveBeenCalled();
+    expect(screen.getByText('Action Card Preview')).toBeInTheDocument();
+    expect(screen.getByText(/RFI 112 is 6 days late/)).toBeInTheDocument();
   });
 });

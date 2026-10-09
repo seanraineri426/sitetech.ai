@@ -1,8 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync, readdirSync, statSync } from 'fs';
+import { readFileSync, readdirSync, statSync, existsSync } from 'fs';
 import { join } from 'path';
 
 function getAllFilesRecursive(dir: string, fileList: string[] = []): string[] {
+  if (!existsSync(dir)) {
+    return fileList;
+  }
+  
   const files = readdirSync(dir);
 
   files.forEach((file) => {
@@ -18,20 +22,42 @@ function getAllFilesRecursive(dir: string, fileList: string[] = []): string[] {
 }
 
 describe('Fixture import restrictions', () => {
-  it('no app file (outside (dev)) imports from tests/fixtures', () => {
-    const appDir = join(process.cwd(), 'app');
-    const allFiles = getAllFilesRecursive(appDir);
+  it('no production code imports from tests/fixtures', () => {
+    const dirs = ['app', 'components', 'lib'];
+    const proxyFile = join(process.cwd(), 'proxy.ts');
     
-    const nonDevFiles = allFiles.filter((file) => !file.includes('/(dev)/'));
+    let allFiles: string[] = [];
+    
+    dirs.forEach((dir) => {
+      const fullDir = join(process.cwd(), dir);
+      allFiles = allFiles.concat(getAllFilesRecursive(fullDir));
+    });
+    
+    if (existsSync(proxyFile)) {
+      allFiles.push(proxyFile);
+    }
+    
+    const productionFiles = allFiles.filter((file) => !file.includes('/(dev)/') && !file.includes('/__tests__/'));
     
     const violations: string[] = [];
 
-    nonDevFiles.forEach((file) => {
+    productionFiles.forEach((file) => {
       const content = readFileSync(file, 'utf-8');
-      const fixtureImportPattern = /from\s+['"]@?\/tests\/fixtures/;
-      const relativeFixturePattern = /from\s+['"]\.\.?\/.*tests\/fixtures/;
+      const fromPattern = /from\s+['"]@?\/tests\/fixtures/;
+      const relativeFromPattern = /from\s+['"]\.\.?\/.*tests\/fixtures/;
+      const importPattern = /import\(\s*['"]@?\/tests\/fixtures/;
+      const relativeImportPattern = /import\(\s*['"]\.\.?\/.*tests\/fixtures/;
+      const requirePattern = /require\(\s*['"]@?\/tests\/fixtures/;
+      const relativeRequirePattern = /require\(\s*['"]\.\.?\/.*tests\/fixtures/;
       
-      if (fixtureImportPattern.test(content) || relativeFixturePattern.test(content)) {
+      if (
+        fromPattern.test(content) || 
+        relativeFromPattern.test(content) ||
+        importPattern.test(content) ||
+        relativeImportPattern.test(content) ||
+        requirePattern.test(content) ||
+        relativeRequirePattern.test(content)
+      ) {
         violations.push(file);
       }
     });
@@ -39,7 +65,7 @@ describe('Fixture import restrictions', () => {
     if (violations.length > 0) {
       const relativePaths = violations.map((f) => f.replace(process.cwd() + '/', ''));
       expect.fail(
-        `The following app files (outside (dev)) import from tests/fixtures:\n${relativePaths.join('\n')}`
+        `The following production files import from tests/fixtures:\n${relativePaths.join('\n')}`
       );
     }
 

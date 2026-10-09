@@ -59,7 +59,7 @@ describe('ActionCard', () => {
       expect(screen.getByText(/1 day/)).toBeInTheDocument();
     });
 
-    it('converts cents to dollars', () => {
+    it('rounds cents to nearest dollar', () => {
       const data = { ...rfiEscalationFixture, dollarsAtRisk: 4200042 };
       render(
         <ActionCard
@@ -71,6 +71,48 @@ describe('ActionCard', () => {
       );
 
       expect(screen.getByText(/\$42,000/)).toBeInTheDocument();
+    });
+
+    it('shows "under $1" for positive cents less than 100', () => {
+      const data = { ...rfiEscalationFixture, dollarsAtRisk: 99, daysAtRisk: null };
+      render(
+        <ActionCard
+          data={data}
+          onApprove={mockOnApprove}
+          onEdit={mockOnEdit}
+          onDismiss={mockOnDismiss}
+        />
+      );
+
+      expect(screen.getByText('under $1 at risk')).toBeInTheDocument();
+    });
+
+    it('shows "-under $1" for negative cents between -99 and -1', () => {
+      const data = { ...rfiEscalationFixture, dollarsAtRisk: -50, daysAtRisk: null };
+      render(
+        <ActionCard
+          data={data}
+          onApprove={mockOnApprove}
+          onEdit={mockOnEdit}
+          onDismiss={mockOnDismiss}
+        />
+      );
+
+      expect(screen.getByText('-under $1 at risk')).toBeInTheDocument();
+    });
+
+    it('formats negative dollars correctly', () => {
+      const data = { ...rfiEscalationFixture, dollarsAtRisk: -200000, daysAtRisk: null };
+      render(
+        <ActionCard
+          data={data}
+          onApprove={mockOnApprove}
+          onEdit={mockOnEdit}
+          onDismiss={mockOnDismiss}
+        />
+      );
+
+      expect(screen.getByText('-$2,000 at risk')).toBeInTheDocument();
     });
 
     it('shows nothing when both days and dollars are null', () => {
@@ -142,6 +184,36 @@ describe('ActionCard', () => {
       );
 
       expect(screen.getByText('0 days · $42,000 at risk')).toBeInTheDocument();
+    });
+
+    it('formats dates in project timezone', () => {
+      const data = { ...rfiEscalationFixture, dueBy: '2026-10-12', timeZone: 'America/New_York' };
+      const { container } = render(
+        <ActionCard
+          data={data}
+          onApprove={mockOnApprove}
+          onEdit={mockOnEdit}
+          onDismiss={mockOnDismiss}
+        />
+      );
+
+      const text = container.textContent || '';
+      expect(text).toMatch(/Due:.*Oct.*12/);
+    });
+
+    it('shows nothing for invalid dates', () => {
+      const data = { ...rfiEscalationFixture, dueBy: 'invalid-date' };
+      const { container } = render(
+        <ActionCard
+          data={data}
+          onApprove={mockOnApprove}
+          onEdit={mockOnEdit}
+          onDismiss={mockOnDismiss}
+        />
+      );
+
+      const text = container.textContent || '';
+      expect(text).not.toMatch(/Due:/);
     });
   });
 
@@ -264,7 +336,6 @@ describe('ActionCard', () => {
 
     it('rejects procore.com without subdomain', async () => {
       const windowOpen = vi.spyOn(window, 'open').mockImplementation(() => null);
-      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
       const data = {
         ...changeEventFixture,
         handoff: {
@@ -288,12 +359,11 @@ describe('ActionCard', () => {
       await userEvent.click(approveButton!);
 
       expect(windowOpen).not.toHaveBeenCalled();
-      expect(consoleError).toHaveBeenCalledWith('Blocked disallowed URL:', 'https://procore.com/malicious');
+      expect(screen.getByText('This link can\'t be opened safely')).toBeInTheDocument();
     });
 
     it('rejects evil.com URLs', async () => {
       const windowOpen = vi.spyOn(window, 'open').mockImplementation(() => null);
-      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
       const data = {
         ...rfiEscalationFixture,
         handoff: {
@@ -317,12 +387,11 @@ describe('ActionCard', () => {
       await userEvent.click(approveButton!);
 
       expect(windowOpen).not.toHaveBeenCalled();
-      expect(consoleError).toHaveBeenCalled();
+      expect(screen.getByText('This link can\'t be opened safely')).toBeInTheDocument();
     });
 
     it('rejects javascript: URLs', async () => {
       const windowOpen = vi.spyOn(window, 'open').mockImplementation(() => null);
-      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
       const data = {
         ...rfiEscalationFixture,
         handoff: {
@@ -346,12 +415,11 @@ describe('ActionCard', () => {
       await userEvent.click(approveButton!);
 
       expect(windowOpen).not.toHaveBeenCalled();
-      expect(consoleError).toHaveBeenCalled();
+      expect(screen.getByText('This link can\'t be opened safely')).toBeInTheDocument();
     });
 
     it('rejects procore.com.evil.com URLs', async () => {
       const windowOpen = vi.spyOn(window, 'open').mockImplementation(() => null);
-      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
       const data = {
         ...changeEventFixture,
         handoff: {
@@ -375,12 +443,11 @@ describe('ActionCard', () => {
       await userEvent.click(approveButton!);
 
       expect(windowOpen).not.toHaveBeenCalled();
-      expect(consoleError).toHaveBeenCalled();
+      expect(screen.getByText('This link can\'t be opened safely')).toBeInTheDocument();
     });
 
     it('rejects http URLs', async () => {
       const windowOpen = vi.spyOn(window, 'open').mockImplementation(() => null);
-      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
       const data = {
         ...rfiEscalationFixture,
         handoff: {
@@ -404,7 +471,88 @@ describe('ActionCard', () => {
       await userEvent.click(approveButton!);
 
       expect(windowOpen).not.toHaveBeenCalled();
-      expect(consoleError).toHaveBeenCalled();
+      expect(screen.getByText('This link can\'t be opened safely')).toBeInTheDocument();
+    });
+
+    it('rejects URLs with username', async () => {
+      const windowOpen = vi.spyOn(window, 'open').mockImplementation(() => null);
+      const data = {
+        ...rfiEscalationFixture,
+        handoff: {
+          href: 'https://user@outlook.office.com/mail/compose',
+          copyText: null,
+          label: 'Approve & open',
+        },
+      };
+
+      const { container } = render(
+        <ActionCard
+          data={data}
+          onApprove={mockOnApprove}
+          onEdit={mockOnEdit}
+          onDismiss={mockOnDismiss}
+        />
+      );
+
+      const buttons = container.querySelectorAll('button');
+      const approveButton = Array.from(buttons).find((btn) => btn.textContent?.includes('Approve'));
+      await userEvent.click(approveButton!);
+
+      expect(windowOpen).not.toHaveBeenCalled();
+    });
+
+    it('rejects URLs with password', async () => {
+      const windowOpen = vi.spyOn(window, 'open').mockImplementation(() => null);
+      const data = {
+        ...rfiEscalationFixture,
+        handoff: {
+          href: 'https://user:pass@outlook.office.com/mail/compose',
+          copyText: null,
+          label: 'Approve & open',
+        },
+      };
+
+      const { container } = render(
+        <ActionCard
+          data={data}
+          onApprove={mockOnApprove}
+          onEdit={mockOnEdit}
+          onDismiss={mockOnDismiss}
+        />
+      );
+
+      const buttons = container.querySelectorAll('button');
+      const approveButton = Array.from(buttons).find((btn) => btn.textContent?.includes('Approve'));
+      await userEvent.click(approveButton!);
+
+      expect(windowOpen).not.toHaveBeenCalled();
+    });
+
+    it('rejects URLs with non-default port', async () => {
+      const windowOpen = vi.spyOn(window, 'open').mockImplementation(() => null);
+      const data = {
+        ...rfiEscalationFixture,
+        handoff: {
+          href: 'https://outlook.office.com:8080/mail/compose',
+          copyText: null,
+          label: 'Approve & open',
+        },
+      };
+
+      const { container } = render(
+        <ActionCard
+          data={data}
+          onApprove={mockOnApprove}
+          onEdit={mockOnEdit}
+          onDismiss={mockOnDismiss}
+        />
+      );
+
+      const buttons = container.querySelectorAll('button');
+      const approveButton = Array.from(buttons).find((btn) => btn.textContent?.includes('Approve'));
+      await userEvent.click(approveButton!);
+
+      expect(windowOpen).not.toHaveBeenCalled();
     });
   });
 
@@ -564,7 +712,7 @@ describe('ActionCard', () => {
       expect(quotes.length).toBe(0);
     });
 
-    it('shows source link', async () => {
+    it('shows source link when URL is valid', async () => {
       const { container } = render(
         <ActionCard
           data={rfiEscalationFixture}
@@ -582,6 +730,97 @@ describe('ActionCard', () => {
       const sourceLink = Array.from(links).find((link) => link.textContent?.includes('View source'));
       expect(sourceLink).toBeDefined();
       expect(sourceLink?.getAttribute('href')).toBe('https://app.procore.com/projects/12345/rfis/112');
+    });
+
+    it('shows plain text for data: URL', async () => {
+      const data = {
+        ...rfiEscalationFixture,
+        why: { kind: 'record' as const, label: 'Test', sourceUrl: 'data:text/plain,test' },
+      };
+      const { container } = render(
+        <ActionCard
+          data={data}
+          onApprove={mockOnApprove}
+          onEdit={mockOnEdit}
+          onDismiss={mockOnDismiss}
+        />
+      );
+
+      const buttons = container.querySelectorAll('button');
+      const whyButton = Array.from(buttons).find((btn) => btn.textContent?.includes('Why'));
+      await userEvent.click(whyButton!);
+
+      const links = container.querySelectorAll('a[href]');
+      const hasDataLink = Array.from(links).some((link) => link.getAttribute('href')?.startsWith('data:'));
+      expect(hasDataLink).toBe(false);
+    });
+
+    it('shows plain text for http:// URL', async () => {
+      const data = {
+        ...rfiEscalationFixture,
+        why: { kind: 'record' as const, label: 'Test', sourceUrl: 'http://evil.com/page' },
+      };
+      const { container } = render(
+        <ActionCard
+          data={data}
+          onApprove={mockOnApprove}
+          onEdit={mockOnEdit}
+          onDismiss={mockOnDismiss}
+        />
+      );
+
+      const buttons = container.querySelectorAll('button');
+      const whyButton = Array.from(buttons).find((btn) => btn.textContent?.includes('Why'));
+      await userEvent.click(whyButton!);
+
+      const links = container.querySelectorAll('a[href^="http://"]');
+      expect(links.length).toBe(0);
+    });
+
+    it('shows plain text for https://evil.com URL', async () => {
+      const data = {
+        ...rfiEscalationFixture,
+        why: { kind: 'record' as const, label: 'Test', sourceUrl: 'https://evil.com/page' },
+      };
+      const { container } = render(
+        <ActionCard
+          data={data}
+          onApprove={mockOnApprove}
+          onEdit={mockOnEdit}
+          onDismiss={mockOnDismiss}
+        />
+      );
+
+      const buttons = container.querySelectorAll('button');
+      const whyButton = Array.from(buttons).find((btn) => btn.textContent?.includes('Why'));
+      await userEvent.click(whyButton!);
+
+      const links = container.querySelectorAll('a');
+      const evilLink = Array.from(links).find((link) => link.getAttribute('href')?.includes('evil.com'));
+      expect(evilLink).toBeUndefined();
+    });
+
+    it('shows plain text for //evil.com URL', async () => {
+      const data = {
+        ...rfiEscalationFixture,
+        why: { kind: 'record' as const, label: 'Test', sourceUrl: '//evil.com/page' },
+      };
+      const { container } = render(
+        <ActionCard
+          data={data}
+          onApprove={mockOnApprove}
+          onEdit={mockOnEdit}
+          onDismiss={mockOnDismiss}
+        />
+      );
+
+      const buttons = container.querySelectorAll('button');
+      const whyButton = Array.from(buttons).find((btn) => btn.textContent?.includes('Why'));
+      await userEvent.click(whyButton!);
+
+      const links = container.querySelectorAll('a');
+      const evilLink = Array.from(links).find((link) => link.getAttribute('href')?.includes('evil.com'));
+      expect(evilLink).toBeUndefined();
     });
   });
 
@@ -650,6 +889,32 @@ describe('ActionCard', () => {
       expect(mockOnApprove).toHaveBeenCalledTimes(1);
     });
 
+    it('does not call onApprove when handoff is blocked', async () => {
+      const data = {
+        ...rfiEscalationFixture,
+        handoff: {
+          href: 'https://evil.com/phishing',
+          copyText: null,
+          label: 'Approve & open',
+        },
+      };
+      const { container } = render(
+        <ActionCard
+          data={data}
+          onApprove={mockOnApprove}
+          onEdit={mockOnEdit}
+          onDismiss={mockOnDismiss}
+        />
+      );
+
+      const buttons = container.querySelectorAll('button');
+      const approveButton = Array.from(buttons).find((btn) => btn.textContent?.includes('Approve'));
+      await userEvent.click(approveButton!);
+
+      expect(mockOnApprove).not.toHaveBeenCalled();
+      expect(screen.getByText('This link can\'t be opened safely')).toBeInTheDocument();
+    });
+
     it('calls onEdit when edit button is clicked', async () => {
       const { container } = render(
         <ActionCard
@@ -688,7 +953,7 @@ describe('ActionCard', () => {
   });
 
   describe('Accessibility', () => {
-    it('has minimum 44px tap targets for buttons', () => {
+    it('has minimum 44px tap targets for all interactive elements', async () => {
       const { container } = render(
         <ActionCard
           data={rfiEscalationFixture}
@@ -699,15 +964,19 @@ describe('ActionCard', () => {
       );
 
       const buttons = container.querySelectorAll('button');
-      const mainButtons = Array.from(buttons).filter(
-        (btn) => btn.textContent?.includes('Approve') || 
-                 btn.textContent === 'Edit' || 
-                 btn.textContent === 'Dismiss'
-      );
-
-      expect(mainButtons.length).toBe(3);
-      mainButtons.forEach((button) => {
+      buttons.forEach((button) => {
         expect(button.className).toContain('min-h-[44px]');
+      });
+
+      const whyButton = Array.from(buttons).find((btn) => btn.textContent?.includes('Why'));
+      await userEvent.click(whyButton!);
+
+      await waitFor(() => {
+        const links = container.querySelectorAll('a');
+        const sourceLink = Array.from(links).find((link) => link.textContent?.includes('View source'));
+        if (sourceLink) {
+          expect(sourceLink.className).toContain('min-h-[44px]');
+        }
       });
     });
 
@@ -737,6 +1006,36 @@ describe('ActionCard', () => {
 
       const whyButton = container.querySelector('button[aria-expanded]');
       expect(whyButton).toHaveAttribute('aria-expanded', 'false');
+    });
+
+    it('has aria-live on copied message', async () => {
+      const data = {
+        ...submittalChaseFixture,
+        handoff: {
+          href: null,
+          copyText: 'Test content',
+          label: 'Copy & open',
+        },
+      };
+
+      const { container } = render(
+        <ActionCard
+          data={data}
+          onApprove={mockOnApprove}
+          onEdit={mockOnEdit}
+          onDismiss={mockOnDismiss}
+        />
+      );
+
+      const buttons = container.querySelectorAll('button');
+      const approveButton = Array.from(buttons).find((btn) => btn.textContent?.includes('Copy'));
+      await userEvent.click(approveButton!);
+
+      await waitFor(() => {
+        const copiedMsg = container.querySelector('[aria-live="polite"]');
+        expect(copiedMsg).toBeInTheDocument();
+        expect(copiedMsg?.textContent).toContain('Copied');
+      });
     });
   });
 });

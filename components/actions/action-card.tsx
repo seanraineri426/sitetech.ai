@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,10 +19,18 @@ const ALLOWED_HOSTS = [
   'outlook.live.com',
 ] as const;
 
-function isAllowedUrl(urlString: string): boolean {
+export function isAllowedUrl(urlString: string): boolean {
   try {
     const url = new URL(urlString);
     if (url.protocol !== 'https:') {
+      return false;
+    }
+    
+    if (url.username || url.password) {
+      return false;
+    }
+    
+    if (url.port && url.port !== '443') {
       return false;
     }
     
@@ -48,8 +56,18 @@ function formatRisk(daysAtRisk: number | null, dollarsAtRisk: number | null): st
   }
   
   if (dollarsAtRisk !== null) {
-    const dollars = Math.floor(dollarsAtRisk / 100);
-    parts.push(`$${dollars.toLocaleString()}`);
+    const absCents = Math.abs(dollarsAtRisk);
+    if (absCents > 0 && absCents < 100) {
+      parts.push(dollarsAtRisk < 0 ? '-under $1' : 'under $1');
+    } else {
+      const dollars = Math.round(dollarsAtRisk / 100);
+      const formatter = new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        maximumFractionDigits: 0,
+      });
+      parts.push(formatter.format(dollars));
+    }
   }
   
   if (parts.length === 0) {
@@ -59,17 +77,30 @@ function formatRisk(daysAtRisk: number | null, dollarsAtRisk: number | null): st
   return `${parts.join(' · ')} at risk`;
 }
 
-function formatDueDate(isoDate: string | null): string | null {
+function formatDueDate(isoDate: string | null, timeZone: string): string | null {
   if (!isoDate) {
     return null;
   }
   
   try {
-    const date = new Date(isoDate);
+    const match = isoDate.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!match) {
+      return null;
+    }
+    
+    const [, year, month, day] = match;
+    const dateStr = `${year}-${month}-${day}T12:00:00`;
+    const date = new Date(dateStr);
+    
+    if (isNaN(date.getTime())) {
+      return null;
+    }
+    
     return date.toLocaleDateString('en-US', {
       weekday: 'short',
       month: 'short',
       day: 'numeric',
+      timeZone,
     });
   } catch {
     return null;
@@ -79,19 +110,32 @@ function formatDueDate(isoDate: string | null): string | null {
 export function ActionCard({ data, onApprove, onEdit, onDismiss }: ActionCardProps) {
   const [whyExpanded, setWhyExpanded] = useState(false);
   const [showCopied, setShowCopied] = useState(false);
+  const [handoffError, setHandoffError] = useState<string | null>(null);
 
   const riskText = formatRisk(data.daysAtRisk, data.dollarsAtRisk);
-  const dueDateText = formatDueDate(data.dueBy);
+  const dueDateText = formatDueDate(data.dueBy, data.timeZone);
   const ownerText = data.ownerName ? `${data.ownerRole} · ${data.ownerName}` : data.ownerRole;
+  const sourceUrlValid = isAllowedUrl(data.why.sourceUrl);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (showCopied) {
+      timer = setTimeout(() => setShowCopied(false), 2000);
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [showCopied]);
 
   const handleApproveClick = async () => {
     const { href, copyText } = data.handoff;
 
+    if (href && !isAllowedUrl(href)) {
+      setHandoffError('This link can\'t be opened safely');
+      return;
+    }
+
     if (href) {
-      if (!isAllowedUrl(href)) {
-        console.error('Blocked disallowed URL:', href);
-        return;
-      }
       window.open(href, '_blank', 'noopener,noreferrer');
     }
 
@@ -99,7 +143,6 @@ export function ActionCard({ data, onApprove, onEdit, onDismiss }: ActionCardPro
       try {
         await navigator.clipboard.writeText(copyText);
         setShowCopied(true);
-        setTimeout(() => setShowCopied(false), 2000);
       } catch (error) {
         console.error('Failed to copy to clipboard:', error);
       }
@@ -124,10 +167,23 @@ export function ActionCard({ data, onApprove, onEdit, onDismiss }: ActionCardPro
         <div>
           <button
             onClick={() => setWhyExpanded(!whyExpanded)}
-            className="text-sm font-medium text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
+            className="text-sm font-medium text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded min-h-[44px] inline-flex items-center"
             aria-expanded={whyExpanded}
           >
-            Why {whyExpanded ? '▼' : '▶'}
+            <span className="inline-flex items-center gap-1">
+              Why{' '}
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 12 12"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+                style={{ transform: whyExpanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }}
+              >
+                <path d="M4 2L8 6L4 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
           </button>
           
           {whyExpanded && (
@@ -138,14 +194,20 @@ export function ActionCard({ data, onApprove, onEdit, onDismiss }: ActionCardPro
                   &ldquo;{data.why.quote}&rdquo;
                 </blockquote>
               )}
-              <a
-                href={data.why.sourceUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-primary hover:underline inline-block"
-              >
-                View source →
-              </a>
+              {sourceUrlValid ? (
+                <a
+                  href={data.why.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-primary hover:underline inline-flex items-center min-h-[44px]"
+                >
+                  View source →
+                </a>
+              ) : (
+                <span className="text-sm text-muted-foreground inline-block">
+                  {data.why.sourceUrl}
+                </span>
+              )}
             </div>
           )}
         </div>
@@ -185,8 +247,14 @@ export function ActionCard({ data, onApprove, onEdit, onDismiss }: ActionCardPro
           {data.handoff.label}
         </Button>
         
+        {handoffError && (
+          <p className="text-sm text-destructive font-medium text-center">{handoffError}</p>
+        )}
+        
         {showCopied && (
-          <p className="text-sm text-green-600 font-medium text-center">✓ Copied</p>
+          <p className="text-sm text-green-600 font-medium text-center" aria-live="polite">
+            ✓ Copied
+          </p>
         )}
         
         <div className="flex gap-2 w-full">

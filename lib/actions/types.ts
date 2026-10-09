@@ -27,6 +27,7 @@ export interface ActionCardData {
   daysAtRisk: number | null;
   dollarsAtRisk: number | null;
   dueBy: string | null;
+  timeZone: string;
   ownerRole: OwnerRole;
   ownerName: string | null;
   why: WhySource;

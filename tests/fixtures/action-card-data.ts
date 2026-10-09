@@ -7,7 +7,8 @@ export const rfiEscalationFixture: ActionCardData = {
   projectName: 'Linden Yard',
   daysAtRisk: 3,
   dollarsAtRisk: 3600000,
-  dueBy: '2026-10-09T17:00:00Z',
+  dueBy: '2026-10-09',
+  timeZone: 'America/New_York',
   ownerRole: 'PE',
   ownerName: 'Sarah Chen',
   why: {
@@ -38,6 +39,7 @@ export const submittalChaseFixture: ActionCardData = {
   daysAtRisk: null,
   dollarsAtRisk: null,
   dueBy: null,
+  timeZone: 'America/New_York',
   ownerRole: 'PE',
   ownerName: null,
   why: {
@@ -66,7 +68,8 @@ export const changeEventFixture: ActionCardData = {
   projectName: 'Linden Yard',
   daysAtRisk: 0,
   dollarsAtRisk: 4200000,
-  dueBy: '2026-10-15T17:00:00Z',
+  dueBy: '2026-10-15',
+  timeZone: 'America/New_York',
   ownerRole: 'PM',
   ownerName: 'Mike Torres',
   why: {
