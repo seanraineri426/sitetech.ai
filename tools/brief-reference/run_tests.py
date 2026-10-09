@@ -67,8 +67,9 @@ def check_no_holdout_material():
     )
     
     if result.returncode != 0:
-        print("⚠ Warning: Could not run git ls-files, skipping holdout check")
-        return True
+        print(f"✗ ERROR: git ls-files failed (exit {result.returncode})")
+        print(f"  stderr: {result.stderr}")
+        return False
     
     all_files = result.stdout.strip().split('\n')
     
