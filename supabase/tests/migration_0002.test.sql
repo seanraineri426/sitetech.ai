@@ -2,7 +2,7 @@
 -- Tests: cross-org isolation, RLS policies, constraints, service role writes
 
 begin;
-select plan(127);
+select plan(126);
 
 -- Setup test data
 set role postgres;
