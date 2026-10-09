@@ -535,7 +535,7 @@ Every number displayed in the what-if result must include a citation (tap to see
 >
 > [View schedule snapshot] [View project settings]
 
-**Citation links (PM):** Link to the schedule snapshot summary for M2. Direct deep-links to Procore activities or P6 web UI rows are desirable for M3 but require deep-link support from those tools.
+**Citation links (PM):** Link to the schedule snapshot summary for M2. Direct deep-links to P6 web UI rows are desirable for M3 but require deep-link support from those tools.
 
 ---
 
@@ -590,7 +590,7 @@ Reference fixture: `docs/what-if-examples/fixture.json`. All numbers computed by
 2. ✅ **Shutdown periods (PM):** Use P6 calendars in the XER (they carry non-work periods) plus project holidays from settings. No separate manual calendar for M2.
 3. ✅ **Activity matching (PM):** Normalize case, spaces, and hyphens ("curtainwall" = "curtain wall"). Confidence enum stays internal; user only sees Confirm chip or picker.
 4. ✅ **Successor display (PM):** Show impacted activities. Successors ordered: critical-path activities first, then rest by least float (ascending).
-5. ✅ **Citation links (PM):** Link to schedule snapshot summary for M2. Direct deep-links to Procore/P6 desirable for M3 but require tool support. Every citation shows the schedule snapshot's data date.
+5. ✅ **Citation links (PM):** Link to schedule snapshot summary for M2. Direct deep-links to P6 desirable for M3 but require tool support. Every citation shows the schedule snapshot's data date.
 6. ✅ **Acceleration savings (PM):** Do not compute $ savings for acceleration (negative slip). Delay impact only. (Savings are less common and harder to justify; delay impact is the primary use case.)
 7. ✅ **Cache results (PM):** Not needed for M2; 500ms is fast enough. May revisit for M3.
 8. ✅ **Notice threshold (PM):** Handled by action routing. A6 escalates to PX same day if deadline < 2 business days.
@@ -609,4 +609,4 @@ Reference fixture: `docs/what-if-examples/fixture.json`. All numbers computed by
 - **v1.1 (Oct 9, 2026, 18:07 UTC):** PM resolved 9 OPEN questions. Applied CTO guardrail (NOT building schedule engine).
 - **v1.2 (Oct 9, 2026, 18:14 UTC):** Lead review at 1966299 (first round). Renamed "slip propagation". Added Data requirements section. P6 XER only. Fixed FS+1 convention, SF flag, notice deadline calculation. Created fixture and compute script.
 - **v1.3 (Oct 9, 2026, 18:56 UTC):** Lead review at 4069227 (second round). Rebuilt fixture with contiguous activities. Fixed propagate_slip to honor shared float. Added Jul 5, 2027 holiday. Updated all examples/test cases with computed numbers. Fixed working→calendar day $ conversion. Removed CPM references. Data requirements match main migration. Added Due/escalation to A1/A2/A4/A5/A7/A8. Fixed A6 escalation, flagged A11 CEO escalation OPEN. requires_procore on all actions. Party enum gc_vendor OPEN, cure_default display label clarified. A4 email mode consistent across precondition/eval.
-- **v1.4 (Oct 9, 2026, 19:20 UTC):** Reference fixture & compute (sha256 verified). Replaced all examples with reference numbers from fixture (A1000/A1100/A1200/A2000/A2100/A2200/A3000). Added verbatim rules from compute.py docstring (counting rule, shift vs extend, FS/SS/FF/SF, lag calendar, no max(0) float clamp, completion slip, $, notice). Marked OPEN: notice event date source, lag calendar (successor vs predecessor), no negative float constraints. Removed early/late columns from Data requirements (exist on main), use project_holidays, removed delay_cost_unit and driving_path defaults. TC1-TC17 updated with exact reference numbers. Added check.py for fixture validation. Note: A4 closed-RFI path needs Procore.
+- **v1.4 (Oct 9, 2026, 19:20 UTC):** Reference fixture & compute (sha256 verified). Replaced all examples with reference numbers from fixture (A1000/A1100/A1200/A2000/A2100/A2200/A3000). Added verbatim rules from compute.py docstring (counting rule, shift vs extend, FS/SS/FF/SF, lag calendar, no max(0) float clamp, completion slip, $, notice). Marked OPEN: notice event date source, lag calendar (successor vs predecessor), no negative float constraints. Removed early/late columns from Data requirements (exist on main), use project_holidays, removed delay_cost_unit and driving_path defaults. TC1-TC17 updated with exact reference numbers. Added check.py for fixture validation.
