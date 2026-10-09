@@ -2,7 +2,7 @@
 -- Tests: cross-org isolation, RLS policies, constraints, service role writes
 
 begin;
-select plan(81);
+select plan(105);
 
 -- Setup test data
 set role postgres;
@@ -637,6 +637,224 @@ select throws_ok(
   '23505',
   null,
   'schedule_activities unique key enforced (org_id, project_id, external_id)'
+);
+reset role;
+
+-- ============================================================================
+-- HARDENING TESTS (post-migration 0003)
+-- ============================================================================
+
+-- Test 77-86: Cross-org project_id rejection on ALL project-scoped tables
+set role postgres;
+select throws_ok(
+  $$insert into public.rfis (org_id, project_id, raw_record_id, external_id, number, subject, status) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '44444444-bbbb-bbbb-bbbb-444444444444', '11111111-1111-1111-1111-000000001111', 'rfi-cross', '999', 'Test', 'open')$$,
+  '23503',
+  null,
+  'project_id from another org rejected (rfis)'
+);
+select throws_ok(
+  $$insert into public.submittals (org_id, project_id, raw_record_id, external_id, number, title, status) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '44444444-bbbb-bbbb-bbbb-444444444444', '22222222-2222-2222-2222-000000002222', 'sub-cross', 'S999', 'Test', 'pending')$$,
+  '23503',
+  null,
+  'project_id from another org rejected (submittals)'
+);
+select throws_ok(
+  $$insert into public.emails (org_id, project_id, raw_record_id, external_id, subject, from_address, received_at, received_at_source) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '44444444-bbbb-bbbb-bbbb-444444444444', '11111111-1111-1111-1111-000000001111', 'email-cross', 'Test', 'test@example.com', now(), 'graph')$$,
+  '23503',
+  null,
+  'project_id from another org rejected (emails)'
+);
+select throws_ok(
+  $$insert into public.schedule_activities (org_id, project_id, external_id, task_code, name) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '44444444-bbbb-bbbb-bbbb-444444444444', 'CROSS:ACT', 'ACT', 'Cross')$$,
+  '23503',
+  null,
+  'project_id from another org rejected (schedule_activities)'
+);
+select throws_ok(
+  $$insert into public.project_holidays (org_id, project_id, holiday_date, label) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '44444444-bbbb-bbbb-bbbb-444444444444', '2027-01-01', 'New Year')$$,
+  '23503',
+  null,
+  'project_id from another org rejected (project_holidays)'
+);
+select throws_ok(
+  $$insert into public.project_parties (org_id, project_id, company_name, email_domain, role) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '44444444-bbbb-bbbb-bbbb-444444444444', 'Cross Company', 'cross.example.com', 'sub')$$,
+  '23503',
+  null,
+  'project_id from another org rejected (project_parties)'
+);
+reset role;
+
+-- Test 87: Connection leak - admin cannot attach another org's connection
+set role postgres;
+select throws_ok(
+  $$insert into public.project_sources (org_id, project_id, connection_id, source_project_id) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-aaaa-aaaa-aaaa-333333333333', '22222222-2222-2222-2222-000000000002', 'leak-test')$$,
+  '23503',
+  null,
+  'Cannot attach Org B connection to Org A project (composite FK prevents leak)'
+);
+reset role;
+
+-- Test 88-89: Cascade delete on project and org
+set role postgres;
+-- Create test project with children
+insert into public.projects (id, org_id, name, timezone) values
+  ('88888888-aaaa-aaaa-aaaa-888888888888', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Delete Test Project', 'UTC');
+insert into public.project_holidays (org_id, project_id, holiday_date, label) values
+  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '88888888-aaaa-aaaa-aaaa-888888888888', '2027-07-04', 'July 4th');
+-- Delete project
+delete from public.projects where id = '88888888-aaaa-aaaa-aaaa-888888888888';
+select is(
+  (select count(*)::int from public.project_holidays where project_id = '88888888-aaaa-aaaa-aaaa-888888888888'),
+  0,
+  'Deleting project cascades to child tables'
+);
+reset role;
+
+-- Test org delete cascade
+set role postgres;
+insert into public.orgs (id, name, slug) values ('88888888-8888-8888-8888-888888888888', 'Delete Test Org', 'delete-test-org');
+insert into public.org_memberships (org_id, user_id, role) values ('88888888-8888-8888-8888-888888888888', '11111111-1111-1111-1111-111111111111', 'owner');
+insert into public.projects (id, org_id, name, timezone) values ('88888888-8888-8888-8888-888888888881', '88888888-8888-8888-8888-888888888888', 'Org Delete Test', 'UTC');
+insert into public.integration_connections (org_id, provider, status, display_name, external_account_id) values ('88888888-8888-8888-8888-888888888888', 'procore', 'active', 'Test', 'test-conn');
+delete from public.orgs where id = '88888888-8888-8888-8888-888888888888';
+select is(
+  (select count(*)::int from public.integration_connections where org_id = '88888888-8888-8888-8888-888888888888'),
+  0,
+  'Deleting org cascades to all child tables'
+);
+reset role;
+
+-- Test 90-91: Cross-org raw_record_id and schedule_activity_id rejected
+set role postgres;
+select throws_ok(
+  $$insert into public.rfis (org_id, project_id, raw_record_id, external_id, number, subject, status) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-aaaa-aaaa-aaaa-333333333333', '22222222-2222-2222-2222-000000002222', 'rfi-cross-raw', '998', 'Cross Raw', 'open')$$,
+  '23503',
+  null,
+  'Cannot link Org A RFI to Org B raw_record (composite FK prevents)'
+);
+select throws_ok(
+  $$insert into public.submittals (org_id, project_id, raw_record_id, external_id, number, title, status, schedule_activity_id, schedule_match_method, schedule_match_confidence) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-aaaa-aaaa-aaaa-333333333333', '11111111-1111-1111-1111-000000001111', 'sub-cross-act', 'S998', 'Cross Act', 'pending', '88888888-8888-8888-8888-888888888888', 'manual', 0.8)$$,
+  '23503',
+  null,
+  'Cannot link Org A submittal to Org B schedule_activity (composite FK prevents)'
+);
+reset role;
+
+-- Test 92-93: Member update/delete on settings affects 0 rows
+set role authenticated;
+set local "request.jwt.claim.sub" = '44444444-4444-4444-4444-444444444444';
+update public.project_notice_periods set days = 999 where org_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+select is(
+  (select count(*)::int from public.project_notice_periods where days = 999),
+  0,
+  'Member update on settings table affects 0 rows (RLS blocks)'
+);
+delete from public.project_holidays where org_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+select is(
+  (select count(*)::int from public.project_holidays where org_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),
+  3,
+  'Member delete on settings table affects 0 rows (RLS blocks)'
+);
+reset role;
+
+-- Test 94-95: Authenticated update/delete on connector tables affects 0 rows
+set role authenticated;
+set local "request.jwt.claim.sub" = '11111111-1111-1111-1111-111111111111';
+update public.raw_records set fingerprint = 'hacked' where org_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+select is(
+  (select count(*)::int from public.raw_records where fingerprint = 'hacked'),
+  0,
+  'Authenticated update on connector table affects 0 rows (no policy)'
+);
+delete from public.rfis where org_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+select is(
+  (select count(*)::int from public.rfis where org_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),
+  1,
+  'Authenticated delete on connector table affects 0 rows (no policy)'
+);
+reset role;
+
+-- Test 96: Org A admin cannot insert into Org B
+set role authenticated;
+set local "request.jwt.claim.sub" = '33333333-3333-3333-3333-333333333333';
+select throws_ok(
+  $$insert into public.project_notice_periods (org_id, project_id, contract_kind, notice_type, days, day_basis) values ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '44444444-bbbb-bbbb-bbbb-444444444444', 'owner_gc', 'delay_time_extension', 10, 'calendar')$$,
+  '42501',
+  null,
+  'Org A admin cannot insert into Org B (RLS check prevents)'
+);
+reset role;
+
+-- Test 97: company_role enum has exactly 4 values
+set role postgres;
+select is(
+  (select count(*)::int from pg_enum where enumtypid = 'public.company_role'::regtype),
+  4,
+  'company_role enum has exactly 4 values'
+);
+reset role;
+
+-- Test 98-102: Uniqueness constraints enforced
+set role postgres;
+select throws_ok(
+  $$insert into public.rfis (org_id, project_id, raw_record_id, external_id, number, subject, status) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-aaaa-aaaa-aaaa-333333333333', '11111111-1111-1111-1111-000000001111', 'rfi-1', '997', 'Dup', 'open')$$,
+  '23505',
+  null,
+  'rfis unique key enforced'
+);
+select throws_ok(
+  $$insert into public.submittals (org_id, project_id, raw_record_id, external_id, number, title, status) values ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '44444444-bbbb-bbbb-bbbb-444444444444', '22222222-2222-2222-2222-000000002222', 'sub-1', 'S997', 'Dup', 'pending')$$,
+  '23505',
+  null,
+  'submittals unique key enforced'
+);
+select throws_ok(
+  $$insert into public.emails (org_id, project_id, raw_record_id, external_id, subject, from_address, received_at, received_at_source) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-aaaa-aaaa-aaaa-333333333333', '11111111-1111-1111-1111-000000001111', 'email-1', 'Dup', 'dup@example.com', now(), 'graph')$$,
+  '23505',
+  null,
+  'emails unique key enforced'
+);
+select throws_ok(
+  $$insert into public.project_sources (org_id, project_id, connection_id, source_project_id) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-aaaa-aaaa-aaaa-333333333333', '11111111-1111-1111-1111-000000000001', 'procore-proj-123')$$,
+  '23505',
+  null,
+  'project_sources unique key enforced'
+);
+reset role;
+
+-- Test 103: anon cannot truncate
+set role anon;
+select throws_ok(
+  $$truncate table public.rfis$$,
+  '42501',
+  null,
+  'anon cannot TRUNCATE tenant tables'
+);
+reset role;
+
+-- Test 104: Deleting user nulls entered_by
+set role postgres;
+insert into auth.users (id, email) values ('99999999-9999-9999-9999-999999999999', 'delete-test@example.com');
+insert into public.project_notice_periods (org_id, project_id, contract_kind, notice_type, days, day_basis, entered_by) values ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-aaaa-aaaa-aaaa-333333333333', 'owner_gc', 'other', 5, 'calendar', '99999999-9999-9999-9999-999999999999');
+delete from public.profiles where id = '99999999-9999-9999-9999-999999999999';
+select is(
+  (select entered_by from public.project_notice_periods where notice_type = 'other'),
+  null,
+  'Deleting profile sets entered_by to null'
+);
+reset role;
+
+-- Test 105: body_text is isolated (member of Org A cannot read Org B body_text)
+set role postgres;
+update public.emails set body_text = 'Confidential Org B email content' where org_id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+reset role;
+
+set role authenticated;
+set local "request.jwt.claim.sub" = '11111111-1111-1111-1111-111111111111';
+select is(
+  (select count(*)::int from public.emails where body_text like '%Confidential Org B%'),
+  0,
+  'Member of Org A cannot read Org B email body_text (RLS isolation)'
 );
 reset role;
 

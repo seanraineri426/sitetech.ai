@@ -33,28 +33,34 @@ isOneToOne: false
                   ]
                 },"emails": {
                   Row: {
-                    "body_preview": string | null,"cc_addresses": (string)[],"conversation_id": string | null,"created_at": string,"external_id": string,"from_address": string,"has_attachments": boolean,"id": string,"org_id": string,"project_id": string,"raw_record_id": string,"received_at": string,"received_at_source": Database["public"]['Enums']["received_at_source"],"subject": string,"to_addresses": (string)[],"updated_at": string
+                    "body_preview": string | null,"body_text": string | null,"cc_addresses": (string)[],"conversation_id": string | null,"created_at": string,"external_id": string,"from_address": string,"has_attachments": boolean,"id": string,"org_id": string,"project_id": string,"raw_record_id": string,"received_at": string,"received_at_source": Database["public"]['Enums']["received_at_source"],"subject": string,"to_addresses": (string)[],"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "body_preview"?: string | null,"cc_addresses"?: (string)[],"conversation_id"?: string | null,"created_at"?: string,"external_id": string,"from_address": string,"has_attachments"?: boolean,"id"?: string,"org_id": string,"project_id": string,"raw_record_id": string,"received_at": string,"received_at_source": Database["public"]['Enums']["received_at_source"],"subject": string,"to_addresses"?: (string)[],"updated_at"?: string
+                    "body_preview"?: string | null,"body_text"?: string | null,"cc_addresses"?: (string)[],"conversation_id"?: string | null,"created_at"?: string,"external_id": string,"from_address": string,"has_attachments"?: boolean,"id"?: string,"org_id": string,"project_id": string,"raw_record_id": string,"received_at": string,"received_at_source": Database["public"]['Enums']["received_at_source"],"subject": string,"to_addresses"?: (string)[],"updated_at"?: string
                   }
                   Update: {
-                    "body_preview"?: string | null,"cc_addresses"?: (string)[],"conversation_id"?: string | null,"created_at"?: string,"external_id"?: string,"from_address"?: string,"has_attachments"?: boolean,"id"?: string,"org_id"?: string,"project_id"?: string,"raw_record_id"?: string,"received_at"?: string,"received_at_source"?: Database["public"]['Enums']["received_at_source"],"subject"?: string,"to_addresses"?: (string)[],"updated_at"?: string
+                    "body_preview"?: string | null,"body_text"?: string | null,"cc_addresses"?: (string)[],"conversation_id"?: string | null,"created_at"?: string,"external_id"?: string,"from_address"?: string,"has_attachments"?: boolean,"id"?: string,"org_id"?: string,"project_id"?: string,"raw_record_id"?: string,"received_at"?: string,"received_at_source"?: Database["public"]['Enums']["received_at_source"],"subject"?: string,"to_addresses"?: (string)[],"updated_at"?: string
                   }
                   Relationships: [
                     {
+      foreignKeyName: "emails_org_fk"
+      columns: ["org_id"]
+isOneToOne: false
+      referencedRelation: "orgs"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "emails_org_project_fk"
       columns: ["project_id","org_id"]
 isOneToOne: false
       referencedRelation: "projects"
       referencedColumns: ["id","org_id"]
     },{
-      foreignKeyName: "emails_raw_record_id_fkey"
-      columns: ["raw_record_id"]
+      foreignKeyName: "emails_raw_record_fk"
+      columns: ["raw_record_id","org_id","project_id"]
 isOneToOne: false
       referencedRelation: "raw_records"
-      referencedColumns: ["id"]
+      referencedColumns: ["id","org_id","project_id"]
     }
                   ]
                 },"integration_connections": {
@@ -150,6 +156,12 @@ isOneToOne: false
                   }
                   Relationships: [
                     {
+      foreignKeyName: "project_holidays_org_fk"
+      columns: ["org_id"]
+isOneToOne: false
+      referencedRelation: "orgs"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "project_holidays_org_project_fk"
       columns: ["project_id","org_id"]
 isOneToOne: false
@@ -176,6 +188,12 @@ isOneToOne: false
       referencedRelation: "profiles"
       referencedColumns: ["id"]
     },{
+      foreignKeyName: "project_notice_periods_org_fk"
+      columns: ["org_id"]
+isOneToOne: false
+      referencedRelation: "orgs"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "project_notice_periods_org_project_fk"
       columns: ["project_id","org_id"]
 isOneToOne: false
@@ -196,6 +214,12 @@ isOneToOne: false
                   }
                   Relationships: [
                     {
+      foreignKeyName: "project_parties_org_fk"
+      columns: ["org_id"]
+isOneToOne: false
+      referencedRelation: "orgs"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "project_parties_org_project_fk"
       columns: ["project_id","org_id"]
 isOneToOne: false
@@ -216,10 +240,16 @@ isOneToOne: false
                   }
                   Relationships: [
                     {
-      foreignKeyName: "project_sources_connection_id_fkey"
-      columns: ["connection_id"]
+      foreignKeyName: "project_sources_connection_fk"
+      columns: ["connection_id","org_id"]
 isOneToOne: false
       referencedRelation: "integration_connections"
+      referencedColumns: ["id","org_id"]
+    },{
+      foreignKeyName: "project_sources_org_fk"
+      columns: ["org_id"]
+isOneToOne: false
+      referencedRelation: "orgs"
       referencedColumns: ["id"]
     },{
       foreignKeyName: "project_sources_org_project_fk"
@@ -268,6 +298,12 @@ isOneToOne: false
                   }
                   Relationships: [
                     {
+      foreignKeyName: "raw_records_org_fk"
+      columns: ["org_id"]
+isOneToOne: false
+      referencedRelation: "orgs"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "raw_records_org_project_fk"
       columns: ["project_id","org_id"]
 isOneToOne: false
@@ -288,17 +324,23 @@ isOneToOne: false
                   }
                   Relationships: [
                     {
+      foreignKeyName: "rfis_org_fk"
+      columns: ["org_id"]
+isOneToOne: false
+      referencedRelation: "orgs"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "rfis_org_project_fk"
       columns: ["project_id","org_id"]
 isOneToOne: false
       referencedRelation: "projects"
       referencedColumns: ["id","org_id"]
     },{
-      foreignKeyName: "rfis_raw_record_id_fkey"
-      columns: ["raw_record_id"]
+      foreignKeyName: "rfis_raw_record_fk"
+      columns: ["raw_record_id","org_id","project_id"]
 isOneToOne: false
       referencedRelation: "raw_records"
-      referencedColumns: ["id"]
+      referencedColumns: ["id","org_id","project_id"]
     }
                   ]
                 },"schedule_activities": {
@@ -314,17 +356,23 @@ isOneToOne: false
                   }
                   Relationships: [
                     {
+      foreignKeyName: "schedule_activities_org_fk"
+      columns: ["org_id"]
+isOneToOne: false
+      referencedRelation: "orgs"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "schedule_activities_org_project_fk"
       columns: ["project_id","org_id"]
 isOneToOne: false
       referencedRelation: "projects"
       referencedColumns: ["id","org_id"]
     },{
-      foreignKeyName: "schedule_activities_raw_record_id_fkey"
-      columns: ["raw_record_id"]
+      foreignKeyName: "schedule_activities_raw_record_fk"
+      columns: ["raw_record_id","org_id","project_id"]
 isOneToOne: false
       referencedRelation: "raw_records"
-      referencedColumns: ["id"]
+      referencedColumns: ["id","org_id","project_id"]
     }
                   ]
                 },"submittals": {
@@ -340,23 +388,29 @@ isOneToOne: false
                   }
                   Relationships: [
                     {
+      foreignKeyName: "submittals_org_fk"
+      columns: ["org_id"]
+isOneToOne: false
+      referencedRelation: "orgs"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "submittals_org_project_fk"
       columns: ["project_id","org_id"]
 isOneToOne: false
       referencedRelation: "projects"
       referencedColumns: ["id","org_id"]
     },{
-      foreignKeyName: "submittals_raw_record_id_fkey"
-      columns: ["raw_record_id"]
+      foreignKeyName: "submittals_raw_record_fk"
+      columns: ["raw_record_id","org_id","project_id"]
 isOneToOne: false
       referencedRelation: "raw_records"
-      referencedColumns: ["id"]
+      referencedColumns: ["id","org_id","project_id"]
     },{
-      foreignKeyName: "submittals_schedule_activity_id_fkey"
-      columns: ["schedule_activity_id"]
+      foreignKeyName: "submittals_schedule_activity_fk"
+      columns: ["schedule_activity_id","org_id","project_id"]
 isOneToOne: false
       referencedRelation: "schedule_activities"
-      referencedColumns: ["id"]
+      referencedColumns: ["id","org_id","project_id"]
     }
                   ]
                 },"sync_runs": {
@@ -372,17 +426,23 @@ isOneToOne: false
                   }
                   Relationships: [
                     {
+      foreignKeyName: "sync_runs_org_fk"
+      columns: ["org_id"]
+isOneToOne: false
+      referencedRelation: "orgs"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "sync_runs_org_project_fk"
       columns: ["project_id","org_id"]
 isOneToOne: false
       referencedRelation: "projects"
       referencedColumns: ["id","org_id"]
     },{
-      foreignKeyName: "sync_runs_project_source_id_fkey"
-      columns: ["project_source_id"]
+      foreignKeyName: "sync_runs_project_source_fk"
+      columns: ["project_source_id","org_id","project_id"]
 isOneToOne: false
       referencedRelation: "project_sources"
-      referencedColumns: ["id"]
+      referencedColumns: ["id","org_id","project_id"]
     }
                   ]
                 }
@@ -394,23 +454,11 @@ isOneToOne: false
             "create_org":
 { Args: { "p_name": string,"p_slug": string }; Returns: string
                            },
-"dearmor":
-{ Args: { "": string }; Returns: string
-                           },
-"gen_random_uuid":
-{ Args: Record<PropertyKey, never>; Returns: string
-                           },
-"gen_salt":
-{ Args: { "": string }; Returns: string
-                           },
 "has_org_role":
 { Args: { "p_org_id": string,"p_roles": (string)[] }; Returns: boolean
                            },
 "is_org_member":
 { Args: { "p_org_id": string }; Returns: boolean
-                           },
-"pgp_armor_headers":
-{ Args: { "": string }; Returns: Record<string, unknown>[]
                            }
           }
           Enums: {

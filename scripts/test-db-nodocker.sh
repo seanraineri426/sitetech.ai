@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 # Colors for output
 RED='\033[0;31m'
@@ -21,18 +21,18 @@ sudo -u postgres psql -c "CREATE DATABASE $DB_NAME;"
 
 # Run bootstrap script
 echo -e "\n${YELLOW}Running bootstrap script...${NC}"
-sudo -u postgres psql -d $DB_NAME -f supabase/tests/bootstrap_no_docker.sql
+sudo -u postgres psql -d $DB_NAME -v ON_ERROR_STOP=1 -f supabase/tests/bootstrap_no_docker.sql
 
 # Apply migrations in order
 echo -e "\n${YELLOW}Applying migrations...${NC}"
 for migration in supabase/migrations/*.sql; do
   echo "  Applying: $(basename $migration)"
-  sudo -u postgres psql -d $DB_NAME -f "$migration"
+  sudo -u postgres psql -d $DB_NAME -v ON_ERROR_STOP=1 -f "$migration"
 done
 
 # Install pgTAP extension
 echo -e "\n${YELLOW}Installing pgTAP extension...${NC}"
-sudo -u postgres psql -d $DB_NAME -c "CREATE EXTENSION IF NOT EXISTS pgtap;"
+sudo -u postgres psql -d $DB_NAME -v ON_ERROR_STOP=1 -c "CREATE EXTENSION IF NOT EXISTS pgtap;"
 
 # Run pgTAP tests
 echo -e "\n${YELLOW}Running pgTAP tests...${NC}"
