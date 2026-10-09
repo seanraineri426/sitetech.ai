@@ -54,14 +54,24 @@ jobs:
       - name: Test brief reference (offline, network isolated)
         run: |
           cd tools/brief-reference
-          # Try sudo unshare -n first (GitHub runners support this)
-          if sudo unshare -n python3 run_tests.py 2>/dev/null; then
-            echo "✓ Tests passed with network namespace isolation"
-          else
-            echo "✗ Network namespace isolation failed"
+          # Get the full path to the venv python interpreter
+          PYTHON_PATH=$(which python3)
+          echo "Using Python: $PYTHON_PATH"
+          
+          # Try sudo unshare -n with venv python (GitHub runners support this)
+          if ! sudo unshare -n echo "Network isolation available"; then
+            echo "✗ Network namespace isolation setup failed"
             echo "Tests MUST run with either sudo unshare -n or docker --network none"
             exit 1
           fi
+          
+          # Run tests with venv python through sudo by passing PATH
+          if ! sudo unshare -n env PATH="$PATH" python3 run_tests.py; then
+            echo "✗ Tests failed with network namespace isolation"
+            exit 1
+          fi
+          
+          echo "✓ Tests passed with network namespace isolation"
 
   rls-tests:
     runs-on: ubuntu-latest

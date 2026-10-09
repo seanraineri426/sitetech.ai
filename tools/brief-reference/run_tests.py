@@ -141,7 +141,7 @@ def main():
     print("\n" + "=" * 60)
     print("Running: network_blocking_probe")
     print("=" * 60)
-    if not run_test_suite("network_blocking_probe", "python3 test_network_block.py"):
+    if not run_test_suite("network_blocking_probe", f"{sys.executable} test_network_block.py"):
         print("❌ FAILED: network_blocking_probe")
         print("Network blocking is not working - tests would reach external services!")
         return 1
@@ -149,12 +149,12 @@ def main():
     
     # Run test suites
     suites = [
-        ("tests_iter4", "python3 -m harness.tests_iter4", False),
-        ("tests_iter3", "python3 -m harness.tests_iter3", False),
-        ("tests_zero_cost", "python3 -m harness.tests_zero_cost", False),
-        ("tests_recall_pack", "python3 -m harness.tests_recall_pack", False),
-        ("scorer_validation", "python3 test_scorer_on_gold_example.py", False),
-        ("prompt_injection_defense", "python3 -m harness.tests_prompt_injection", False),
+        ("tests_iter4", f"{sys.executable} -m harness.tests_iter4", False),
+        ("tests_iter3", f"{sys.executable} -m harness.tests_iter3", False),
+        ("tests_zero_cost", f"{sys.executable} -m harness.tests_zero_cost", False),
+        ("tests_recall_pack", f"{sys.executable} -m harness.tests_recall_pack", False),
+        ("scorer_validation", f"{sys.executable} test_scorer_on_gold_example.py", False),
+        ("prompt_injection_defense", f"{sys.executable} -m harness.tests_prompt_injection", False),
     ]
     
     for name, command, xfail in suites:
@@ -170,7 +170,7 @@ def main():
     print("Running: linden_gate (XFAIL)")
     print("=" * 60)
     result = subprocess.run(
-        "python3 test_linden_gate.py",
+        f"{sys.executable} test_linden_gate.py",
         shell=True,
         cwd=os.path.join(os.path.dirname(__file__), "evals"),
         capture_output=True,
