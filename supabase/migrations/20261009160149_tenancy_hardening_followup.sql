@@ -130,4 +130,6 @@ revoke execute on all functions in schema public from public;
 alter default privileges for role postgres in schema public revoke execute on functions from public;
 
 -- Also revoke default execute from anon directly (overrides bootstrap grants)
-alter default privileges in schema public revoke execute on functions from anon;
+-- This must revoke both the general default and the postgres-specific default
+alter default privileges in schema public revoke all on functions from anon;
+alter default privileges for role postgres in schema public revoke all on functions from anon;
