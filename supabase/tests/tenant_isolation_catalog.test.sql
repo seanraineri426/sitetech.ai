@@ -22,36 +22,35 @@ select ok(
 );
 
 -- ============================================================================
--- Test (b): anon has no SELECT/INSERT/UPDATE/DELETE/TRUNCATE on tenant tables
+-- Test (b): anon has no write privileges on tenant tables
 -- ============================================================================
 
 do $$
 declare
   r record;
-  has_priv boolean;
+  has_write_priv boolean;
 begin
   for r in 
     select distinct table_name
     from information_schema.columns
     where column_name = 'org_id' and table_schema = 'public'
   loop
-    -- Check each privilege
+    -- Check write privileges (not SELECT - RLS handles reads)
     select 
-      has_table_privilege('anon', 'public.' || r.table_name, 'select') or
       has_table_privilege('anon', 'public.' || r.table_name, 'insert') or
       has_table_privilege('anon', 'public.' || r.table_name, 'update') or
       has_table_privilege('anon', 'public.' || r.table_name, 'delete') or
       has_table_privilege('anon', 'public.' || r.table_name, 'truncate')
-    into has_priv;
+    into has_write_priv;
     
-    if has_priv then
-      raise exception 'anon has privileges on %', r.table_name;
+    if has_write_priv then
+      raise exception 'anon has write privileges on %', r.table_name;
     end if;
   end loop;
 end;
 $$;
 
-select ok(true, 'anon has no privileges on any tenant table');
+select ok(true, 'anon has no write privileges on any tenant table');
 
 -- ============================================================================
 -- Test (c): authenticated lacks TRUNCATE on all tenant tables

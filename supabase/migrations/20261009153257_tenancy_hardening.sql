@@ -161,23 +161,23 @@ drop index if exists public.idx_schedule_activities_external_lookup;
 -- 9. COMPREHENSIVE PRIVILEGE REVOCATIONS
 -- ============================================================================
 
--- Revoke ALL from anon on all public tables
-revoke all on public.orgs from anon;
-revoke all on public.profiles from anon;
-revoke all on public.org_memberships from anon;
-revoke all on public.projects from anon;
-revoke all on public.audit_log from anon;
-revoke all on public.integration_connections from anon;
-revoke all on public.project_sources from anon;
-revoke all on public.sync_runs from anon;
-revoke all on public.raw_records from anon;
-revoke all on public.rfis from anon;
-revoke all on public.submittals from anon;
-revoke all on public.emails from anon;
-revoke all on public.schedule_activities from anon;
-revoke all on public.project_notice_periods from anon;
-revoke all on public.project_holidays from anon;
-revoke all on public.project_parties from anon;
+-- Revoke write privileges from anon (keep SELECT for RLS to filter)
+revoke insert, update, delete, truncate, references, trigger on public.orgs from anon;
+revoke insert, update, delete, truncate, references, trigger on public.profiles from anon;
+revoke insert, update, delete, truncate, references, trigger on public.org_memberships from anon;
+revoke insert, update, delete, truncate, references, trigger on public.projects from anon;
+revoke insert, update, delete, truncate, references, trigger on public.audit_log from anon;
+revoke insert, update, delete, truncate, references, trigger on public.integration_connections from anon;
+revoke insert, update, delete, truncate, references, trigger on public.project_sources from anon;
+revoke insert, update, delete, truncate, references, trigger on public.sync_runs from anon;
+revoke insert, update, delete, truncate, references, trigger on public.raw_records from anon;
+revoke insert, update, delete, truncate, references, trigger on public.rfis from anon;
+revoke insert, update, delete, truncate, references, trigger on public.submittals from anon;
+revoke insert, update, delete, truncate, references, trigger on public.emails from anon;
+revoke insert, update, delete, truncate, references, trigger on public.schedule_activities from anon;
+revoke insert, update, delete, truncate, references, trigger on public.project_notice_periods from anon;
+revoke insert, update, delete, truncate, references, trigger on public.project_holidays from anon;
+revoke insert, update, delete, truncate, references, trigger on public.project_parties from anon;
 
 -- Revoke TRUNCATE from authenticated on all public tables
 revoke truncate on public.orgs from authenticated;
