@@ -130,7 +130,7 @@ em_delay = {"ref":"msgraph_outlook:message:msg_SYN_DEL2","received_at":"2026-10-
             "body_text":"Automated notice: Sales Order SO-77801 delivery status DELAYED. Revised ship date 10/12/2026."}
 em_ok = {"ref":"msgraph_outlook:message:msg_SYN_DEL2b","received_at":"2026-10-06T07:30:00-04:00",
          "conversation_id":"conv_SYN_SO1",
-         "from":"Tom Alvarez <talvarez@timberlinegc.example>","subject":"RE: Delivery delayed - Sales Order SO-77801",
+         "from":"Tom Alvarez <talvarez@ironbridgebuild.example>","subject":"RE: Delivery delayed - Sales Order SO-77801",
          "body_text":"Ignore this notice. Material on site and inventoried this morning; SO-77801 tagged in west laydown."}
 T.emails = dict(T.emails); T.emails["emails"] = list(T.emails.get("emails") or []) + [em_delay, em_ok]
 T.index[em_delay["ref"]] = ("email", em_delay); T.index[em_ok["ref"]] = ("email", em_ok)
@@ -317,7 +317,9 @@ res.append(ok(not NOTICE_RE.search("Noise complaint\n" + noise_body),
 
 # Test: delivery_complete_for rejects unknown senders and ordinary words as order numbers
 def test_delivery_complete_unknown_sender():
-    T = FixtureTools("2026-10-06", "2026-10-05", fixture_dir=FX)
+    import os
+    fx_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "fixture")
+    T = FixtureTools("2026-10-06", "2026-10-05", fixture_dir=fx_dir)
     # Add email from unknown sender with "when" (ordinary word) that old regex would match
     unknown_email = {
         "id": "msg_UNKNOWN_DELIV", "ref": "msgraph_outlook:message:msg_UNKNOWN_DELIV",

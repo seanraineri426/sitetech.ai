@@ -106,22 +106,33 @@ def _verbatim(q, *texts, min_len=4):
     return len(q) >= min_len and any(q in _norm(t) for t in texts)
 
 def _verbatim_token(val, text):
-    """Check if val appears as a token in text (word boundaries, not substring)."""
+    """Check if val appears as a token in text (word boundaries, not substring).
+    
+    For numbers: "200" should NOT match in "$48,200" (it's a substring of a larger number)
+    but should match in "$200" or "paid 200 dollars".
+    """
     import re
     # Normalize text
     text_norm = _norm(text)
-    val_norm = _norm(str(val))
-    # For numbers with commas (e.g., "48,200"), check exact match with token boundaries
-    # For IDs/specs, check with word boundaries
-    # Pattern: (?<![\w.,])VALUE(?![\d,]) for amounts, (?<!\w)VALUE(?!\w) for IDs
-    if ',' in val_norm or '.' in val_norm:
-        # Amount with comma/decimal - use negative lookbehind/ahead that allows spaces but not word chars or punctuation
-        pattern = re.escape(val_norm).replace(r'\ ', r'\s+')
-        pattern = r'(?<![\w.])' + pattern + r'(?![\d,])'
+    val_str = str(val) if isinstance(val, (int, float)) else val
+    val_norm = _norm(val_str)
+    
+    if isinstance(val, (int, float)):
+        # For numbers, we need to match exactly, not as substring of another number
+        # "200" should match "\b200\b" but NOT in "48,200" or "200,000" or "482001"
+        raw = str(val) if isinstance(val, int) else f"{val:.10g}"
+        comma_fmt = f"{int(val):,}" if isinstance(val, int) else raw
+        
+        # Negative lookbehind/ahead: not preceded or followed by digit or comma
+        # This ensures "200" doesn't match in "48,200" (preceded by comma) or "2001" (followed by digit)
+        boundary_pattern = r'(?<![\d,])' + re.escape(raw) + r'(?![\d,])'
+        comma_pattern = r'(?<![\d,])' + re.escape(comma_fmt) + r'(?![\d,])'
+        
+        return bool(re.search(boundary_pattern, text_norm) or re.search(comma_pattern, text_norm))
     else:
-        # ID or number - use word boundaries
+        # For string IDs/specs, use word boundaries
         pattern = r'\b' + re.escape(val_norm) + r'\b'
-    return bool(re.search(pattern, text_norm))
+        return bool(re.search(pattern, text_norm))
 
 def verify_email_facts(T, rec, facts):
     """Code checks only (no judgment). Returns (kept, dropped)."""
