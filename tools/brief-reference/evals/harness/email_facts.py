@@ -105,11 +105,14 @@ def _verbatim(q, *texts, min_len=4):
     q = _norm(q).strip(" .\"'")
     return len(q) >= min_len and any(q in _norm(t) for t in texts)
 
-def _verbatim_token(val, text):
+def _verbatim_token(val, text, spec_section=False):
     """Check if val appears as a token in text (word boundaries, not substring).
     
     For numbers: "200" should NOT match in "$48,200" (it's a substring of a larger number)
     but should match in "$200" or "paid 200 dollars".
+    
+    For spec_section: "03 30" should NOT match in "03 30 00" (partial spec match).
+    Specs require exact match with no adjacent digits.
     """
     import re
     # Normalize text
@@ -129,6 +132,12 @@ def _verbatim_token(val, text):
         comma_pattern = r'(?<![\d,])' + re.escape(comma_fmt) + r'(?![\d,])'
         
         return bool(re.search(boundary_pattern, text_norm) or re.search(comma_pattern, text_norm))
+    elif spec_section:
+        # For spec sections, require exact match with no adjacent digits (even through spaces)
+        # "03 30" should NOT match "03 30 00"; "03 30 00" should match "03 30 00"
+        # Pattern: not preceded by digit-space* and not followed by space*-digit
+        pattern = r'(?<!\d\s)(?<!\d)' + re.escape(val_norm) + r'(?!\s?\d)'
+        return bool(re.search(pattern, text_norm))
     else:
         # For string IDs/specs, use word boundaries
         pattern = r'\b' + re.escape(val_norm) + r'\b'
@@ -151,17 +160,11 @@ def verify_email_facts(T, rec, facts):
         for key in check_fields:
             val = f.get(key)
             if val is not None and val != "":
-                # For amounts, compare exactly (no int truncation)
-                if isinstance(val, (int, float)):
-                    # Check both raw and comma-formatted versions with token boundaries
-                    # e.g., for 48200: check "48200" and "48,200" but NOT "48200.99" or "482001"
-                    candidates = [str(val) if isinstance(val, int) else f"{val:.10g}", f"{int(val):,}"]
-                    if not any(_verbatim_token(c, text) for c in candidates):
-                        dropped.append({"fact": f, "reason": f"{key} '{val}' not verbatim"}); break
-                else:
-                    # For strings (IDs/specs), check with token boundaries
-                    if not _verbatim_token(val, text):
-                        dropped.append({"fact": f, "reason": f"{key} '{val}' not verbatim"}); break
+                # Use token boundary matching (exact match, not substring)
+                # For spec_section, use stricter matching to reject partial specs
+                is_spec = (key == "spec_section")
+                if not _verbatim_token(val, text, spec_section=is_spec):
+                    dropped.append({"fact": f, "reason": f"{key} '{val}' not verbatim"}); break
         else:
             # All checks passed
             if f.get("sender_party") != lab: f["sender_party_model"] = f.get("sender_party"); f["sender_party"] = lab

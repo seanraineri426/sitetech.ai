@@ -271,8 +271,8 @@ def test_mismatched_values_dropped():
         (48200.99, "amount_usd 48200.99 truncated to 48200 should not match 48,200"),
         ("CO-01", "ce_no 'CO-01' is substring of CO-012 but not a token"),
         ("12", "rfi_no '12' is substring of CO-012 but not a token"),
-        ("4", "rfi_no '4' is substring of $48,200 but not a token"),
-        ("03 30", "spec_section '03 30' is substring of '03 30 00' but not a complete token"),
+        ("82", "rfi_no '82' is substring of $48,200 but not a token"),
+        ("30 00", "spec_section '30 00' is substring of '03 30 00' but not a complete token"),
     ]
     
     for val, desc in must_drop:
