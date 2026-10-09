@@ -81,11 +81,11 @@ Reference to source record with optional quote and data date. UI type enriches s
 
 ```typescript
 type Citation = {
-  source: 'procore' | 'msgraph_mail' | 'p6_xer' | 'granola' | 'project_settings' | 'manual';
+  source: 'procore' | 'msgraph' | 'p6_upload' | 'granola' | 'project_settings' | 'manual'; // Unified: msgraph maps to mail/drive
   entity_type: string; // e.g. 'rfi', 'email', 'schedule_activity', 'meeting'
   external_id: string; // External system's ID
   label?: string; // Human-readable label
-  connection_id?: string | null; // UUID of integration_connection for stale detection (UI-added)
+  connection_id?: string | null; // UUID of integration_connection for stale detection (UI-added, nullable)
   data_date?: string; // ISO date - when this record was captured (UI-added)
   quote?: string; // Verbatim text from redacted body (UI-added)
 };
@@ -94,10 +94,12 @@ type Citation = {
 **Purpose:** Every number on screen must cite its source. `connection_id` allows cards to show "source stale" next to the exact number it affects.
 
 **Storage vs. UI:**
-- **Stored citations** (in `findings.citations` JSONB): `{source, entity_type, external_id, label?}`
-- **UI citations** (enriched): Add `connection_id`, `data_date`, and `quote` from linked records
+- **Stored citations** (in `findings.citations` JSONB): `{source, entity_type, external_id, label?}` - strict shape
+- **UI citations** (enriched): Add optional `connection_id` (nullable), `data_date`, and `quote` from linked records
 
-**Redaction:** Quotes match against redacted email bodies where addresses are replaced with `[email-<domain>]` placeholders. See `docs/email-facts-fields.md`.
+**Source names:** Unified to match DB `integration_provider` enum: `procore`, `msgraph` (maps to mail/drive), `p6_upload`, `granola`. All schemas agree on these names.
+
+**API validation:** API rejects any citation whose `(source, entity_type, external_id)` does not resolve to a synced row (see `docs/m1-findings-columns.md`).
 
 **Fixture example:**
 ```typescript
@@ -856,24 +858,27 @@ type UnverifiedSendersSection = {
 
 ## OPEN Items
 
-1. **CEO escalation tier** - A11 outgoing delay notice escalates to CEO if not approved by PX. Current approval tier enum supports only PE/PM/PX. Add CEO tier or change A11 escalation target? (actions-registry.md line 600)
+1. **CEO escalation tier** - A11 outgoing delay notice escalates to CEO if not approved by PX. Current approval tier enum supports only PE/PM/PX. Add CEO tier or change A11 escalation target? (actions-registry.md on main, line ~600)
 
-2. **gc_vendor party enum** - A6 notice response tracking mentions gc_vendor as a contract_kind counterparty. Current `company_role` enum on main: owner, architect_engineer, gc, sub. Add gc_vendor role or clarify mapping? (actions-registry.md line 306)
+2. **gc_vendor party enum** - A6 notice response tracking mentions gc_vendor as a contract_kind counterparty. Current `company_role` enum on main: owner, architect_engineer, gc, sub. Add gc_vendor role or clarify mapping? (actions-registry.md on main, line ~306)
 
 3. **Stale threshold values** - Per-provider staleness thresholds for SourceFreshness.stale computation:
    - procore: ? hours
-   - msgraph_mail: ? hours
-   - msgraph_drive: ? hours
+   - msgraph (mail/drive): ? hours
    - p6_upload: ? hours
    - granola: ? hours
 
-4. **Lead time rule** - A2 submittal chase uses: (1) the submittal's `lead_time_days` field if set, else (2) per-project lead time by spec division (configured at onboarding), else (3) "Confirm lead time" with no $ impact shown. There are NO defaults—missing values require explicit confirmation. (actions-registry.md line 90)
+4. **Lead time rule** - A2 submittal chase uses: (1) the submittal's `lead_time_days` field if set, else (2) per-project lead time by spec division (configured at onboarding), else (3) "Confirm lead time" with no $ impact shown. **There are NO defaults**—missing values require explicit confirmation. **Note:** actions-registry.md line ~90 still incorrectly says "or project default" - needs fixing.
 
-5. **Delay cost unit** - Confirm whether `projects.daily_delay_cost_usd` is per calendar day or working day (affects what-if $ calculations and critical-path slip conversions). (what-if-math.md line 147)
+5. **Delay cost unit** - Confirm whether `projects.daily_delay_cost_usd` is per calendar day or working day (affects what-if $ calculations and critical-path slip conversions). (what-if-math.md on main, line ~147)
 
-6. **hours_per_day source** - What-if math needs `hours_per_day` for float conversion (P6 stores float in hours). Propose adding to `projects` table or storing in XER metadata? (what-if-math.md line 78)
+6. **hours_per_day source** - What-if math needs `hours_per_day` for float conversion (P6 stores float in hours). **Note:** P6 parser currently hard-codes 8 h/day; what-if-math has DEFAULT 8. Propose adding to `projects` table or storing in XER metadata? (what-if-math.md on main, line ~78)
 
-7. **A5 resequence for no-float activities** - When activity has ≤ 0 float remaining, should the resequence suggestion be omitted entirely, or shown with a note that float is exhausted? (actions-registry.md line 770)
+7. **A5 resequence for no-float activities** - When activity has ≤ 0 float remaining, should the resequence suggestion be omitted entirely, or shown with a note that float is exhausted? (actions-registry.md on main, line ~770)
+
+8. **SourceFreshness field sources** - `mode` source unclear (integration_connections field or derived?); `checkpoint_reset_at` source unclear. Do partial sync runs (status='partial') count as success for `last_success_at`?
+
+9. **Approval.audit_log_ids** - References `audit_log.id` (bigint). Ensure migrations/API align on this reference vs. separate audit_events table.
 
 ---
 
@@ -881,3 +886,4 @@ type UnverifiedSendersSection = {
 
 - **v1.0 (Oct 9, 2026, 19:17 UTC):** Initial draft with all 13 contract types, fixtures, permission model, UI states, unverified senders section, SourceFreshness integration, email sender_auth, and 9 documented OPEN items.
 - **v1.1 (Oct 9, 2026, 19:26 UTC):** Added `docs/m1-findings-columns.md` and `docs/email-facts-fields.md` reconciled against main migrations (tables don't exist yet; docs describe planned schema). Clarified Citation storage vs. UI enrichment (stored citations lack connection_id/data_date/quote; UI adds them). Fixed OPEN #4 wording (no lead-time defaults). Noted current enum differences for CEO tier and gc_vendor. OPEN count: 7 (resolved #8, #9).
+- **v2.0 (Oct 9, 2026, 19:44 UTC):** **Independent review corrections.** Rebased onto main (34 commits). Matched m1-findings-columns.md to PR #7 Lead-aligned version (composite FKs, required unique indexes, CHECK constraint, severity enum, uppercase rule_id, cost_exposure_usd limit, API rejection note). Updated email-facts-fields.md (7-value notice_type enum, $ = completion slip × daily cost). Approval.audit_log_ids references audit_log.id (bigint). Citation: connection_id nullable, StoredCitation .strict(), unified source names (procore/msgraph/p6_upload/granola). SourceFreshness: documented field sources, health='ok' refine. Provenance validation with zod refines + NEGATIVE tests (verified+model, verified+confidence, null w/o confirm, verified $ w/o citations, ai_suggested $, suppressed w/o reason, read_only literal true, email evidence requires sender_auth). Finding/Evidence: unverified_sender flag. UnverifiedSendersSection: split reason (auth_failed/not_on_project_parties), removed ai_suggested $. Action: can_approve field. Fixtures: marked SYNTHETIC, fixed A1 $ calc (completion slip × daily cost), fixed dates, neutral model placeholder. OPEN #4/#6 notes added. OPEN count: 9.

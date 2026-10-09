@@ -41,7 +41,17 @@ export const EvidenceSchema = z.object({
   excerpt: z.string().optional(),
   why_panel: WhyPanelSchema,
   open_in_source_link: z.string().url().optional(),
-  sender_auth: SenderAuthSchema.optional()
-});
+  sender_auth: SenderAuthSchema.optional(),
+  unverified_sender: z.boolean() // CTO rule: unverified emails can't create, change, or hide findings
+}).refine(
+  data => {
+    // Email evidence requires sender_auth (verdict may be 'unknown')
+    if (data.kind === 'email' && !data.sender_auth) {
+      return false;
+    }
+    return true;
+  },
+  { message: 'Email evidence requires sender_auth' }
+);
 
 export type Evidence = z.infer<typeof EvidenceSchema>;

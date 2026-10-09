@@ -13,10 +13,11 @@ export const UnverifiedSenderRowSchema = z.object({
   sender_domain: z.string(),
   sender_display_name: z.string(),
   email_count: z.number().int().min(0),
-  hypothetical_impact: MeasureSchema(z.number()),
+  hypothetical_impact: MeasureSchema(z.number()), // May only be non-dollar units; code computes $
   sample_subjects: z.array(z.string()).max(3),
   add_party_allowed: z.boolean(),
-  sender_auth_summary: SenderAuthSummarySchema
+  sender_auth_summary: SenderAuthSummarySchema,
+  reason: z.enum(['auth_failed', 'not_on_project_parties']) // Split into two cases
 });
 
 export type UnverifiedSenderRow = z.infer<typeof UnverifiedSenderRowSchema>;

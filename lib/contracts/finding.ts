@@ -26,7 +26,17 @@ export const FindingSchema = z.object({
   owner_role: OwnerRoleSchema,
   assigned_to: z.string().optional(),
   suppressed: z.boolean(),
-  suppressed_reason: z.string().optional()
-});
+  suppressed_reason: z.string().optional(),
+  unverified_sender: z.boolean() // CTO rule: unverified emails can't create, change, or hide findings
+}).refine(
+  data => {
+    // Suppressed findings require suppressed_reason
+    if (data.suppressed && !data.suppressed_reason) {
+      return false;
+    }
+    return true;
+  },
+  { message: 'Suppressed findings require suppressed_reason' }
+);
 
 export type Finding = z.infer<typeof FindingSchema>;
