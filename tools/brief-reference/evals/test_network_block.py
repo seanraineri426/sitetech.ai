@@ -166,8 +166,10 @@ test_bypass("subprocess env curl", test_env_curl)
 def test_os_system_curl():
     import os
     result = os.system("curl -s http://google.com >/dev/null 2>&1")
-    # os.system returns 0 on success - that means the bypass works (not blocked)
-    # Don't raise here; let it succeed to signal "not blocked"
+    # os.system returns 0 on success - bypass works (not blocked)
+    # Return code != 0 means blocked
+    if result != 0:
+        raise Exception("os.system curl blocked")
 
 test_bypass("os.system curl", test_os_system_curl)
 
@@ -179,8 +181,10 @@ def test_python_I_socket():
         capture_output=True,
         timeout=2
     )
-    # returncode 0 means success - the bypass works (not blocked)
-    # Don't raise here; let it succeed to signal "not blocked"
+    # returncode 0 means connection succeeded - bypass works (not blocked)
+    # returncode != 0 means blocked
+    if result.returncode != 0:
+        raise Exception("python3 -I socket blocked")
 
 test_bypass("python3 -I socket", test_python_I_socket)
 
