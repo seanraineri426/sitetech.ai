@@ -80,7 +80,7 @@ export const SUBMITTAL_ALLOWLIST = [
   "internal_review_time",
   "buffer_time",
   "approvers", // Array: {id, name, revision, response, responded_at}, NO emails
-  "scheduled_task", // Object: {id, name}
+  "scheduled_task", // Object: {id, code, name}
   "project.id",
   "company.id",
 ] as const;
@@ -188,7 +188,7 @@ function buildAllowlistedSubmittalPayload(
   const scheduled_task = submittal.scheduled_task
     ? {
         id: submittal.scheduled_task.id,
-        code: submittal.scheduled_task.code,
+        code: submittal.scheduled_task.code ?? null,
         name: submittal.scheduled_task.name,
       }
     : null;
@@ -366,7 +366,7 @@ export function mapProcoreSubmittalToNormalized(
     scheduled_task: submittal.scheduled_task
       ? {
           id: String(submittal.scheduled_task.id),
-          code: submittal.scheduled_task.code,
+          code: submittal.scheduled_task.code ?? null,
           name: submittal.scheduled_task.name,
         }
       : null,

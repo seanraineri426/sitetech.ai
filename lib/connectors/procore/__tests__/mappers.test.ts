@@ -571,6 +571,42 @@ describe("Procore mappers", () => {
       expect(normalized.scheduled_task).not.toBeNull();
       expect(normalized.scheduled_task?.code).toBe("A1020");
     });
+
+    it("handles absent scheduled_task.code key (not just null)", () => {
+      const submittal = {
+        ...mockSubmittal,
+        scheduled_task: {
+          id: 333,
+          name: "Install Steel",
+          // code key entirely absent
+        } as ProcoreSubmittal["scheduled_task"],
+      };
+      const normalized = mapProcoreSubmittalToNormalized(submittal);
+      expect(normalized.scheduled_task).not.toBeNull();
+      expect(normalized.scheduled_task?.code).toBeNull();
+    });
+
+    it("absent code key produces same fingerprint as explicit null", () => {
+      const withAbsentCode = {
+        ...mockSubmittal,
+        scheduled_task: {
+          id: 333,
+          name: "Install Steel",
+          // code key entirely absent
+        } as ProcoreSubmittal["scheduled_task"],
+      };
+      const withNullCode = {
+        ...mockSubmittal,
+        scheduled_task: {
+          id: 333,
+          code: null,
+          name: "Install Steel",
+        },
+      };
+      const fp1 = mapProcoreSubmittalToNormalized(withAbsentCode).fingerprint;
+      const fp2 = mapProcoreSubmittalToNormalized(withNullCode).fingerprint;
+      expect(fp1).toBe(fp2);
+    });
   });
 
   describe("Docs fixtures validation", () => {

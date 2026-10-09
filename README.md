@@ -89,7 +89,7 @@ pnpm start
 - `pnpm start` — Start production server
 - `pnpm typecheck` — Run TypeScript type checking
 - `pnpm lint` — Run ESLint
-- `pnpm test` — Run tests (191 tests pass, 19 skipped without Supabase)
+- `pnpm test` — Run tests
 - `pnpm test:watch` — Run tests in watch mode
 
 ## Environment Variables
