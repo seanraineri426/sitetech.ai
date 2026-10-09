@@ -155,7 +155,10 @@ from harness.stages import rank as rank_stage
 from harness.ranker import verify_request
 
 # Build a minimal fixture
-test_fixture_dir = os.path.join(os.path.dirname(os.path.dirname(HERE)), "fixture")
+# __file__ is evals/harness/tests_prompt_injection.py
+# fixture is at evals/fixture/
+# Go up one level from harness/ to evals/, then to fixture/
+test_fixture_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "fixture")
 T = FixtureTools("2026-10-06", "2026-10-05", fixture_dir=test_fixture_dir)
 
 # Construct cached-style fact objects for hostile emails
