@@ -674,7 +674,7 @@ describe('ActionCard', () => {
 
   describe('Why panel', () => {
     it('starts closed', () => {
-      const { container } = render(
+      render(
         <ActionCard
           data={rfiEscalationFixture}
           onApprove={mockOnApprove}
