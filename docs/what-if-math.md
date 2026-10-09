@@ -99,13 +99,9 @@ ALTER TABLE schedule_activities
   ADD COLUMN calendar_id TEXT,
   ADD COLUMN remaining_duration_days INTEGER,
   ADD COLUMN original_duration_days INTEGER,
-  ADD COLUMN early_start DATE,
-  ADD COLUMN early_finish DATE,
-  ADD COLUMN late_start DATE,
-  ADD COLUMN late_finish DATE,
   ADD COLUMN actual_start DATE,
   ADD COLUMN actual_finish DATE,
-  ADD COLUMN driving_path BOOLEAN DEFAULT FALSE;
+  ADD COLUMN driving_path BOOLEAN;
 ```
 
 ### schedule_relationships table (new, proposed)
@@ -144,9 +140,9 @@ CREATE TABLE schedule_calendars (
 ### Delay cost configuration
 **Current on main:** `projects.daily_delay_cost_usd` (unit not specified)
 
-**Proposed:** Add `delay_cost_unit` to clarify:
+**Proposed:** Add `delay_cost_unit`:
 ```sql
-ALTER TABLE projects ADD COLUMN delay_cost_unit TEXT DEFAULT 'calendar_day' CHECK (delay_cost_unit IN ('calendar_day', 'working_day'));
+ALTER TABLE projects ADD COLUMN delay_cost_unit TEXT CHECK (delay_cost_unit IN ('calendar_day', 'working_day'));
 ```
 
 **If delay cost is per calendar day:** slip propagation (in working days) must be converted to calendar days for $ computation. Conversion: count calendar days between original completion and new completion, accounting for non-working days.
@@ -523,8 +519,8 @@ Reference fixture: `docs/what-if-examples/fixture.json`. All numbers computed by
 | **TC2: Positive float** | A1100 (7d float) slips 5 wd | Float consumed 5d, remaining float +2d. Completion slip: 0 wd. $ = $0 (absorbed by float) |
 | **TC3: Float exceeded** | A1100 (7d float) slips 12 wd | Resulting float -5d. Completion slip: 5 wd = 7 cd. $ = $84,000 (7 cd × $12k/cd) |
 | **TC4: Negative float** | A2100 (critical, 0d float) slips 8 wd | Resulting float -8d. Completion slip: 8 wd = 10 cd. $ = $120,000 (10 cd × $12k/cd) |
-| **TC5: Multi-path merge** | A1100 slips exactly its 7d float | Two paths to A3000 (via A1200 and direct FS+2). Latest predecessor drives (tie, no slip). $ = $0 |
-| **TC6: Holiday spanning** | A2200 slips 10 wd across Thanksgiving (Nov 26-27) | Completion slip: 10 wd = 14 cd. $ = $168,000. Working days: Nov 23-30 (skipping Thu-Fri holidays) + Dec 1 |
+| **TC5: Multi-path merge** | A1100 slips exactly its 7d float | Two paths to A3000: A1100→A3000 (FS+2) and A2200→A3000 (FS). A1200 is open end with no successors. Latest predecessor drives (tie, no slip). $ = $0 |
+| **TC6: Holiday spanning** | A2200 slips 10 wd across Thanksgiving (Nov 26-27) | A2200 moves to Nov 23-30 (skipping Nov 26-27 holidays). A3000 starts Dec 1. Completion slip: 10 wd = 14 cd. $ = $168,000 |
 | **TC7: Shutdown period** | A3000 slips 20 wd across Dec 25 and Jan 1 | Completion slip: 20 wd = 30 cd. $ = $360,000. (Dec 25, Jan 1 non-work) |
 | **TC8: In-progress** | A1000 (in progress, 6d remaining from Oct 8) extends +5 wd | Uses remaining duration from data date. Slip absorbed by float. $ = $0 |
 | **TC9: Lag (FS+2)** | A1100 slips 9 wd; FS+2 lag to A3000 preserved | Completion slip: 2 wd = 2 cd (lag + 1 convention). $ = $24,000 |
@@ -576,4 +572,4 @@ Reference fixture: `docs/what-if-examples/fixture.json`. All numbers computed by
 - **v1.1 (Oct 9, 2026, 18:07 UTC):** PM resolved 9 OPEN questions. Applied CTO guardrail (NOT building schedule engine).
 - **v1.2 (Oct 9, 2026, 18:14 UTC):** Lead review at 1966299 (first round). Renamed "slip propagation". Added Data requirements section. P6 XER only. Fixed FS+1 convention, SF flag, notice deadline calculation. Created fixture and compute script.
 - **v1.3 (Oct 9, 2026, 18:56 UTC):** Lead review at 4069227 (second round). Rebuilt fixture with contiguous activities. Fixed propagate_slip to honor shared float. Added Jul 5, 2027 holiday. Updated all examples/test cases with computed numbers. Fixed working→calendar day $ conversion. Removed CPM references. Data requirements match main migration. Added Due/escalation to A1/A2/A4/A5/A7/A8. Fixed A6 escalation, flagged A11 CEO escalation OPEN. requires_procore on all actions. Party enum gc_vendor OPEN, cure_default display label clarified. A4 email mode consistent across precondition/eval.
-- **v1.4 (Oct 9, 2026, 19:20 UTC):** Reference fixture & compute from Lead (sha256 verified). Replaced all examples with reference numbers from fixture (A1000/A1100/A1200/A2000/A2100/A2200/A3000). Added verbatim rules from compute.py docstring (counting rule, shift vs extend, FS/SS/FF/SF, lag calendar, no max(0) float clamp, completion slip, $, notice). Marked OPEN: notice event date source, lag calendar (successor vs predecessor), no negative float constraints. Removed early/late columns from Data requirements (exist on main), use project_holidays, removed defaults. TC1-TC17 updated with exact reference numbers. Added check.py for fixture validation. Note: A4 closed-RFI path needs Procore.
+- **v1.4 (Oct 9, 2026, 19:20 UTC):** Reference fixture & compute (sha256 verified). Replaced all examples with reference numbers from fixture (A1000/A1100/A1200/A2000/A2100/A2200/A3000). Added verbatim rules from compute.py docstring (counting rule, shift vs extend, FS/SS/FF/SF, lag calendar, no max(0) float clamp, completion slip, $, notice). Marked OPEN: notice event date source, lag calendar (successor vs predecessor), no negative float constraints. Removed early/late columns from Data requirements (exist on main), use project_holidays, removed delay_cost_unit and driving_path defaults. TC1-TC17 updated with exact reference numbers. Added check.py for fixture validation. Note: A4 closed-RFI path needs Procore.
