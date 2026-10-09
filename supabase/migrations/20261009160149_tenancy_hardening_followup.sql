@@ -128,3 +128,6 @@ alter default privileges for role postgres in schema public revoke truncate on t
 -- Revoke execute on functions from PUBLIC (prevents anon access via PUBLIC role)
 revoke execute on all functions in schema public from public;
 alter default privileges for role postgres in schema public revoke execute on functions from public;
+
+-- Also revoke default execute from anon directly (overrides bootstrap grants)
+alter default privileges in schema public revoke execute on functions from anon;
