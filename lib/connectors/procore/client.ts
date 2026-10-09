@@ -14,6 +14,7 @@
 import "server-only";
 import { z } from "zod";
 import { retryRequest } from "../shared/retry";
+import { ConnectorError, ERROR_CODES } from "../shared/errors";
 
 const ProcoreConfigSchema = z.object({
   clientId: z.string().min(1),
@@ -73,10 +74,10 @@ export class ProcoreClient {
     ];
 
     if (!allowedApiOrigins.includes(this.apiOrigin)) {
-      throw new Error("Procore baseUrl not in allowlist");
+      throw new ConnectorError("Procore baseUrl not in allowlist", ERROR_CODES.BASEURL_NOT_ALLOWED);
     }
     if (!allowedAuthOrigins.includes(this.authOrigin)) {
-      throw new Error("Procore authUrl not in allowlist");
+      throw new ConnectorError("Procore authUrl not in allowlist", ERROR_CODES.AUTHURL_NOT_ALLOWED);
     }
   }
 
@@ -140,10 +141,10 @@ export class ProcoreClient {
   ): Promise<Response> {
     // Enforce GET-only BEFORE attaching Bearer token
     if (method !== "GET") {
-      const err = new Error(`Method ${method} not allowed: client is GET-only`);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (err as any).code = "METHOD_NOT_ALLOWED";
-      throw err;
+      throw new ConnectorError(
+        `Method ${method} not allowed: client is GET-only`,
+        ERROR_CODES.METHOD_NOT_ALLOWED
+      );
     }
 
     // Validate origin BEFORE attaching Bearer token
@@ -153,18 +154,12 @@ export class ProcoreClient {
     } catch (e: unknown) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if ((e as any).code === "ERR_INVALID_URL") {
-        const err = new Error("Invalid URL");
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (err as any).code = "INVALID_URL";
-        throw err;
+        throw new ConnectorError("Invalid URL", ERROR_CODES.INVALID_URL);
       }
       throw e;
     }
     if (urlOrigin !== this.apiOrigin) {
-      const err = new Error("Foreign origin not allowed");
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (err as any).code = "FOREIGN_ORIGIN";
-      throw err;
+      throw new ConnectorError("Foreign origin not allowed", ERROR_CODES.FOREIGN_ORIGIN);
     }
 
     // Now safe to make the request with token
@@ -210,10 +205,7 @@ export class ProcoreClient {
     } catch (e: unknown) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if ((e as any).code === "ERR_INVALID_URL") {
-        const err = new Error("Invalid URL");
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (err as any).code = "INVALID_URL";
-        throw err;
+        throw new ConnectorError("Invalid URL", ERROR_CODES.INVALID_URL);
       }
       throw e;
     }
@@ -230,12 +222,11 @@ export class ProcoreClient {
       const errorCode = rawErrorCode && /^[A-Za-z0-9_.-]{1,40}$/.test(rawErrorCode)
         ? rawErrorCode
         : "UNKNOWN";
-      const err = new Error(
-        `Procore API error: ${response.status} (code: ${errorCode})`
+      throw new ConnectorError(
+        `Procore API error: ${response.status} (code: ${errorCode})`,
+        ERROR_CODES.API_ERROR,
+        response.status
       );
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (err as any).code = "API_ERROR";
-      throw err;
     }
 
     const json = await response.json();

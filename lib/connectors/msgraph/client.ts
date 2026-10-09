@@ -12,6 +12,7 @@
 import "server-only";
 import { z } from "zod";
 import { retryRequest } from "../shared/retry";
+import { ConnectorError, ERROR_CODES } from "../shared/errors";
 
 const GraphConfigSchema = z.object({
   tenantId: z.string().min(1),
@@ -112,10 +113,10 @@ export class GraphClient {
   ): Promise<Response> {
     // Enforce GET-only
     if (method !== "GET") {
-      const err = new Error(`Method ${method} not allowed: client is GET-only`);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (err as any).code = "METHOD_NOT_ALLOWED";
-      throw err;
+      throw new ConnectorError(
+        `Method ${method} not allowed: client is GET-only`,
+        ERROR_CODES.METHOD_NOT_ALLOWED
+      );
     }
 
     // Validate origin
@@ -125,18 +126,12 @@ export class GraphClient {
     } catch (e: unknown) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if ((e as any).code === "ERR_INVALID_URL") {
-        const err = new Error("Invalid Graph URL");
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (err as any).code = "INVALID_URL";
-        throw err;
+        throw new ConnectorError("Invalid Graph URL", ERROR_CODES.INVALID_URL);
       }
       throw e;
     }
     if (urlObj.origin !== this.apiOrigin) {
-      const err = new Error("Foreign origin not allowed");
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (err as any).code = "FOREIGN_ORIGIN";
-      throw err;
+      throw new ConnectorError("Foreign origin not allowed", ERROR_CODES.FOREIGN_ORIGIN);
     }
 
     // Validate scope: must be under /users/{mailbox}/ or /sites/{siteId}/
@@ -159,10 +154,7 @@ export class GraphClient {
       pathSegments[3] === this.config.siteId;
 
     if (!isMailboxPath && !isSitePath) {
-      const err = new Error("Path outside allowed scope");
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (err as any).code = "OUT_OF_SCOPE";
-      throw err;
+      throw new ConnectorError("Path outside allowed scope", ERROR_CODES.OUT_OF_SCOPE);
     }
 
     // Build headers: standard headers LAST to prevent override
@@ -210,10 +202,7 @@ export class GraphClient {
     } catch (e: unknown) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if ((e as any).code === "ERR_INVALID_URL") {
-        const err = new Error("Invalid Graph URL");
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (err as any).code = "INVALID_URL";
-        throw err;
+        throw new ConnectorError("Invalid Graph URL", ERROR_CODES.INVALID_URL);
       }
       throw e;
     }
@@ -230,12 +219,11 @@ export class GraphClient {
       const errorCode = rawErrorCode && /^[A-Za-z0-9_.-]{1,40}$/.test(rawErrorCode)
         ? rawErrorCode
         : "UNKNOWN";
-      const error = new Error(`Graph API error: ${response.status} (code: ${errorCode})`);
-      // Attach status for typed error detection (e.g., 410 resync check)
-      (error as Error & { status: number }).status = response.status;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (error as any).code = "API_ERROR";
-      throw error;
+      throw new ConnectorError(
+        `Graph API error: ${response.status} (code: ${errorCode})`,
+        ERROR_CODES.API_ERROR,
+        response.status
+      );
     }
 
     const json = await response.json();
