@@ -4,9 +4,28 @@ Standalone, pure-TypeScript connector modules for Procore, Microsoft Graph (Mail
 
 ---
 
+## CTO Logging Rule (2026-10-09)
+
+**NO customer field values in logs on ANY connector.**
+
+Logs may contain **only**:
+- **Production keys**: `skipped_count`, `limit`, `remaining`, `reset_at`, `provider` (grep call sites)
+- **Numbers**: ONLY on numeric keys (`skipped_count`, `limit`, `remaining`)
+- **Strings**: ONLY from per-key enums (provider: 'Procore'|'Graph'|'P6') or ISO-8601 (reset_at)
+- **Unknown keys**: omitted entirely (never shown, not even as "[dropped]")
+- **Unknown event names**: throw error
+
+All connector logging routes through `lib/connectors/shared/log.ts`, which enforces strict key-based allowlisting. Event names are validated at runtime against a fixed set.
+
+A CI test (`lib/connectors/__tests__/log-scrub.test.ts`) exercises retry paths, real fetchers, and error surfaces with sensitive mock data. `lib/connectors/__tests__/log-probe.test.ts` verifies allowlist enforcement with hostile values (emails, phone numbers, URLs) on real production keys.
+
+---
+
 ## Test Status
 
 ✅ **All tests passing**
+
+**Note:** There is no Granola connector yet. The logging rule applies to Procore, Microsoft Graph, and P6 connectors only.
 
 ---
 
@@ -166,9 +185,11 @@ lib/connectors/
 
 **Plain Text:** Connector sends `Prefer: outlook.body-content-type="text"` header. If Graph returns HTML anyway, strips tags to text with dependency-free converter.
 
-**Fingerprint:** id + received_at + subject + **body_text** (full body, not bodyPreview) + **domains** (not full addresses) + categories
+**Fingerprint:** id + received_at + subject + **body_text** (full body redacted, not bodyPreview) + **domains** (not full addresses) + categories
 
-**NOT fingerprinted:** isRead (read status), raw email addresses (only domains)
+**Redacted:** All text fields (subject, body_preview, body_text) have email addresses replaced with `[email-domain]`
+
+**NOT fingerprinted:** isRead (read status), raw email addresses (only domains; addresses stored in from/to/cc fields only)
 
 ### Graph DriveItem
 ```typescript
@@ -193,8 +214,8 @@ lib/connectors/
 - Internal P6 task_id NOT in fingerprint
 
 **Graph Mail:**
-- Fingerprint: id + received_at + subject + **body_text** (full body including quoted history, NOT bodyPreview) + **participant domains** + categories
-- Raw addresses stored but NOT fingerprinted as content (RLS + 30-day purge)
+- Fingerprint: id + received_at + subject + **body_text redacted** (full body including quoted history, NOT bodyPreview) + **participant domains** + categories
+- Raw addresses stored in from/to/cc fields only (RLS + 30-day purge); text fields redacted
 - Model layer maps addresses → company+role
 - Body stored as plain text; HTML stripped if Graph ignores Prefer header
 

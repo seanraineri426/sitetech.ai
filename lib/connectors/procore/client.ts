@@ -14,6 +14,7 @@
 import "server-only";
 import { z } from "zod";
 import { retryRequest } from "../shared/retry";
+import { ConnectorError, ERROR_CODES } from "../shared/errors";
 
 const ProcoreConfigSchema = z.object({
   clientId: z.string().min(1),
@@ -73,10 +74,10 @@ export class ProcoreClient {
     ];
 
     if (!allowedApiOrigins.includes(this.apiOrigin)) {
-      throw new Error(`Procore baseUrl not in allowlist: ${this.apiOrigin}`);
+      throw new ConnectorError("Procore baseUrl not in allowlist", ERROR_CODES.BASEURL_NOT_ALLOWED);
     }
     if (!allowedAuthOrigins.includes(this.authOrigin)) {
-      throw new Error(`Procore authUrl not in allowlist: ${this.authOrigin}`);
+      throw new ConnectorError("Procore authUrl not in allowlist", ERROR_CODES.AUTHURL_NOT_ALLOWED);
     }
   }
 
@@ -140,15 +141,25 @@ export class ProcoreClient {
   ): Promise<Response> {
     // Enforce GET-only BEFORE attaching Bearer token
     if (method !== "GET") {
-      throw new Error(`Method ${method} not allowed: client is GET-only`);
+      throw new ConnectorError(
+        `Method ${method} not allowed: client is GET-only`,
+        ERROR_CODES.METHOD_NOT_ALLOWED
+      );
     }
 
     // Validate origin BEFORE attaching Bearer token
-    const urlOrigin = new URL(url).origin;
+    let urlOrigin: string;
+    try {
+      urlOrigin = new URL(url).origin;
+    } catch (e: unknown) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((e as any).code === "ERR_INVALID_URL") {
+        throw new ConnectorError("Invalid URL", ERROR_CODES.INVALID_URL);
+      }
+      throw e;
+    }
     if (urlOrigin !== this.apiOrigin) {
-      throw new Error(
-        `Foreign origin not allowed: ${urlOrigin} (expected ${this.apiOrigin})`
-      );
+      throw new ConnectorError("Foreign origin not allowed", ERROR_CODES.FOREIGN_ORIGIN);
     }
 
     // Now safe to make the request with token
@@ -188,7 +199,16 @@ export class ProcoreClient {
     const token = await this.getAccessToken();
 
     // Build URL (supports absolute paths and relative paths)
-    const url = new URL(path, this.config.baseUrl);
+    let url: URL;
+    try {
+      url = new URL(path, this.config.baseUrl);
+    } catch (e: unknown) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((e as any).code === "ERR_INVALID_URL") {
+        throw new ConnectorError("Invalid URL", ERROR_CODES.INVALID_URL);
+      }
+      throw e;
+    }
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         url.searchParams.set(key, String(value));
@@ -198,10 +218,14 @@ export class ProcoreClient {
     const response = await this.request(url.toString(), "GET", token);
 
     if (!response.ok) {
-      // Don't include raw response body in error
-      const errorCode = response.headers.get("X-Error-Code") || "UNKNOWN";
-      throw new Error(
-        `Procore API error: ${response.status} (code: ${errorCode})`
+      const rawErrorCode = response.headers.get("X-Error-Code");
+      const errorCode = rawErrorCode && /^[A-Za-z0-9_.-]{1,40}$/.test(rawErrorCode)
+        ? rawErrorCode
+        : "UNKNOWN";
+      throw new ConnectorError(
+        `Procore API error: ${response.status} (code: ${errorCode})`,
+        ERROR_CODES.API_ERROR,
+        response.status
       );
     }
 

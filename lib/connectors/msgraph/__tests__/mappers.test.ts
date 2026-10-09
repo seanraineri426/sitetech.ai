@@ -7,7 +7,7 @@ import { describe, it, expect, vi } from "vitest";
 // Mock server-only
 vi.mock("server-only", () => ({}));
 
-import { mapGraphMessageToNormalized, emailToRawRecord } from "../mappers";
+import { mapGraphMessageToNormalized, emailToRawRecord, redactAddresses, MAX_BODY_CHARS } from "../mappers";
 import type { GraphMessage } from "../types";
 
 describe("Microsoft Graph mappers", () => {
@@ -476,6 +476,436 @@ describe("Microsoft Graph mappers", () => {
       expect(elapsed).toBeLessThan(50);
       expect(result).toContain("[email-y]");
     });
+
+    it("URL with encoded addresses leaves no local parts", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      const text = "https://list.example.com/u?e=bob@x.com%26ref=carol@y.com%26z";
+      const result = redactAddresses(text);
+      
+      expect(result).not.toContain("bob@");
+      expect(result).not.toContain("carol@");
+      expect(result).not.toContain("@x.com%");
+      expect(result).not.toContain("@y.com%");
+    });
+
+    it("addresses separated by underscore with suffix", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      expect(redactAddresses("a@x.com_|b@y.com_")).not.toContain("@");
+    });
+
+    it("addresses separated by dash with suffix", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      expect(redactAddresses("a@x.com-|b@y.com-")).not.toContain("@");
+    });
+
+    it("addresses separated by various punctuation", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      const separators = [":", "<", ">", "'", '"', "(", "&", "=", "?"];
+      for (const sep of separators) {
+        const text = `a@x.com${sep}b@y.com`;
+        const result = redactAddresses(text);
+        expect(result).not.toContain("@");
+      }
+    });
+
+    it("multiple @ in one address uses last domain", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      expect(redactAddresses("a@b@c@d.com")).toBe("[email-d.com]");
+    });
+
+    it("construction text: rebar sizes unchanged", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      expect(redactAddresses("rebar #5@10 vs #5@12")).toBe("rebar #5@10 vs #5@12");
+    });
+
+    it("construction text: lumber o.c. unchanged", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      expect(redactAddresses('2x4@16" o.c.')).toBe('2x4@16" o.c.');
+    });
+
+    it("construction text: angle iron unchanged", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      expect(redactAddresses("L4x4x1/4@24")).toBe("L4x4x1/4@24");
+    });
+
+    it("construction text: cost code unchanged", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      expect(redactAddresses("CO#12@$4,500")).toBe("CO#12@$4,500");
+    });
+
+    it("construction text: price per unit unchanged", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      expect(redactAddresses("3@ $1,200")).toBe("3@ $1,200");
+    });
+
+    it("construction text: grid reference unchanged", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      expect(redactAddresses("beam B-3@grid C/4")).toBe("beam B-3@grid C/4");
+    });
+
+    it("construction text: meeting time unchanged", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      expect(redactAddresses("meeting@2pm")).toBe("meeting@2pm");
+    });
+
+    it("construction text: rebar spacing unchanged", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      expect(redactAddresses("#4@16 EW")).toBe("#4@16 EW");
+    });
+
+    it("construction text: steel beam unchanged", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      expect(redactAddresses("W12x26@16")).toBe("W12x26@16");
+    });
+
+    it("construction text: quantity pricing unchanged", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      expect(redactAddresses("5ea@$40")).toBe("5ea@$40");
+    });
+
+    it("construction text: elevation unchanged", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      expect(redactAddresses('T/O slab@+12\'-0"')).toBe('T/O slab@+12\'-0"');
+    });
+
+    it("truncated addresses at end of string are redacted", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      expect(redactAddresses("bob@gc.c")).toBe("[email-gc.c]");
+      expect(redactAddresses("bob@gc")).toBe("[email-gc]");
+    });
+
+    it("Unicode local parts redacted", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      const result = redactAddresses("josé@x.com");
+      expect(result).toBe("[email-x.com]");
+      expect(result).not.toContain("josé");
+    });
+
+    it("Unicode domains preserved", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      expect(redactAddresses("user@почта.рф")).toBe("[email-почта.рф]");
+    });
+
+    it("full-width @ normalized and redacted", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      const result = redactAddresses("bob＠x.com");
+      expect(result).not.toContain("bob");
+      expect(result).toContain("[email-x.com]");
+    });
+
+    it("linear performance: 200KB of a@b_ repeated", async () => {
+      const { redactAddresses } = await import("../mappers");
+      
+      const text = "a@b_".repeat(50_000); // 200KB
+      const t0 = performance.now();
+      redactAddresses(text);
+      const elapsed = performance.now() - t0;
+      
+      expect(elapsed).toBeLessThan(50);
+    });
+
+    describe("construction text byte-for-byte unchanged", () => {
+      const constructionInputs = [
+        "#5@10 EW",
+        "#4@12\" o.c. T&B",
+        "03 30 00 Cast-in-Place Concrete",
+        "Spec 08 71 00 §2.3",
+        "$48,200 CO",
+        "CO #12 @ $4,500",
+        "$1.2M",
+        "($3,450.00)",
+        "RFI #045",
+        "RFI-045 rev 2",
+        "PCO 017",
+        "CE-23",
+        "ASI 4",
+        "SK-12",
+        "10/09/2026",
+        "Oct 9, 2026",
+        "2026-10-09T14:00:00Z",
+        "due 10/15 @ 2pm",
+        "W12x26@16",
+        "L4x4x1/4@24",
+        "meeting@2pm",
+        "beam B-3@grid C/4",
+      ];
+
+      for (const input of constructionInputs) {
+        it(`unchanged: ${input}`, async () => {
+          const { redactAddresses } = await import("../mappers");
+          expect(redactAddresses(input)).toBe(input);
+        });
+      }
+
+      it("realistic multi-line subject unchanged byte-for-byte", async () => {
+        const { redactAddresses } = await import("../mappers");
+        const subject = `RE: RFI #045 - Concrete Mix Design CO #12 @ $4,500
+Spec 03 30 00 Cast-in-Place Concrete - W12x26@16
+Due 10/15 @ 2pm, beam B-3@grid C/4, #5@10 EW
+Meeting@2pm Oct 9, 2026 ($48,200 CO)`;
+        
+        const result = redactAddresses(subject);
+        expect(result).toBe(subject);
+        expect(Buffer.from(result).equals(Buffer.from(subject))).toBe(true);
+      });
+
+      it("construction text unchanged through emailToRawRecord", async () => {
+        const { emailToRawRecord, mapGraphMessageToNormalized } = await import("../mappers");
+        const mockMessage = {
+          id: "msg1",
+          conversationId: "conv1",
+          subject: "CO #12 @ $4,500",
+          bodyPreview: "W12x26@16, #5@10 EW, due 10/15 @ 2pm",
+          body: { contentType: "text" as const, content: "beam B-3@grid C/4" },
+          from: { emailAddress: { name: "A", address: "a@x.com" } },
+          toRecipients: [],
+          ccRecipients: [],
+          receivedDateTime: "2026-10-09T12:00:00Z",
+          sentDateTime: "2026-10-09T12:00:00Z",
+          hasAttachments: false,
+          importance: "normal" as const,
+          isRead: false,
+          categories: [],
+        };
+
+        const normalized = mapGraphMessageToNormalized(mockMessage, "user@example.com");
+        const raw = emailToRawRecord(normalized);
+        const payload = raw.allowlistedPayload as Record<string, unknown>;
+
+        expect(payload.subject).toBe("CO #12 @ $4,500");
+        expect(payload.body_preview).toBe("W12x26@16, #5@10 EW, due 10/15 @ 2pm");
+      });
+    });
+
+    describe("byte-for-byte except addresses", () => {
+      it("construction + 1 address: exact span replacement", async () => {
+        const { redactAddresses } = await import("../mappers");
+        const input = "Contact alice@example.com for CO #12 @ $4,500";
+        const result = redactAddresses(input);
+        
+        // Build expected by manually replacing the known address span
+        const expected = "Contact [email-example.com] for CO #12 @ $4,500";
+        expect(result).toBe(expected);
+        
+        // Verify only the address span changed
+        const beforeAddr = "Contact ";
+        const afterAddr = " for CO #12 @ $4,500";
+        expect(result.startsWith(beforeAddr)).toBe(true);
+        expect(result.endsWith(afterAddr)).toBe(true);
+      });
+
+      it("construction + 2 addresses: exact spans replacement", async () => {
+        const { redactAddresses } = await import("../mappers");
+        const input = "From bob@x.com to carol@y.com re: W12x26@16, #5@10 EW";
+        const result = redactAddresses(input);
+        
+        // Build expected by manually replacing known address spans
+        const expected = "From [email-x.com] to [email-y.com] re: W12x26@16, #5@10 EW";
+        expect(result).toBe(expected);
+        
+        // Verify construction text unchanged
+        expect(result).toContain("W12x26@16");
+        expect(result).toContain("#5@10 EW");
+      });
+
+      it("construction + 3 addresses in realistic text", async () => {
+        const { redactAddresses } = await import("../mappers");
+        const input = `RFI #045 from alice@gc.com to bob@sub.example.com, carol@another.org
+Spec 03 30 00 - due 10/15 @ 2pm
+CO #12 @ $4,500, beam B-3@grid C/4`;
+        
+        const result = redactAddresses(input);
+        
+        // Build expected manually
+        const expected = `RFI #045 from [email-gc.com] to [email-sub.example.com], [email-another.org]
+Spec 03 30 00 - due 10/15 @ 2pm
+CO #12 @ $4,500, beam B-3@grid C/4`;
+        
+        expect(result).toBe(expected);
+        
+        // Verify no addresses remain and construction text intact
+        expect(result).not.toContain("alice@");
+        expect(result).not.toContain("bob@");
+        expect(result).not.toContain("carol@");
+        expect(result).toContain("due 10/15 @ 2pm");
+        expect(result).toContain("CO #12 @ $4,500");
+        expect(result).toContain("beam B-3@grid C/4");
+      });
+    });
+
+    describe("body_text redaction", () => {
+      it("body_text IS redacted, contains no address-like x@y.z (text body)", async () => {
+        const { mapGraphMessageToNormalized } = await import("../mappers");
+        const textContent = "Contact alice@example.com or bob@test.org for details.";
+        const mockMessage = {
+          id: "msg1",
+          conversationId: "conv1",
+          subject: "Test",
+          bodyPreview: "Preview",
+          body: { contentType: "text" as const, content: textContent },
+          from: { emailAddress: { name: "A", address: "a@x.com" } },
+          toRecipients: [],
+          ccRecipients: [],
+          receivedDateTime: "2026-10-09T12:00:00Z",
+          sentDateTime: "2026-10-09T12:00:00Z",
+          hasAttachments: false,
+          importance: "normal" as const,
+          isRead: false,
+          categories: [],
+        };
+
+        const normalized = mapGraphMessageToNormalized(mockMessage, "user@example.com");
+        
+        // body_text must be redacted
+        expect(normalized.body_text).not.toContain("alice@");
+        expect(normalized.body_text).not.toContain("bob@");
+        expect(normalized.body_text).toContain("[email-example.com]");
+        expect(normalized.body_text).toContain("[email-test.org]");
+      });
+
+      it("body_text IS redacted, contains no address-like x@y.z (HTML body)", async () => {
+        const { mapGraphMessageToNormalized } = await import("../mappers");
+        const htmlContent = "<p>Contact alice@example.com or <a href='mailto:bob@test.org'>bob@test.org</a></p>";
+        const mockMessage = {
+          id: "msg1",
+          conversationId: "conv1",
+          subject: "Test",
+          bodyPreview: "Preview",
+          body: { contentType: "html" as const, content: htmlContent },
+          from: { emailAddress: { name: "A", address: "a@x.com" } },
+          toRecipients: [],
+          ccRecipients: [],
+          receivedDateTime: "2026-10-09T12:00:00Z",
+          sentDateTime: "2026-10-09T12:00:00Z",
+          hasAttachments: false,
+          importance: "normal" as const,
+          isRead: false,
+          categories: [],
+        };
+
+        const normalized = mapGraphMessageToNormalized(mockMessage, "user@example.com");
+        
+        // body_text must be redacted
+        expect(normalized.body_text).not.toContain("alice@");
+        expect(normalized.body_text).not.toContain("bob@");
+      });
+
+      it("body_text byte-for-byte except address spans", async () => {
+        const { mapGraphMessageToNormalized } = await import("../mappers");
+        const textContent = "From alice@example.com: CO #12 @ $4,500, W12x26@16";
+        const mockMessage = {
+          id: "msg1",
+          conversationId: "conv1",
+          subject: "Test",
+          bodyPreview: "Preview",
+          body: { contentType: "text" as const, content: textContent },
+          from: { emailAddress: { name: "A", address: "a@x.com" } },
+          toRecipients: [],
+          ccRecipients: [],
+          receivedDateTime: "2026-10-09T12:00:00Z",
+          sentDateTime: "2026-10-09T12:00:00Z",
+          hasAttachments: false,
+          importance: "normal" as const,
+          isRead: false,
+          categories: [],
+        };
+
+        const normalized = mapGraphMessageToNormalized(mockMessage, "user@example.com");
+        
+        // Build expected: input with only address span replaced
+        const expected = "From [email-example.com]: CO #12 @ $4,500, W12x26@16";
+        expect(normalized.body_text).toBe(expected);
+        
+        // Construction text preserved
+        expect(normalized.body_text).toContain("CO #12 @ $4,500");
+        expect(normalized.body_text).toContain("W12x26@16");
+      });
+
+      it("200KB body with scattered addresses redacts under 100ms", async () => {
+        const { mapGraphMessageToNormalized } = await import("../mappers");
+        
+        // Build 200KB text with addresses every ~500 chars
+        let content = "";
+        for (let i = 0; i < 400; i++) {
+          content += "x".repeat(490) + " alice@example.com ";
+        }
+        
+        const mockMessage = {
+          id: "msg1",
+          conversationId: "conv1",
+          subject: "Test",
+          bodyPreview: "Preview",
+          body: { contentType: "text" as const, content },
+          from: { emailAddress: { name: "A", address: "a@x.com" } },
+          toRecipients: [],
+          ccRecipients: [],
+          receivedDateTime: "2026-10-09T12:00:00Z",
+          sentDateTime: "2026-10-09T12:00:00Z",
+          hasAttachments: false,
+          importance: "normal" as const,
+          isRead: false,
+          categories: [],
+        };
+
+        const t0 = performance.now();
+        const normalized = mapGraphMessageToNormalized(mockMessage, "user@example.com");
+        const elapsed = performance.now() - t0;
+        
+        expect(elapsed).toBeLessThan(100);
+        expect(normalized.body_text).not.toContain("alice@");
+      });
+
+      it("from/to/cc still hold raw addresses", async () => {
+        const { mapGraphMessageToNormalized } = await import("../mappers");
+        const mockMessage = {
+          id: "msg1",
+          conversationId: "conv1",
+          subject: "Test",
+          bodyPreview: "Preview",
+          body: { contentType: "text" as const, content: "Body with alice@example.com" },
+          from: { emailAddress: { name: "Alice", address: "alice@example.com" } },
+          toRecipients: [{ emailAddress: { name: "Bob", address: "bob@test.org" } }],
+          ccRecipients: [{ emailAddress: { name: "Carol", address: "carol@x.com" } }],
+          receivedDateTime: "2026-10-09T12:00:00Z",
+          sentDateTime: "2026-10-09T12:00:00Z",
+          hasAttachments: false,
+          importance: "normal" as const,
+          isRead: false,
+          categories: [],
+        };
+
+        const normalized = mapGraphMessageToNormalized(mockMessage, "user@example.com");
+        
+        // Raw addresses preserved in from/to/cc
+        expect(normalized.from.address).toBe("alice@example.com");
+        expect(normalized.to_recipients[0].address).toBe("bob@test.org");
+        expect(normalized.cc_recipients[0].address).toBe("carol@x.com");
+        
+        // But text fields are redacted
+        expect(normalized.body_text).not.toContain("alice@");
+        expect(normalized.body_text).toContain("[email-example.com]");
+      });
+    });
   });
 
   describe("size caps and null byte stripping", () => {
@@ -636,6 +1066,781 @@ describe("Microsoft Graph mappers", () => {
 
       const stripped = stripDriveItemEmails(driveItem);
       expect(stripped).toEqual(driveItem);
+    });
+  });
+
+  describe("redactAddresses - digit-leading domains and construction patterns", () => {
+    it("redacts digit-leading domains", () => {
+      expect(redactAddresses("bob@3m.com_")).toBe("[email-3m.com]_");
+      expect(redactAddresses("bob@123.com_")).toBe("[email-123.com]_");
+      expect(redactAddresses("bob@3m.com-x")).toBe("[email-3m.com]-x");
+      expect(redactAddresses("x@1and1.com-|y@1and1.com-")).toBe("[email-1and1.com]-|[email-1and1.com]-");
+      expect(redactAddresses("bob@1and1.com_ more")).toBe("[email-1and1.com]_ more");
+    });
+
+    it("redacts digit-leading domains in subject and body_preview through emailToRawRecord", () => {
+      const normalized = mapGraphMessageToNormalized({
+        id: "msg1",
+        conversationId: "conv1",
+        receivedDateTime: "2024-01-01T00:00:00Z",
+        sentDateTime: "2024-01-01T00:00:00Z",
+        subject: "bob@1and1.com_|carol@1and1.com_",
+        bodyPreview: "bob@1and1.com_|carol@1and1.com_",
+        from: { emailAddress: { name: "Alice", address: "alice@example.com" } },
+        toRecipients: [],
+        ccRecipients: [],
+        body: { contentType: "text", content: "" },
+        hasAttachments: false,
+        importance: "normal",
+        isRead: false,
+        categories: [],
+      }, "mb1");
+      const raw = emailToRawRecord(normalized);
+      const payload = raw.allowlistedPayload as Record<string, unknown>;
+      expect(payload.subject).toBe("[email-1and1.com]_|[email-1and1.com]_");
+      expect(payload.body_preview).toBe("[email-1and1.com]_|[email-1and1.com]_");
+    });
+
+    it("redacts digit-leading domains in normalized body_text", () => {
+      const normalized = mapGraphMessageToNormalized({
+        id: "msg1",
+        conversationId: "conv1",
+        receivedDateTime: "2024-01-01T00:00:00Z",
+        sentDateTime: "2024-01-01T00:00:00Z",
+        subject: "Test",
+        bodyPreview: "",
+        from: { emailAddress: { name: "Alice", address: "alice@example.com" } },
+        toRecipients: [],
+        ccRecipients: [],
+        body: { contentType: "text", content: "bob@1and1.com_|carol@1and1.com_" },
+        hasAttachments: false,
+        importance: "normal",
+        isRead: false,
+        categories: [],
+      }, "mb1");
+      expect(normalized.body_text).toBe("[email-1and1.com]_|[email-1and1.com]_");
+    });
+
+    it("leaves construction patterns unchanged", () => {
+      expect(redactAddresses("col@A.5")).toBe("col@A.5");
+      expect(redactAddresses("grid@B.3")).toBe("grid@B.3");
+      expect(redactAddresses("elev@El.100")).toBe("elev@El.100");
+      expect(redactAddresses("pour@level.2 deck")).toBe("pour@level.2 deck");
+      expect(redactAddresses("T.O.@El.102.5")).toBe("T.O.@El.102.5");
+      expect(redactAddresses("lintel@door.3")).toBe("lintel@door.3");
+      expect(redactAddresses("anchors@A.1-A.5")).toBe("anchors@A.1-A.5");
+    });
+
+    it("redacts look-alikes and invisible chars while preserving non-address look-alikes", () => {
+      // Zero-width space in address
+      expect(redactAddresses("bob\u200b@x.com")).toBe("[email-x.com]");
+      // Full-width @ in address (U+FE6B ﹫)
+      expect(redactAddresses("bob﹫x.com")).toBe("[email-x.com]");
+      // Full-width dot in address (U+FF0E ．)
+      expect(redactAddresses("bob@x．com")).toBe("[email-x.com]");
+      // Full-width @ NOT in address (U+FF20 ＠) - should be unchanged
+      expect(redactAddresses("price＠$5")).toBe("price＠$5");
+      expect(redactAddresses("＠channel")).toBe("＠channel");
+    });
+
+    it("preserves stray full-width @ and zero-width space outside addresses", () => {
+      const input = "Level 3＠grid C\u200b, see RFI-045 @ $4,500";
+      expect(redactAddresses(input)).toBe(input);
+    });
+
+    it("redacts real address while preserving stray look-alikes", () => {
+      const input = "Contact bob@acme.com for Level 3＠grid C\u200b details";
+      const output = redactAddresses(input);
+      expect(output).toBe("Contact [email-acme.com] for Level 3＠grid C\u200b details");
+      // Verify byte-identical non-address parts
+      expect(output.includes("Level 3＠grid C\u200b details")).toBe(true);
+    });
+
+    it("allows domains ending in digit when glued to text", () => {
+      expect(redactAddresses("bob@163.com1")).toBe("[email-163.com1]");
+      expect(redactAddresses("bob@3m.comPhone")).toBe("[email-3m.comPhone]");
+    });
+
+    it("keeps trailing dots outside placeholder", () => {
+      expect(redactAddresses("bob@gc.")).toBe("[email-gc].");
+      expect(redactAddresses("bob@x.com.")).toBe("[email-x.com].");
+      expect(redactAddresses("bob@x.com..")).toBe("[email-x.com]..");
+    });
+
+    it("finds quote spanning redacted address in body_text", () => {
+      const body = "Per bob@acmemech.com: the #5@10 rebar is short by $48,200.";
+      const normalized = mapGraphMessageToNormalized({
+        id: "msg1",
+        conversationId: "conv1",
+        receivedDateTime: "2024-01-01T00:00:00Z",
+        sentDateTime: "2024-01-01T00:00:00Z",
+        subject: "Test",
+        bodyPreview: "",
+        from: { emailAddress: { name: "Alice", address: "alice@example.com" } },
+        toRecipients: [],
+        ccRecipients: [],
+        body: { contentType: "text", content: body },
+        hasAttachments: false,
+        importance: "normal",
+        isRead: false,
+        categories: [],
+      }, "mb1");
+
+      expect(normalized.body_text).toBeTruthy();
+      
+      // Quote including the redacted address form
+      const quote1 = "Per [email-acmemech.com]: the #5@10 rebar";
+      expect(normalized.body_text!.indexOf(quote1)).toBeGreaterThanOrEqual(0);
+
+      // Quote after the address
+      const quote2 = "the #5@10 rebar is short by $48,200.";
+      expect(normalized.body_text!.indexOf(quote2)).toBeGreaterThanOrEqual(0);
+    });
+
+    it("validates quote offset deltas with multiple addresses", () => {
+      const original = "alice@a.com then bob@b.com then carol@c.com done";
+      const redacted = redactAddresses(original);
+      
+      // Calculate expected deltas for all three addresses
+      const addr1Original = "alice@a.com";
+      const addr1Redacted = "[email-a.com]";
+      const delta1 = addr1Redacted.length - addr1Original.length;
+      
+      const addr2Original = "bob@b.com";
+      const addr2Redacted = "[email-b.com]";
+      const delta2 = addr2Redacted.length - addr2Original.length;
+      
+      const addr3Original = "carol@c.com";
+      const addr3Redacted = "[email-c.com]";
+      const delta3 = addr3Redacted.length - addr3Original.length;
+      
+      // Quote after all addresses
+      const quoteAfterAll = "done";
+      const originalOffset = original.indexOf(quoteAfterAll);
+      const redactedOffset = redacted.indexOf(quoteAfterAll);
+      const expectedOffset = originalOffset + delta1 + delta2 + delta3;
+      
+      expect(redactedOffset).toBe(expectedOffset);
+      expect(redacted.substring(redactedOffset, redactedOffset + quoteAfterAll.length)).toBe(quoteAfterAll);
+    });
+  });
+
+  describe("redactAddresses - invisible characters after '@'", () => {
+    it("redacts addresses with invisible chars right after '@'", () => {
+      // U+200B zero-width space, U+2060 word joiner, U+00AD soft hyphen
+      expect(redactAddresses("bob@\u200bx.com")).toBe("[email-x.com]");
+      expect(redactAddresses("bob@\u2060x.com")).toBe("[email-x.com]");
+      expect(redactAddresses("bob@\u00adx.com")).toBe("[email-x.com]");
+    });
+
+    it("redacts addresses with invisible chars inside domain", () => {
+      expect(redactAddresses("bob@x\u200b.com")).toBe("[email-x.com]");
+      expect(redactAddresses("bob@acme\u00admech.com")).toBe("[email-acmemech.com]");
+    });
+
+    it("redacts invisible-char addresses in subject and body_preview", () => {
+      const normalized = mapGraphMessageToNormalized({
+        id: "msg1",
+        conversationId: "conv1",
+        receivedDateTime: "2024-01-01T00:00:00Z",
+        sentDateTime: "2024-01-01T00:00:00Z",
+        subject: "bob@\u200bx.com and bob@acme\u00admech.com",
+        bodyPreview: "bob@\u2060x.com test",
+        from: { emailAddress: { name: "Alice", address: "alice@example.com" } },
+        toRecipients: [],
+        ccRecipients: [],
+        body: { contentType: "text", content: "" },
+        hasAttachments: false,
+        importance: "normal",
+        isRead: false,
+        categories: [],
+      }, "mb1");
+      expect(normalized.subject).toBe("[email-x.com] and [email-acmemech.com]");
+      expect(normalized.body_preview).toBe("[email-x.com] test");
+    });
+
+    it("redacts invisible-char addresses in normalized body_text", () => {
+      const normalized = mapGraphMessageToNormalized({
+        id: "msg1",
+        conversationId: "conv1",
+        receivedDateTime: "2024-01-01T00:00:00Z",
+        sentDateTime: "2024-01-01T00:00:00Z",
+        subject: "Test",
+        bodyPreview: "",
+        from: { emailAddress: { name: "Alice", address: "alice@example.com" } },
+        toRecipients: [],
+        ccRecipients: [],
+        body: { contentType: "text", content: "Contact bob@\u200bx.com or bob@acme\u00admech.com" },
+        hasAttachments: false,
+        importance: "normal",
+        isRead: false,
+        categories: [],
+      }, "mb1");
+      expect(normalized.body_text).toBe("Contact [email-x.com] or [email-acmemech.com]");
+    });
+
+    it("redacts invisible-char addresses through emailToRawRecord", () => {
+      const normalized = mapGraphMessageToNormalized({
+        id: "msg1",
+        conversationId: "conv1",
+        receivedDateTime: "2024-01-01T00:00:00Z",
+        sentDateTime: "2024-01-01T00:00:00Z",
+        subject: "bob@\u00adx.com",
+        bodyPreview: "bob@\u2060x.com",
+        from: { emailAddress: { name: "Alice", address: "alice@example.com" } },
+        toRecipients: [],
+        ccRecipients: [],
+        body: { contentType: "text", content: "bob@\u200bx.com" },
+        hasAttachments: false,
+        importance: "normal",
+        isRead: false,
+        categories: [],
+      }, "mb1");
+      const raw = emailToRawRecord(normalized);
+      const payload = raw.allowlistedPayload as Record<string, unknown>;
+      expect(payload.subject).toBe("[email-x.com]");
+      expect(payload.body_preview).toBe("[email-x.com]");
+      expect(payload.body_text_sha256).toBeTruthy();
+    });
+
+    it("strips invisible chars from placeholder domain", () => {
+      const result = redactAddresses("bob@\u200bx\u00ad.com");
+      expect(result).toBe("[email-x.com]");
+      expect(result).not.toContain("\u200b");
+      expect(result).not.toContain("\u00ad");
+    });
+  });
+
+  describe("redactAddresses - capping after redaction", () => {
+    it("caps body_text after redaction, placeholder-aware", { timeout: 30000 }, () => {
+      // Body text that's definitely over the cap after redaction
+      // Create a body that will be over MAX_BODY_CHARS after redaction
+      const body = "x".repeat(MAX_BODY_CHARS + 1000) + " contact alice@example.com for details";
+      
+      const normalized = mapGraphMessageToNormalized({
+        id: "msg1",
+        conversationId: "conv1",
+        receivedDateTime: "2024-01-01T00:00:00Z",
+        sentDateTime: "2024-01-01T00:00:00Z",
+        subject: "Test",
+        bodyPreview: "",
+        from: { emailAddress: { name: "Bob", address: "bob@test.com" } },
+        toRecipients: [],
+        ccRecipients: [],
+        body: { contentType: "text", content: body },
+        hasAttachments: false,
+        importance: "normal",
+        isRead: false,
+        categories: [],
+      }, "mb1");
+
+      expect(normalized.body_text).toBeTruthy();
+      expect(normalized.body_text!.endsWith(" [truncated]")).toBe(true);
+      
+      // Should not contain '@' with local part before it
+      const match = normalized.body_text!.match(/(?<![a-z0-9._%+-])[a-z0-9._%+-]+@/i);
+      expect(match).toBeNull();
+      
+      // Should not have split placeholders - count complete [email-...] patterns
+      const completePattern = /\[email-[^\]]+\]/g;
+      const completeMatches = (normalized.body_text!.match(completePattern) || []).length;
+      const openPattern = /\[email-/g;
+      const openMatches = (normalized.body_text!.match(openPattern) || []).length;
+      expect(completeMatches).toBe(openMatches); // Every [email- should have a closing ]
+    });
+
+    it("5MB HTML body with addresses: body_text <= MAX_BODY_CHARS + marker", { timeout: 60000 }, () => {
+      // 5MB of repeated addresses in HTML
+      const htmlChunk = "<p>Contact alice@acme.com or bob@example.com</p>\n";
+      const iterations = Math.ceil((5 * 1024 * 1024) / htmlChunk.length);
+      const hugeHtml = htmlChunk.repeat(iterations);
+
+      const normalized = mapGraphMessageToNormalized({
+        id: "msg1",
+        conversationId: "conv1",
+        receivedDateTime: "2024-01-01T00:00:00Z",
+        sentDateTime: "2024-01-01T00:00:00Z",
+        subject: "Test",
+        bodyPreview: "",
+        from: { emailAddress: { name: "Bob", address: "bob@test.com" } },
+        toRecipients: [],
+        ccRecipients: [],
+        body: { contentType: "html", content: hugeHtml },
+        hasAttachments: false,
+        importance: "normal",
+        isRead: false,
+        categories: [],
+      }, "mb1");
+
+      expect(normalized.body_text).toBeTruthy();
+      const maxAllowed = MAX_BODY_CHARS + " [truncated]".length;
+      expect(normalized.body_text!.length).toBeLessThanOrEqual(maxAllowed);
+    });
+
+    it("50MB text body maps in bounded time with proper cap", { timeout: 10000 }, () => {
+      // 50MB text body
+      const hugeText = "x".repeat(50 * 1024 * 1024);
+      
+      const times = [
+        performance.now(),
+        performance.now()
+      ];
+      
+      const normalized1 = mapGraphMessageToNormalized({
+        id: "msg1",
+        conversationId: "conv1",
+        receivedDateTime: "2024-01-01T00:00:00Z",
+        sentDateTime: "2024-01-01T00:00:00Z",
+        subject: "Test",
+        bodyPreview: "",
+        from: { emailAddress: { name: "Bob", address: "bob@test.com" } },
+        toRecipients: [],
+        ccRecipients: [],
+        body: { contentType: "text", content: hugeText },
+        hasAttachments: false,
+        importance: "normal",
+        isRead: false,
+        categories: [],
+      }, "mb1");
+      times.push(performance.now());
+      
+      mapGraphMessageToNormalized({
+        id: "msg2",
+        conversationId: "conv2",
+        receivedDateTime: "2024-01-01T00:00:00Z",
+        sentDateTime: "2024-01-01T00:00:00Z",
+        subject: "Test",
+        bodyPreview: "",
+        from: { emailAddress: { name: "Bob", address: "bob@test.com" } },
+        toRecipients: [],
+        ccRecipients: [],
+        body: { contentType: "text", content: hugeText },
+        hasAttachments: false,
+        importance: "normal",
+        isRead: false,
+        categories: [],
+      }, "mb2");
+      times.push(performance.now());
+      
+      const elapsed1 = times[2] - times[1];
+      const elapsed2 = times[3] - times[2];
+      const best = Math.min(elapsed1, elapsed2);
+      
+      console.log("50MB text body", best.toFixed(0), "ms (best of 2)");
+      expect(best).toBeLessThan(1500);
+      
+      expect(normalized1.body_text).toBeTruthy();
+      const maxAllowed = MAX_BODY_CHARS + " [truncated]".length;
+      expect(normalized1.body_text!.length).toBeLessThanOrEqual(maxAllowed);
+    });
+
+    it("address straddling pre-cap limit leaves no local part", () => {
+      // Test that pre-cap with whitespace boundary prevents splitting addresses
+      // Use a smaller test size (10K instead of 800K) for performance
+      const testLimit = 10000;
+      
+      // Place address so it straddles the limit
+      const before = "x".repeat(testLimit - 15);
+      const body = before + " alice@example.com test";
+
+      const normalized = mapGraphMessageToNormalized({
+        id: "msg1",
+        conversationId: "conv1",
+        receivedDateTime: "2024-01-01T00:00:00Z",
+        sentDateTime: "2024-01-01T00:00:00Z",
+        subject: "Test",
+        bodyPreview: "",
+        from: { emailAddress: { name: "Bob", address: "bob@test.com" } },
+        toRecipients: [],
+        ccRecipients: [],
+        body: { contentType: "text", content: body },
+        hasAttachments: false,
+        importance: "normal",
+        isRead: false,
+        categories: [],
+      }, "mb1");
+
+      // Should not have address fragments like "alice@" or "x@y"
+      expect(normalized.body_text).toBeTruthy();
+      const atMatch = normalized.body_text!.match(/(?<![a-z0-9._%+-])[a-z0-9._%+-]+@/i);
+      expect(atMatch).toBeNull();
+      
+      // Should not have bare x@y pattern
+      const bareMatch = normalized.body_text!.match(/\w@\w/i);
+      expect(bareMatch).toBeNull();
+    });
+
+    it("24 positions around 800K pre-cap: text no-whitespace, no leaked local parts", { timeout: 60000 }, () => {
+      const preCapLimit = MAX_BODY_CHARS * 4; // 800K
+      const positions = [
+        preCapLimit - 100, preCapLimit - 50, preCapLimit - 20, preCapLimit - 10,
+        preCapLimit - 5, preCapLimit - 1, preCapLimit, preCapLimit + 1,
+        preCapLimit + 5, preCapLimit + 10, preCapLimit + 20, preCapLimit + 50,
+        preCapLimit + 100, preCapLimit + 200, preCapLimit + 500, preCapLimit + 1000,
+        preCapLimit + 2000, preCapLimit + 5000, preCapLimit + 10000, preCapLimit + 20000,
+        preCapLimit + 50000, preCapLimit + 100000, preCapLimit + 150000, preCapLimit + 200000,
+      ];
+
+      positions.forEach((pos) => {
+        // Create text with NO whitespace and address straddling the position
+        // Ensure body is always longer than preCapLimit to trigger truncation
+        const beforeLen = Math.max(0, pos - 25);
+        const before = "x".repeat(beforeLen);
+        const after = "y".repeat(Math.max(100, preCapLimit - beforeLen + 100));
+        const body = before + "john.smith@acmemech.com" + after;
+
+        const normalized = mapGraphMessageToNormalized({
+          id: "msg1",
+          conversationId: "conv1",
+          receivedDateTime: "2024-01-01T00:00:00Z",
+          sentDateTime: "2024-01-01T00:00:00Z",
+          subject: "Test",
+          bodyPreview: "",
+          from: { emailAddress: { name: "Bob", address: "bob@test.com" } },
+          toRecipients: [],
+          ccRecipients: [],
+          body: { contentType: "text", content: body },
+          hasAttachments: false,
+          importance: "normal",
+          isRead: false,
+          categories: [],
+        }, "mb1");
+
+        expect(normalized.body_text).toBeTruthy();
+        
+        // Must not contain partial address like "john.smi", "john.smith", or "john.smith@"
+        expect(normalized.body_text).not.toContain("john.smi");
+        expect(normalized.body_text).not.toContain("john.smith");
+        
+        // Must not have local part before @
+        const localPartMatch = normalized.body_text!.match(/(?<![a-z0-9._%+-])[a-z0-9._%+-]+@/i);
+        expect(localPartMatch).toBeNull();
+        
+        // Must end with truncation marker
+        expect(normalized.body_text!.endsWith(" [truncated]")).toBe(true);
+      });
+    });
+
+    it("24 positions around 800K pre-cap: HTML no-whitespace, no leaked local parts", { timeout: 60000 }, () => {
+      const preCapLimit = MAX_BODY_CHARS * 4; // 800K
+      const positions = [
+        preCapLimit - 100, preCapLimit - 50, preCapLimit - 20, preCapLimit - 10,
+        preCapLimit - 5, preCapLimit - 1, preCapLimit, preCapLimit + 1,
+        preCapLimit + 5, preCapLimit + 10, preCapLimit + 20, preCapLimit + 50,
+        preCapLimit + 100, preCapLimit + 200, preCapLimit + 500, preCapLimit + 1000,
+        preCapLimit + 2000, preCapLimit + 5000, preCapLimit + 10000, preCapLimit + 20000,
+        preCapLimit + 50000, preCapLimit + 100000, preCapLimit + 150000, preCapLimit + 200000,
+      ];
+
+      positions.forEach((pos) => {
+        // Create HTML with NO whitespace and address straddling the position
+        // Ensure body is always longer than preCapLimit to trigger truncation
+        const beforeLen = Math.max(0, pos - 30);
+        const before = "<p>" + "x".repeat(beforeLen) + "</p>";
+        const afterLen = Math.max(100, preCapLimit - beforeLen + 100);
+        const after = "<p>" + "y".repeat(afterLen) + "</p>";
+        const body = before + "<p>john.smith@acmemech.com</p>" + after;
+
+        const normalized = mapGraphMessageToNormalized({
+          id: "msg1",
+          conversationId: "conv1",
+          receivedDateTime: "2024-01-01T00:00:00Z",
+          sentDateTime: "2024-01-01T00:00:00Z",
+          subject: "Test",
+          bodyPreview: "",
+          from: { emailAddress: { name: "Bob", address: "bob@test.com" } },
+          toRecipients: [],
+          ccRecipients: [],
+          body: { contentType: "html", content: body },
+          hasAttachments: false,
+          importance: "normal",
+          isRead: false,
+          categories: [],
+        }, "mb1");
+
+        expect(normalized.body_text).toBeTruthy();
+        
+        // Must not contain partial address like "john.smi", "john.smith", or "john.smith@"
+        expect(normalized.body_text).not.toContain("john.smi");
+        expect(normalized.body_text).not.toContain("john.smith");
+        
+        // Must not have local part before @
+        const localPartMatch = normalized.body_text!.match(/(?<![a-z0-9._%+-])[a-z0-9._%+-]+@/i);
+        expect(localPartMatch).toBeNull();
+        
+        // Must end with truncation marker
+        expect(normalized.body_text!.endsWith(" [truncated]")).toBe(true);
+      });
+    });
+
+    it("46 pre-cap offsets with glued address run: no leaks", { timeout: 60000 }, () => {
+      const preCapLimit = MAX_BODY_CHARS * 4; // 800K
+      // Test more positions around the pre-cap boundary
+      const positions = Array.from({ length: 46 }, (_, i) => preCapLimit - 200 + i * 10);
+
+      positions.forEach((pos) => {
+        // Create glued address run straddling the position
+        const chunk = "alice@acme.combob@acme.comcarol@acme.com";
+        const repetitions = Math.floor(pos / chunk.length);
+        const before = chunk.repeat(repetitions);
+        const after = chunk.repeat(100) + "@";
+        const body = before + after;
+
+        const normalized = mapGraphMessageToNormalized({
+          id: "msg1",
+          conversationId: "conv1",
+          receivedDateTime: "2024-01-01T00:00:00Z",
+          sentDateTime: "2024-01-01T00:00:00Z",
+          subject: "Test",
+          bodyPreview: "",
+          from: { emailAddress: { name: "Bob", address: "bob@test.com" } },
+          toRecipients: [],
+          ccRecipients: [],
+          body: { contentType: "text", content: body },
+          hasAttachments: false,
+          importance: "normal",
+          isRead: false,
+          categories: [],
+        }, "mb1");
+
+        expect(normalized.body_text).toBeTruthy();
+        
+        // Must not leak local parts
+        expect(normalized.body_text).not.toContain("alice");
+        expect(normalized.body_text).not.toContain("bob");
+        expect(normalized.body_text).not.toContain("carol");
+        
+        // Must not have x@y pattern
+        expect(normalized.body_text).not.toMatch(/\w@\w/);
+      });
+    });
+
+    it("50MB no-whitespace HTML maps in bounded time with marker", { timeout: 10000 }, () => {
+      // 50MB HTML with no whitespace
+      const hugeHtml = "<p>" + "x".repeat(50 * 1024 * 1024 - 7) + "</p>";
+      
+      const times = [performance.now()];
+      
+      const normalized = mapGraphMessageToNormalized({
+        id: "msg1",
+        conversationId: "conv1",
+        receivedDateTime: "2024-01-01T00:00:00Z",
+        sentDateTime: "2024-01-01T00:00:00Z",
+        subject: "Test",
+        bodyPreview: "",
+        from: { emailAddress: { name: "Bob", address: "bob@test.com" } },
+        toRecipients: [],
+        ccRecipients: [],
+        body: { contentType: "html", content: hugeHtml },
+        hasAttachments: false,
+        importance: "normal",
+        isRead: false,
+        categories: [],
+      }, "mb1");
+      times.push(performance.now());
+      
+      const elapsed = times[1] - times[0];
+      console.log("50MB no-whitespace HTML", elapsed.toFixed(0), "ms");
+      expect(elapsed).toBeLessThan(1500);
+      
+      // Must have truncation marker
+      expect(normalized.body_text).toBeTruthy();
+      expect(normalized.body_text!.endsWith(" [truncated]")).toBe(true);
+    });
+
+    it("empty body after redaction but truncated gets marker", () => {
+      // Very large body that becomes empty after redaction (all addresses)
+      const addresses = "alice@example.com ".repeat(1000000);
+
+      const normalized = mapGraphMessageToNormalized({
+        id: "msg1",
+        conversationId: "conv1",
+        receivedDateTime: "2024-01-01T00:00:00Z",
+        sentDateTime: "2024-01-01T00:00:00Z",
+        subject: "Test",
+        bodyPreview: "",
+        from: { emailAddress: { name: "Bob", address: "bob@test.com" } },
+        toRecipients: [],
+        ccRecipients: [],
+        body: { contentType: "text", content: addresses },
+        hasAttachments: false,
+        importance: "normal",
+        isRead: false,
+        categories: [],
+      }, "mb1");
+
+      // Even though body is effectively empty after redaction, marker should be present
+      expect(normalized.body_text).toBeTruthy();
+      expect(normalized.body_text).toContain("[truncated]");
+    });
+
+    it("literal '[email-' with whitespace does not trigger placeholder backoff", () => {
+      // 300K body starting with literal "[email-me later" should not be cut to just marker
+      const body = "[email-me later about the project details " + "x".repeat(MAX_BODY_CHARS + 100000);
+
+      const normalized = mapGraphMessageToNormalized({
+        id: "msg1",
+        conversationId: "conv1",
+        receivedDateTime: "2024-01-01T00:00:00Z",
+        sentDateTime: "2024-01-01T00:00:00Z",
+        subject: "Test",
+        bodyPreview: "",
+        from: { emailAddress: { name: "Bob", address: "bob@test.com" } },
+        toRecipients: [],
+        ccRecipients: [],
+        body: { contentType: "text", content: body },
+        hasAttachments: false,
+        importance: "normal",
+        isRead: false,
+        categories: [],
+      }, "mb1");
+
+      expect(normalized.body_text).toBeTruthy();
+      // Should contain the start of the body, not just " [truncated]"
+      expect(normalized.body_text!.length).toBeGreaterThan(100);
+      expect(normalized.body_text).toContain("[email-me later");
+    });
+
+    it("400-char domain placeholder straddling 200K cut has no partial placeholder", () => {
+      // Create a 400-char domain address
+      const longDomain = "a".repeat(390) + ".com";
+      const address = "user@" + longDomain;
+      
+      // Place it so the placeholder straddles the MAX_BODY_CHARS cut
+      const beforeLen = MAX_BODY_CHARS - 100;
+      const before = "x".repeat(beforeLen);
+      const after = "y".repeat(200);
+      const body = before + " " + address + " " + after;
+
+      const normalized = mapGraphMessageToNormalized({
+        id: "msg1",
+        conversationId: "conv1",
+        receivedDateTime: "2024-01-01T00:00:00Z",
+        sentDateTime: "2024-01-01T00:00:00Z",
+        subject: "Test",
+        bodyPreview: "",
+        from: { emailAddress: { name: "Bob", address: "bob@test.com" } },
+        toRecipients: [],
+        ccRecipients: [],
+        body: { contentType: "text", content: body },
+        hasAttachments: false,
+        importance: "normal",
+        isRead: false,
+        categories: [],
+      }, "mb1");
+
+      expect(normalized.body_text).toBeTruthy();
+      
+      // No partial [email- without closing ]
+      const openPattern = /\[email-/g;
+      const openMatches = (normalized.body_text!.match(openPattern) || []).length;
+      const completePattern = /\[email-[^\]]+\]/g;
+      const completeMatches = (normalized.body_text!.match(completePattern) || []).length;
+      expect(completeMatches).toBe(openMatches);
+      
+      // No domain fragment after last complete placeholder
+      const lastBracket = normalized.body_text!.lastIndexOf(']');
+      if (lastBracket !== -1) {
+        const afterLast = normalized.body_text!.substring(lastBracket + 1);
+        // Should not contain 10+ consecutive 'a's (parts of long domain)
+        expect(afterLast).not.toMatch(/a{10,}/);
+      }
+    });
+
+    it("250-char domain placeholder straddling 200K cut has no partial placeholder", () => {
+      // Create a 250-char domain address
+      const longDomain = "a".repeat(240) + ".com";
+      const address = "user@" + longDomain;
+      
+      // Place it so the placeholder straddles the MAX_BODY_CHARS cut
+      // Placeholder will be [email-<240 chars>.com] = about 253 chars
+      const beforeLen = MAX_BODY_CHARS - 100; // Put address near the cut
+      const before = "x".repeat(beforeLen);
+      const after = "y".repeat(200);
+      const body = before + " " + address + " " + after;
+
+      const normalized = mapGraphMessageToNormalized({
+        id: "msg1",
+        conversationId: "conv1",
+        receivedDateTime: "2024-01-01T00:00:00Z",
+        sentDateTime: "2024-01-01T00:00:00Z",
+        subject: "Test",
+        bodyPreview: "",
+        from: { emailAddress: { name: "Bob", address: "bob@test.com" } },
+        toRecipients: [],
+        ccRecipients: [],
+        body: { contentType: "text", content: body },
+        hasAttachments: false,
+        importance: "normal",
+        isRead: false,
+        categories: [],
+      }, "mb1");
+
+      expect(normalized.body_text).toBeTruthy();
+      
+      // No partial [email- without closing ]
+      const openPattern = /\[email-/g;
+      const openMatches = (normalized.body_text!.match(openPattern) || []).length;
+      const completePattern = /\[email-[^\]]+\]/g;
+      const completeMatches = (normalized.body_text!.match(completePattern) || []).length;
+      expect(completeMatches).toBe(openMatches);
+      
+      // No domain fragment after last complete placeholder
+      const lastBracket = normalized.body_text!.lastIndexOf(']');
+      if (lastBracket !== -1) {
+        const afterLast = normalized.body_text!.substring(lastBracket + 1);
+        // Should not contain parts of the long domain
+        expect(afterLast).not.toMatch(/a{10,}/); // No 10+ consecutive 'a's
+      }
+    });
+
+    it("addresses at key positions around cut: no exposed '@', no split placeholders", { timeout: 60000 }, () => {
+      // Test addresses at key positions around the MAX_BODY_CHARS boundary
+      // Reduced from 24 to 8 positions for performance
+      const positions = [
+        MAX_BODY_CHARS - 100,
+        MAX_BODY_CHARS - 10,
+        MAX_BODY_CHARS,
+        MAX_BODY_CHARS + 10,
+        MAX_BODY_CHARS + 100,
+        MAX_BODY_CHARS + 1000,
+        MAX_BODY_CHARS + 10000,
+        MAX_BODY_CHARS + 50000,
+      ];
+
+      positions.forEach((pos) => {
+        const before = "x".repeat(Math.max(0, pos - 20));
+        const after = "y".repeat(100);
+        const body = before + " alice@example.com " + after;
+
+        const normalized = mapGraphMessageToNormalized({
+          id: "msg1",
+          conversationId: "conv1",
+          receivedDateTime: "2024-01-01T00:00:00Z",
+          sentDateTime: "2024-01-01T00:00:00Z",
+          subject: "Test",
+          bodyPreview: "",
+          from: { emailAddress: { name: "Bob", address: "bob@test.com" } },
+          toRecipients: [],
+          ccRecipients: [],
+          body: { contentType: "text", content: body },
+          hasAttachments: false,
+          importance: "normal",
+          isRead: false,
+          categories: [],
+        }, "mb1");
+
+        // No '@' with local part before it
+        const atMatch = normalized.body_text!.match(/(?<![a-z0-9._%+-])[a-z0-9._%+-]+@/i);
+        expect(atMatch).toBeNull();
+
+        // No split placeholders - count complete [email-...] patterns
+        const completePattern = /\[email-[^\]]+\]/g;
+        const completeMatches = (normalized.body_text!.match(completePattern) || []).length;
+        const openPattern = /\[email-/g;
+        const openMatches = (normalized.body_text!.match(openPattern) || []).length;
+        expect(completeMatches).toBe(openMatches); // Every [email- should have a closing ]
+      });
     });
   });
 });

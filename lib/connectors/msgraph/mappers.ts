@@ -21,6 +21,7 @@ import { canonicalStringify } from "../shared/canonical-stringify";
 import type { NormalizedEmail, RawRecord } from "../types";
 import type { GraphMessage } from "./types";
 import { htmlToText } from "./html-to-text";
+import { redactAddresses } from "../../redact/addresses";
 
 /**
  * Maximum body text size (200KB).
@@ -45,8 +46,93 @@ function stripNullBytes(text: string): string {
 }
 
 /**
+ * Pre-cap text at max length with whitespace/tag boundary cutting.
+ * Cuts on whitespace boundary (look back up to 512 chars) to avoid splitting addresses.
+ * For text with no whitespace, backs off past address-like tokens.
+ * Checks for surrogate pairs at boundary.
+ * Does NOT append truncation marker (used before redaction).
+ * 
+ * @param text - Text to cap
+ * @param maxChars - Maximum length
+ * @param isHtml - If true, prefer cutting after '>' tag boundary
+ * @returns Capped text
+ */
+function preCapText(text: string, maxChars: number, isHtml = false): string {
+  if (text.length <= maxChars) {
+    return text;
+  }
+  
+  let cutPos = maxChars;
+  
+  // For HTML, try to cut after last '>' before limit
+  if (isHtml) {
+    const searchStart = Math.max(0, cutPos - 512);
+    let lastTagClose = -1;
+    for (let i = cutPos - 1; i >= searchStart; i--) {
+      if (text[i] === '>') {
+        lastTagClose = i + 1;
+        break;
+      }
+    }
+    if (lastTagClose !== -1) {
+      cutPos = lastTagClose;
+    } else {
+      // No '>' found, fall through to text rules
+    }
+  }
+  
+  // Look back up to 512 chars for the last whitespace
+  if (!isHtml || cutPos === maxChars) {
+    const searchStart = Math.max(0, cutPos - 512);
+    let lastWhitespace = -1;
+    for (let i = cutPos - 1; i >= searchStart; i--) {
+      const char = text[i];
+      if (char === ' ' || char === '\t' || char === '\n' || char === '\r') {
+        lastWhitespace = i;
+        break;
+      }
+    }
+    
+    if (lastWhitespace !== -1) {
+      cutPos = lastWhitespace;
+    } else {
+      // No whitespace within 512 chars - back off past any address-like token
+      // Find start of token containing '@' or address characters at/near cut
+      let tokenStart = cutPos;
+      const addressChar = /[\p{L}\p{N}._%+\-@\p{Cf}]/u;
+      
+      // Scan backward from cut to find start of address-like token
+      for (let i = cutPos - 1; i >= Math.max(0, cutPos - 1024); i--) {
+        if (addressChar.test(text[i])) {
+          tokenStart = i;
+        } else {
+          // Found non-address char, stop
+          break;
+        }
+      }
+      
+      // Cut before the token if we found one
+      if (tokenStart < cutPos) {
+        cutPos = tokenStart;
+      }
+    }
+  }
+  
+  // Check if we're about to split a surrogate pair
+  if (cutPos > 0) {
+    const charCode = text.charCodeAt(cutPos - 1);
+    if (charCode >= 0xD800 && charCode <= 0xDBFF) {
+      cutPos--;
+    }
+  }
+  
+  return text.slice(0, cutPos);
+}
+
+/**
  * Cap text at max length and append truncation marker.
  * Checks for surrogate pairs at boundary to avoid splitting them.
+ * If cut point falls inside [email-...] placeholder, moves cut back before '['.
  */
 function capText(text: string, maxChars: number): string {
   if (text.length <= maxChars) {
@@ -62,36 +148,63 @@ function capText(text: string, maxChars: number): string {
     cutPos--;
   }
   
+  // Check if cut point falls inside a [email-...] placeholder
+  // Use lastIndexOf('[email-', cutPos) to find placeholder start (handles domains > 253 chars)
+  const lastEmailStart = text.lastIndexOf('[email-', cutPos);
+  
+  if (lastEmailStart !== -1) {
+    // Only back off if there's NO whitespace between '[email-' and cut
+    // (real placeholders never contain whitespace; this avoids matching literal "[email-me later")
+    const betweenText = text.substring(lastEmailStart + 7, cutPos);
+    const hasWhitespace = /\s/.test(betweenText);
+    
+    if (!hasWhitespace) {
+      // Found a placeholder start before cut, check if it closes before cutPos
+      const closeIndex = text.indexOf(']', lastEmailStart + 7);
+      if (closeIndex === -1 || closeIndex >= cutPos) {
+        // No close bracket, or it's at/after our cut point - move cut before '['
+        cutPos = lastEmailStart;
+      }
+    }
+  }
+  
   return text.slice(0, cutPos) + ' [truncated]';
 }
 
 /**
  * Extract body text from Graph message body.
  * Converts HTML to text if content type is HTML.
- * Strips null bytes, caps size at MAX_BODY_CHARS.
+ * Pre-caps at 4x limit with whitespace/tag boundary before processing.
+ * Strips null bytes but does NOT append truncation marker (caller must cap after redaction).
+ * 
+ * @returns Object with text and truncated flag, or null
  */
-function extractBodyText(body: GraphMessage["body"]): string | null {
+function extractBodyText(body: GraphMessage["body"]): { text: string; truncated: boolean } | null {
   if (!body?.content) {
     return null;
   }
 
   let text: string;
+  let truncated = false;
 
   if (body.contentType === "text") {
-    text = body.content;
+    // Pre-cap text at 4x limit with whitespace boundary (before strip/redact)
+    const originalLength = body.content.length;
+    text = preCapText(body.content, MAX_BODY_CHARS * 4, false);
+    truncated = text.length < originalLength;
   } else {
-    // Cap raw HTML at 4x the text limit before conversion
-    const cappedHtml = capText(body.content, MAX_BODY_CHARS * 4);
+    // Cap raw HTML at 4x the text limit before conversion (tag boundary)
+    const originalLength = body.content.length;
+    const cappedHtml = preCapText(body.content, MAX_BODY_CHARS * 4, true);
+    truncated = cappedHtml.length < originalLength;
     text = htmlToText(cappedHtml);
   }
 
   // Strip null bytes
   text = stripNullBytes(text);
 
-  // Cap output
-  text = capText(text, MAX_BODY_CHARS);
-
-  return text;
+  // Note: Final capping with truncation marker happens AFTER redaction in the mapper
+  return { text, truncated };
 }
 
 /**
@@ -123,116 +236,41 @@ function buildEmailFingerprintPayload(
 }
 
 /**
- * Redact email addresses from text.
- * Replaces user@domain.com with [email-domain.com] to preserve domain while ensuring
- * the output doesn't match email regex patterns.
- * 
- * Currently used in emailToRawRecord to redact subject and body_preview before storage.
- * Also available for future model-facing paths.
- * 
- * Uses negative lookahead/lookbehind to avoid quadratic behavior on text with no '@'.
- * Limits local part to 256 chars (RFC 5321 max), domain labels to 63 chars, and TLD to 2-63 chars.
- * Trailing lookahead allows sentence-ending periods but rejects addresses followed by dot+alnum.
- */
-export function redactAddresses(text: string): string {
-  // Quick check: if there's no '@', skip entirely for performance
-  if (!text.includes('@')) return text;
-  
-  // Primary pattern: well-formed addresses
-  // Lookahead (?![A-Z_%-]|\.[A-Z0-9-]) allows sentence-ending '.' but rejects '.com2' style
-  let result = text.replace(
-    /(?<![A-Z0-9._%+-])[A-Z0-9._%+-]{1,256}@([A-Z0-9-]{1,63}(?:\.[A-Z0-9-]{1,63})*\.[A-Z]{2,63})(?![A-Z_%-]|\.[A-Z0-9-])/gi,
-    '[email-$1]'
-  );
-  
-  // Linear token-based fallback for remaining '@' (truncated, malformed, or adjacent addresses)
-  if (result.includes('@')) {
-    // Split on whitespace, keeping separators
-    const parts = result.split(/(\s+)/);
-    
-    for (let i = 0; i < parts.length; i++) {
-      const part = parts[i];
-      // Skip whitespace and parts without '@'
-      if (!part.trim() || !part.includes('@')) continue;
-      
-      // Process token by splitting on delimiters [/,;] and handling each segment
-      const segments = part.split(/([/,;])/); // Keep delimiters
-      for (let j = 0; j < segments.length; j++) {
-        const segment = segments[j];
-        if (!segment.includes('@')) continue;
-        
-        // Find the last '@' in the segment
-        const lastAtIndex = segment.lastIndexOf('@');
-        
-        // Don't redact if '@' is at the start (like @channel) or has no local part
-        if (lastAtIndex === 0 || lastAtIndex === -1) continue;
-        
-        // Check if there's a non-whitespace character before '@'
-        let hasLocalPart = false;
-        for (let k = lastAtIndex - 1; k >= 0; k--) {
-          if (segment[k] !== ' ' && segment[k] !== '\t') {
-            hasLocalPart = true;
-            break;
-          }
-        }
-        
-        // Don't redact bare '@' like "price @ $5"
-        if (!hasLocalPart) continue;
-        
-        // Extract domain-ish part: text after last '@' until first non-[A-Za-z0-9.-]
-        let domainEnd = lastAtIndex + 1;
-        while (domainEnd < segment.length) {
-          const ch = segment[domainEnd];
-          if (!/[A-Za-z0-9.-]/.test(ch)) break;
-          domainEnd++;
-        }
-        
-        let domain = segment.slice(lastAtIndex + 1, domainEnd);
-        // Strip trailing '.'
-        if (domain.endsWith('.')) {
-          domain = domain.slice(0, -1);
-        }
-        
-        // Find the start of the local part (before '@')
-        let localStart = lastAtIndex - 1;
-        while (localStart >= 0) {
-          const ch = segment[localStart];
-          // Stop at punctuation that's not part of email local parts
-          if (!/[A-Za-z0-9._%+-]/.test(ch)) {
-            localStart++;
-            break;
-          }
-          localStart--;
-        }
-        if (localStart < 0) localStart = 0;
-        
-        // Replace the address part with redacted form
-        const before = segment.slice(0, localStart);
-        const after = segment.slice(domainEnd);
-        segments[j] = before + '[email-' + domain + ']' + after;
-      }
-      
-      parts[i] = segments.join('');
-    }
-    
-    result = parts.join('');
-  }
-  
-  return result;
-}
-
-/**
  * Map Graph message to normalized SiteTech email.
- * Raw email addresses are stored but NOT fingerprinted as content.
+ * Raw email addresses are stored in from/to/cc fields only.
+ * All text fields (subject, body_preview, body_text) are redacted.
  * 
  * CTO 2026-10-09: Extract full body text including quoted reply history.
+ * CTO 2026-10-09 (updated): Redact addresses in stored body_text too.
  */
 export function mapGraphMessageToNormalized(
   message: GraphMessage,
   mailbox: string
 ): NormalizedEmail {
-  const bodyText = extractBodyText(message.body);
-  const fingerprintPayload = buildEmailFingerprintPayload(message, bodyText);
+  // Extract body text (null bytes stripped, pre-capped if > 4x limit)
+  const bodyResult = extractBodyText(message.body);
+  
+  // Redact addresses in all text fields BEFORE final capping
+  const redactedSubject = redactAddresses(message.subject);
+  const redactedBodyPreview = redactAddresses(message.bodyPreview);
+  let redactedBodyText = bodyResult ? redactAddresses(bodyResult.text) : null;
+  
+  // Cap body text AFTER redaction (so placeholder-aware cut works)
+  // If pre-cap already truncated, append marker even if under MAX_BODY_CHARS or empty
+  if (redactedBodyText) {
+    if (redactedBodyText.length > MAX_BODY_CHARS) {
+      redactedBodyText = capText(redactedBodyText, MAX_BODY_CHARS);
+    } else if (bodyResult && bodyResult.truncated) {
+      // Pre-cap fired but result is under MAX_BODY_CHARS - still needs marker
+      redactedBodyText = redactedBodyText + ' [truncated]';
+    }
+  } else if (bodyResult && bodyResult.truncated) {
+    // Pre-cap fired but body came out empty after redaction - still needs marker
+    redactedBodyText = ' [truncated]';
+  }
+  
+  // Fingerprint uses redacted body text
+  const fingerprintPayload = buildEmailFingerprintPayload(message, redactedBodyText);
   const fingerprint = createHash("sha256")
     .update(canonicalStringify(fingerprintPayload))
     .digest("hex");
@@ -244,9 +282,9 @@ export function mapGraphMessageToNormalized(
     
     source_mailbox: mailbox,
     
-    subject: message.subject,
-    body_preview: message.bodyPreview,
-    body_text: bodyText,
+    subject: redactedSubject,
+    body_preview: redactedBodyPreview,
+    body_text: redactedBodyText,
     // Raw addresses stored (CTO approved for email records only)
     from: {
       name: message.from.emailAddress.name,
@@ -277,12 +315,12 @@ export function mapGraphMessageToNormalized(
 /**
  * Convert normalized email to raw record shape for storage layer.
  * 
- * CTO 2026-10-09: Store body_text_sha256 (NOT body_text itself).
+ * CTO 2026-10-09: Store body_text_sha256 of redacted body_text (NOT body_text itself).
  * Store participant domains only (NOT raw addresses) in allowlistedPayload.
- * Redact addresses from subject and body_preview before storage.
+ * Text fields (subject, body_preview, body_text) are already redacted in normalized email.
  */
 export function emailToRawRecord(email: NormalizedEmail): RawRecord {
-  // Compute body_text_sha256
+  // Compute body_text_sha256 from already-redacted body_text
   const bodyTextSha256 = email.body_text
     ? createHash('sha256').update(email.body_text).digest('hex')
     : null;
@@ -292,16 +330,13 @@ export function emailToRawRecord(email: NormalizedEmail): RawRecord {
   const toDomains = email.to_recipients.map(r => extractDomain(r.address)).sort();
   const ccDomains = email.cc_recipients.map(r => extractDomain(r.address)).sort();
 
-  // Redact addresses from subject and body_preview
-  const redactedSubject = redactAddresses(email.subject);
-  const redactedBodyPreview = redactAddresses(email.body_preview);
-
   return {
     entityType: "email",
     externalId: email.external_id,
     allowlistedPayload: {
-      subject: redactedSubject,
-      body_preview: redactedBodyPreview,
+      // Already redacted in normalized email
+      subject: email.subject,
+      body_preview: email.body_preview,
       body_text_sha256: bodyTextSha256,
       // Participant domains only (NOT raw addresses)
       from_domain: fromDomain,
@@ -350,3 +385,6 @@ export function stripDriveItemEmails(item: Record<string, unknown>): Record<stri
   
   return result;
 }
+
+// Re-export for backward compatibility with existing tests
+export { redactAddresses };

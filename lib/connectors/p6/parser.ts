@@ -30,6 +30,7 @@ import { createHash } from "crypto";
 import { Readable } from "stream";
 import { createInterface } from "readline";
 import { canonicalStringify } from "../shared/canonical-stringify";
+import { logWarning } from "../shared/log";
 import type { NormalizedScheduleActivity } from "../types";
 
 interface XERTable {
@@ -280,6 +281,7 @@ export async function parseXERToActivities(
   // Guard empty task_code - skip with warning
   const taskIdToExternalId = new Map<string, string>();
   const validTasks: XERTask[] = [];
+  let emptyTaskCodeCount = 0;
 
   for (const row of taskTable.rows) {
     const task: XERTask = {
@@ -303,7 +305,7 @@ export async function parseXERToActivities(
 
     // Guard empty task_code: skip + warning, never emit colliding PROJ: IDs
     if (!task.task_code || task.task_code.trim() === "") {
-      console.warn(`[P6 Parser] Skipping task ${task.task_id} with empty task_code in project ${task.proj_id}`);
+      emptyTaskCodeCount++;
       continue;
     }
 
@@ -311,6 +313,10 @@ export async function parseXERToActivities(
     const externalId = `${projShortName}:${task.task_code}`;
     taskIdToExternalId.set(task.task_id, externalId);
     validTasks.push(task);
+  }
+
+  if (emptyTaskCodeCount > 0) {
+    logWarning("P6.Parser.EmptyTaskCode", { skipped_count: emptyTaskCodeCount });
   }
 
   // Second pass: build activities with mapped predecessors

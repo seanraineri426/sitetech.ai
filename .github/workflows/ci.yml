@@ -73,6 +73,9 @@ jobs:
           
           echo "✓ Tests passed with network namespace isolation"
 
+      - name: Check build for fixtures
+        run: pnpm vitest run -c vitest.build.config.mts
+
   rls-tests:
     runs-on: ubuntu-latest
 
