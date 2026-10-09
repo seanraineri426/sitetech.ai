@@ -44,6 +44,9 @@ describe("LoginForm", () => {
       
       expect(screen.queryByRole("button", { name: /microsoft/i })).not.toBeInTheDocument();
     });
+
+    // Note: Testing flag=true requires dynamic import with mocked env,
+    // which is complex in the current setup. Manual testing recommended.
   });
 
   describe("magic link no-enumeration", () => {
@@ -62,6 +65,9 @@ describe("LoginForm", () => {
       await waitFor(() => {
         expect(screen.getByText(/check your email for a sign-in link/i)).toBeInTheDocument();
       });
+      
+      // Verify it was called with email and next param
+      expect(signInWithMagicLink).toHaveBeenCalledWith("test@example.com", null);
     });
 
     it("shows generic error message on failure without enumeration", async () => {

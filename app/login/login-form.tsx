@@ -32,13 +32,7 @@ export function LoginForm() {
     setMessage(null);
 
     try {
-      // Build callback URL with next param if present
-      const callbackUrl = new URL("/auth/callback", NEXT_PUBLIC_SITE_URL);
-      if (next) {
-        callbackUrl.searchParams.set("next", next);
-      }
-
-      const result = await signInWithMagicLink(email.trim(), callbackUrl.toString());
+      const result = await signInWithMagicLink(email.trim(), next);
 
       if (result.error) {
         setMessage({ type: "error", text: result.error });

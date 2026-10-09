@@ -146,4 +146,54 @@ describe("/auth/callback", () => {
       expect(response.headers.get("location")).toBe("http://localhost:3000/app");
     });
   });
+
+  describe("Location header origin validation (B1 attack vectors)", () => {
+    const siteUrl = "http://localhost:3000";
+    const siteOrigin = new URL(siteUrl).origin;
+
+    beforeEach(async () => {
+      const { createClient } = await import("@/lib/supabase/server");
+      (createClient as ReturnType<typeof vi.fn>).mockResolvedValue({
+        auth: {
+          exchangeCodeForSession: vi.fn().mockResolvedValue({ error: null }),
+        },
+      });
+    });
+
+    const attackVectors = [
+      "/x%3F/..//evil.com",
+      "/x%3f/..//evil.com",
+      "/x%23/..//evil.com",
+      "/app%3F/../..//evil.com",
+      "/a%3F/%2e%2e//evil.com",
+      "%2Fx%3F/..//evil.com",
+      "/..//..%3F/",
+      "/.//evil.com",
+      "/a/..//evil.com",
+      "/%2e//evil.com",
+      "/%2e%2e//evil.com",
+      "/.%2F/evil.com",
+      "/app/../..//evil.com",
+      "/%2F%2Fevil.com",
+      "//evil.com",
+      "/%09/evil.com",
+      "/%2509/evil.com",
+    ];
+
+    attackVectors.forEach((attack) => {
+      it(`ensures Location header origin is same-origin for ${attack}`, async () => {
+        const request = new NextRequest(
+          new URL(`${siteUrl}/auth/callback?code=valid123&next=${encodeURIComponent(attack)}`)
+        );
+        const response = await GET(request);
+
+        expect(response.status).toBe(307);
+        const location = response.headers.get("location");
+        expect(location).toBeTruthy();
+        
+        const locationUrl = new URL(location!);
+        expect(locationUrl.origin).toBe(siteOrigin);
+      });
+    });
+  });
 });

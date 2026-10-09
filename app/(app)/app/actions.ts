@@ -45,7 +45,6 @@ export async function createOrganization(formData: FormData) {
   const { name: validatedName, slug: validatedSlug } = validation.data;
 
   try {
-    const supabase = await createClient();
     const { error: rpcError } = await supabase.rpc("create_org", {
       p_name: validatedName,
       p_slug: validatedSlug,

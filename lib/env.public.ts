@@ -3,8 +3,14 @@
  * These are inlined at build time by Next.js.
  */
 
-export const NEXT_PUBLIC_SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+
+// In production, SITE_URL must be explicitly set
+if (process.env.NODE_ENV === "production" && !siteUrl) {
+  throw new Error("NEXT_PUBLIC_SITE_URL must be set in production");
+}
+
+export const NEXT_PUBLIC_SITE_URL = siteUrl || "http://localhost:3000";
 
 export const NEXT_PUBLIC_SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
