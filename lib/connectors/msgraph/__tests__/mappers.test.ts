@@ -373,7 +373,7 @@ describe("Microsoft Graph mappers", () => {
       const text = "Contact alice@example.com or bob@test.org for details.";
       const redacted = redactAddresses(text);
       
-      expect(redacted).toBe("Contact [email@example.com] or [email@test.org] for details.");
+      expect(redacted).toBe("Contact [email-example.com] or [email-test.org] for details.");
     });
 
     it("handles mixed case emails", async () => {
@@ -382,7 +382,7 @@ describe("Microsoft Graph mappers", () => {
       const text = "Send to Alice.Smith@Example.COM";
       const redacted = redactAddresses(text);
       
-      expect(redacted).toBe("Send to [email@Example.COM]");
+      expect(redacted).toBe("Send to [email-Example.COM]");
     });
 
     it("handles multiple emails on same line", async () => {
@@ -391,9 +391,9 @@ describe("Microsoft Graph mappers", () => {
       const text = "From: a@x.com To: b@y.com CC: c@z.com";
       const redacted = redactAddresses(text);
       
-      expect(redacted).toContain("[email@x.com]");
-      expect(redacted).toContain("[email@y.com]");
-      expect(redacted).toContain("[email@z.com]");
+      expect(redacted).toContain("[email-x.com]");
+      expect(redacted).toContain("[email-y.com]");
+      expect(redacted).toContain("[email-z.com]");
     });
 
     it("leaves non-email text unchanged", async () => {

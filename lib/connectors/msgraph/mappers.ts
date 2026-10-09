@@ -46,12 +46,23 @@ function stripNullBytes(text: string): string {
 
 /**
  * Cap text at max length and append truncation marker.
+ * Checks for surrogate pairs at boundary to avoid splitting them.
  */
 function capText(text: string, maxChars: number): string {
   if (text.length <= maxChars) {
     return text;
   }
-  return text.slice(0, maxChars) + ' [truncated]';
+  
+  // Check if we're about to split a surrogate pair
+  let cutPos = maxChars;
+  const charCode = text.charCodeAt(cutPos - 1);
+  
+  // If the last kept character is a high surrogate (0xD800-0xDBFF), cut one earlier
+  if (charCode >= 0xD800 && charCode <= 0xDBFF) {
+    cutPos--;
+  }
+  
+  return text.slice(0, cutPos) + ' [truncated]';
 }
 
 /**
@@ -112,13 +123,19 @@ function buildEmailFingerprintPayload(
 }
 
 /**
- * Redact email addresses from text for model-facing paths.
- * Replaces user@domain.com with [email@domain.com].
+ * Redact email addresses from text for storage in raw records.
+ * Replaces user@domain.com with [email-$1] to preserve domain while ensuring
+ * the output doesn't match email regex patterns.
+ * 
+ * Uses negative lookahead/lookbehind to avoid quadratic behavior on text with no '@'.
+ * Limits local part to 64 chars, domain labels to 63 chars, and TLD to 2-63 chars.
+ * 
+ * Note: This helper exists for future model-facing paths.
  */
 export function redactAddresses(text: string): string {
   return text.replace(
-    /[A-Z0-9._%+-]+@([A-Z0-9.-]+\.[A-Z]{2,})/gi,
-    '[email@$1]'
+    /(?<![A-Z0-9._%+-])[A-Z0-9._%+-]{1,64}@([A-Z0-9-]{1,63}(?:\.[A-Z0-9-]{1,63})*\.[A-Z]{2,63})(?![A-Z0-9-])/gi,
+    '[email-$1]'
   );
 }
 
@@ -180,6 +197,7 @@ export function mapGraphMessageToNormalized(
  * 
  * CTO 2026-10-09: Store body_text_sha256 (NOT body_text itself).
  * Store participant domains only (NOT raw addresses) in allowlistedPayload.
+ * Redact addresses from subject and body_preview before storage.
  */
 export function emailToRawRecord(email: NormalizedEmail): RawRecord {
   // Compute body_text_sha256
@@ -192,12 +210,16 @@ export function emailToRawRecord(email: NormalizedEmail): RawRecord {
   const toDomains = email.to_recipients.map(r => extractDomain(r.address)).sort();
   const ccDomains = email.cc_recipients.map(r => extractDomain(r.address)).sort();
 
+  // Redact addresses from subject and body_preview
+  const redactedSubject = redactAddresses(email.subject);
+  const redactedBodyPreview = redactAddresses(email.body_preview);
+
   return {
     entityType: "email",
     externalId: email.external_id,
     allowlistedPayload: {
-      subject: email.subject,
-      body_preview: email.body_preview,
+      subject: redactedSubject,
+      body_preview: redactedBodyPreview,
       body_text_sha256: bodyTextSha256,
       // Participant domains only (NOT raw addresses)
       from_domain: fromDomain,
