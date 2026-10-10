@@ -4,7 +4,7 @@ import { join } from 'path';
 
 describe('App routes have no fixture data', () => {
   it('main app page has no fixture strings in source', () => {
-    const appPagePath = join(process.cwd(), 'app', 'page.tsx');
+    const appPagePath = join(process.cwd(), 'app', '(marketing)', 'page.tsx');
     const content = readFileSync(appPagePath, 'utf-8');
 
     expect(content).not.toContain('Linden Yard');

@@ -27,9 +27,9 @@ export function CreateOrgForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="name" className="mb-3 block font-mono text-[11px] uppercase tracking-[0.2em] text-gray-500">
           Organization name
         </label>
         <input
@@ -38,13 +38,13 @@ export function CreateOrgForm() {
           type="text"
           disabled={loading}
           required
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-          placeholder="Acme Construction"
+          className="w-full border border-gray-800 bg-transparent px-4 py-3 text-sm text-white placeholder:text-gray-600 transition-colors focus:border-white focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+          placeholder="Acme Development"
         />
       </div>
 
       <div>
-        <label htmlFor="slug" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="slug" className="mb-3 block font-mono text-[11px] uppercase tracking-[0.2em] text-gray-500">
           Organization slug
         </label>
         <input
@@ -54,24 +54,24 @@ export function CreateOrgForm() {
           disabled={loading}
           required
           pattern="[a-z0-9-]{2,63}"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-          placeholder="acme-construction"
+          className="w-full border border-gray-800 bg-transparent px-4 py-3 text-sm text-white placeholder:text-gray-600 transition-colors focus:border-white focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+          placeholder="acme-development"
         />
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-2 text-xs text-gray-500">
           Lowercase letters, numbers, and hyphens only
         </p>
       </div>
 
       {error && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-          <p className="text-sm text-red-800">{error}</p>
+        <div role="alert" className="border border-red-900/60 p-3">
+          <p className="text-sm text-red-400">{error}</p>
         </div>
       )}
 
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-blue-600 text-white py-2 px-4 rounded-md font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-blue-400 disabled:cursor-not-allowed"
+        className="btn-primary w-full disabled:cursor-not-allowed disabled:opacity-50"
       >
         {loading ? "Creating..." : "Create organization"}
       </button>

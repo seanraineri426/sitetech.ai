@@ -82,80 +82,86 @@ export function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md">
-        <div className="bg-white shadow-md rounded-lg px-8 py-10">
-          <h1 className="text-2xl font-bold text-center mb-8 text-gray-900">
-            Sign in to SiteTech
-          </h1>
+    <div className="w-full max-w-md">
+      <p className="section-label mb-6">Client portal</p>
+      <h1 className="text-3xl font-medium tracking-[-0.025em] text-white">
+        Sign in to SiteTech
+      </h1>
+      <p className="mt-3 text-sm leading-relaxed text-gray-400">
+        We&apos;ll email you a secure sign-in link. No password needed.
+      </p>
 
-          <form onSubmit={handleMagicLink} className="space-y-6">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email address
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={loading}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                placeholder="you@example.com"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-blue-400 disabled:cursor-not-allowed transition"
-            >
-              {loading ? "Sending..." : "Send magic link"}
-            </button>
-          </form>
-
-          {isMicrosoftEnabled && (
-            <>
-              <div className="relative my-6">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">Or continue with</span>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleMicrosoftSignIn}
-                disabled={loading}
-                className="w-full bg-white border border-gray-300 text-gray-700 py-2 px-4 rounded-md font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:bg-gray-100 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
-              >
-                <svg className="w-5 h-5" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="1" y="1" width="9" height="9" fill="#F25022" />
-                  <rect x="1" y="11" width="9" height="9" fill="#00A4EF" />
-                  <rect x="11" y="1" width="9" height="9" fill="#7FBA00" />
-                  <rect x="11" y="11" width="9" height="9" fill="#FFB900" />
-                </svg>
-                Microsoft
-              </button>
-            </>
-          )}
-
-          {displayMessage && (
-            <div
-              className={`mt-6 p-4 rounded-md ${
-                displayMessage.type === "success"
-                  ? "bg-green-50 text-green-800 border border-green-200"
-                  : "bg-red-50 text-red-800 border border-red-200"
-              }`}
-            >
-              <p className="text-sm">{displayMessage.text}</p>
-            </div>
-          )}
+      <form onSubmit={handleMagicLink} className="mt-10 space-y-6">
+        <div>
+          <label
+            htmlFor="email"
+            className="mb-3 block font-mono text-[11px] uppercase tracking-[0.2em] text-gray-500"
+          >
+            Email address
+          </label>
+          <input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            disabled={loading}
+            required
+            className="w-full border border-gray-800 bg-transparent px-4 py-3.5 text-sm text-white placeholder:text-gray-600 transition-colors focus:border-white focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+            placeholder="you@company.com"
+          />
         </div>
-      </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="btn-primary w-full disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {loading ? "Sending..." : "Send magic link"}
+        </button>
+      </form>
+
+      {isMicrosoftEnabled && (
+        <>
+          <div className="relative my-8">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-800"></div>
+            </div>
+            <div className="relative flex justify-center">
+              <span className="bg-black px-3 font-mono text-[11px] uppercase tracking-[0.2em] text-gray-500">
+                Or continue with
+              </span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleMicrosoftSignIn}
+            disabled={loading}
+            className="btn-ghost w-full gap-3 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <svg className="w-5 h-5" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="1" y="1" width="9" height="9" fill="#F25022" />
+              <rect x="1" y="11" width="9" height="9" fill="#00A4EF" />
+              <rect x="11" y="1" width="9" height="9" fill="#7FBA00" />
+              <rect x="11" y="11" width="9" height="9" fill="#FFB900" />
+            </svg>
+            Microsoft
+          </button>
+        </>
+      )}
+
+      {displayMessage && (
+        <div
+          role={displayMessage.type === "error" ? "alert" : "status"}
+          className={`mt-6 border p-4 ${
+            displayMessage.type === "success"
+              ? "border-gray-700 text-white"
+              : "border-red-900/60 text-red-400"
+          }`}
+        >
+          <p className="text-sm">{displayMessage.text}</p>
+        </div>
+      )}
     </div>
   );
 }

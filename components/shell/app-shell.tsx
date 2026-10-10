@@ -23,12 +23,11 @@ export function AppShell({ children, currentPath }: AppShellProps) {
     <div className="flex h-screen overflow-hidden bg-background">
       <aside className="hidden lg:flex lg:flex-col lg:w-64 border-r border-sidebar-border bg-sidebar">
         <div className="flex items-center gap-3 h-16 px-6 border-b border-sidebar-border">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <rect width="20" height="20" rx="4" fill="currentColor" className="text-primary-foreground" />
-            </svg>
-          </div>
-          <span className="text-lg font-semibold text-sidebar-foreground">SiteTech</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-mark-dark.png" alt="" width={24} height={24} className="h-6 w-6" />
+          <span className="font-mono text-[12px] font-medium uppercase tracking-[0.2em] text-white">
+            SiteTech AI
+          </span>
         </div>
 
         <nav className="flex-1 px-4 py-4 space-y-1">
@@ -117,19 +116,10 @@ export function AppShell({ children, currentPath }: AppShellProps) {
           />
           <div className="absolute left-0 top-0 bottom-0 w-64 bg-sidebar border-r border-sidebar-border">
             <div className="flex items-center gap-3 h-16 px-6 border-b border-sidebar-border">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <rect
-                    width="20"
-                    height="20"
-                    rx="4"
-                    fill="currentColor"
-                    className="text-primary-foreground"
-                  />
-                </svg>
-              </div>
-              <span className="text-lg font-semibold text-sidebar-foreground">
-                SiteTech
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo-mark-dark.png" alt="" width={24} height={24} className="h-6 w-6" />
+              <span className="font-mono text-[12px] font-medium uppercase tracking-[0.2em] text-white">
+                SiteTech AI
               </span>
             </div>
 

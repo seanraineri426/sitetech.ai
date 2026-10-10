@@ -32,12 +32,12 @@ export function ScenarioChart({ data, isLoading }: ScenarioChartProps) {
       <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
         <XAxis
           dataKey="label"
-          stroke="hsl(var(--muted-foreground))"
-          tick={{ fill: 'hsl(var(--muted-foreground))' }}
+          stroke="var(--muted-foreground)"
+          tick={{ fill: 'var(--muted-foreground)' }}
         />
         <YAxis
-          stroke="hsl(var(--muted-foreground))"
-          tick={{ fill: 'hsl(var(--muted-foreground))' }}
+          stroke="var(--muted-foreground)"
+          tick={{ fill: 'var(--muted-foreground)' }}
           tickFormatter={(value: number) => `$${value / 1000}k`}
         />
         <Bar dataKey="value" radius={[8, 8, 0, 0]}>
@@ -48,7 +48,7 @@ export function ScenarioChart({ data, isLoading }: ScenarioChartProps) {
               const num = typeof value === 'number' ? value : 0;
               return `$${num / 1000}k`;
             }}
-            fill="hsl(var(--foreground))"
+            fill="var(--foreground)"
           />
         </Bar>
       </BarChart>

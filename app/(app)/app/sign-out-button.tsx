@@ -16,7 +16,7 @@ export function SignOutButton() {
     <button
       onClick={handleSignOut}
       disabled={isPending}
-      className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:bg-gray-100 disabled:cursor-not-allowed"
+      className="border border-gray-700 px-4 py-2 text-[13px] font-medium tracking-wide text-white transition-colors hover:border-white focus:outline-none focus-visible:border-white disabled:cursor-not-allowed disabled:opacity-50"
     >
       {isPending ? "Signing out..." : "Sign out"}
     </button>

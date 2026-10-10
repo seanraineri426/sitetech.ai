@@ -37,11 +37,11 @@ export function TimelineChart({ data, isLoading }: TimelineChartProps) {
         layout="vertical"
         margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
       >
-        <XAxis type="number" stroke="hsl(var(--muted-foreground))" />
+        <XAxis type="number" stroke="var(--muted-foreground)" />
         <YAxis
           type="category"
           dataKey="activity"
-          stroke="hsl(var(--muted-foreground))"
+          stroke="var(--muted-foreground)"
           width={90}
         />
         <Bar dataKey="duration" stackId="a">
@@ -50,10 +50,10 @@ export function TimelineChart({ data, isLoading }: TimelineChartProps) {
               key={`cell-${index}`}
               fill={
                 entry.isSlipped
-                  ? 'hsl(var(--chart-at-risk))'
+                  ? 'var(--chart-at-risk)'
                   : entry.isBaseline
-                  ? 'hsl(var(--chart-amber))'
-                  : 'hsl(var(--chart-protected))'
+                  ? 'var(--chart-amber)'
+                  : 'var(--chart-protected)'
               }
             />
           ))}

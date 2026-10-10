@@ -15,7 +15,7 @@ describe('AppShell', () => {
     );
 
     expect(screen.getByText('Test content')).toBeInTheDocument();
-    expect(screen.getByText('SiteTech')).toBeInTheDocument();
+    expect(screen.getByText('SiteTech AI')).toBeInTheDocument();
   });
 
   it('highlights active nav item', () => {

@@ -2,7 +2,12 @@
 
 AI layer above construction software (Procore, Microsoft 365, etc.).
 
-This is the product application (app.sitetech.ai), not the marketing site.
+This repo serves both the marketing site and the product application at sitetech.ai:
+
+- `app/(marketing)/` — public marketing pages (static; components in `components/marketing/`)
+- `app/login`, `app/auth`, `app/(app)/app` — sign-in and the authenticated product (`/app`)
+
+The Supabase session proxy only runs on `/app`, `/login`, and `/auth`, so marketing pages stay fully static.
 
 **Current status:** Task 1 of Milestone 1 — Base scaffold
 

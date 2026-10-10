@@ -14,7 +14,7 @@ export const kpiFixtures: KpiData[] = [
       { value: 1.4 },
       { value: 1.24 },
     ],
-    color: 'hsl(var(--chart-at-risk))',
+    color: 'var(--chart-at-risk)',
   },
   {
     label: 'FLOAT DAYS PROTECTED',
@@ -28,7 +28,7 @@ export const kpiFixtures: KpiData[] = [
       { value: 35 },
       { value: 38 },
     ],
-    color: 'hsl(var(--chart-protected))',
+    color: 'var(--chart-protected)',
   },
   {
     label: 'CHANGES CAPTURED',
@@ -42,7 +42,7 @@ export const kpiFixtures: KpiData[] = [
       { value: 590 },
       { value: 640 },
     ],
-    color: 'hsl(var(--chart-change))',
+    color: 'var(--chart-change)',
   },
   {
     label: 'NOTICES ANSWERED ON TIME',
@@ -56,7 +56,7 @@ export const kpiFixtures: KpiData[] = [
       { value: 11 },
       { value: 11 },
     ],
-    color: 'hsl(var(--chart-notice))',
+    color: 'var(--chart-notice)',
   },
 ];
 
