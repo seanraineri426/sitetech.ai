@@ -1112,4 +1112,30 @@ describe('ActionCard', () => {
       expect(mockOnApprove).not.toHaveBeenCalled();
     });
   });
+
+  describe('Email redaction', () => {
+    it('does not render any @ characters in card or why panel', async () => {
+      const { container } = render(
+        <ActionCard
+          data={rfiEscalationFixture}
+          onApprove={mockOnApprove}
+          onEdit={mockOnEdit}
+          onDismiss={mockOnDismiss}
+        />
+      );
+
+      const cardText = container.textContent || '';
+      expect(cardText).not.toContain('@');
+
+      const whyButton = screen.getByRole('button', { name: /Why/ });
+      await userEvent.click(whyButton);
+
+      await waitFor(() => {
+        expect(screen.getByRole('dialog')).toBeInTheDocument();
+      });
+
+      const dialogText = screen.getByRole('dialog').textContent || '';
+      expect(dialogText).not.toContain('@');
+    });
+  });
 });

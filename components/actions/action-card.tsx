@@ -38,7 +38,7 @@ function WhyPanel({
             <div className="space-y-4">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Source</p>
-                <p className="text-base">{why.label}</p>
+                <p className="text-base">{redactAddresses(why.label)}</p>
               </div>
 
               {why.kind === 'email_quote' && (
@@ -46,7 +46,7 @@ function WhyPanel({
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">From</p>
                     <p className="text-base">
-                      {why.senderCompany} · {why.senderRole}
+                      {redactAddresses(why.senderCompany)} · {why.senderRole}
                     </p>
                   </div>
 
@@ -78,7 +78,7 @@ function WhyPanel({
 
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Details</p>
-                    <p className="text-base">{why.description}</p>
+                    <p className="text-base">{redactAddresses(why.description)}</p>
                   </div>
                 </>
               )}
@@ -89,10 +89,11 @@ function WhyPanel({
                   const isOutlook = url.hostname.includes('outlook');
                   const isProcore = url.hostname.includes('procore');
                   const label = isOutlook ? 'Open in Outlook' : isProcore ? 'Open in Procore' : 'Open link';
+                  const redactedHref = redactAddresses(why.secondaryLink!);
                   return (
                     <div className="pt-4 border-t">
                       <a
-                        href={why.secondaryLink!}
+                        href={redactedHref}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-primary hover:underline inline-flex items-center gap-2 min-h-[44px]"
@@ -113,6 +114,105 @@ function WhyPanel({
   );
 }
 
+
+interface ActionCardProps {
+  data: ActionCardData;
+  onApprove: () => void;
+  onEdit: () => void;
+  onDismiss: () => void;
+}
+
+const ALLOWED_HOSTS = [
+  'outlook.office.com',
+  'outlook.office365.com',
+  'outlook.live.com',
+] as const;
+
+export function isAllowedUrl(urlString: string): boolean {
+  try {
+    const url = new URL(urlString);
+    if (url.protocol !== 'https:') {
+      return false;
+    }
+    
+    if (url.username || url.password) {
+      return false;
+    }
+    
+    if (url.port && url.port !== '443') {
+      return false;
+    }
+    
+    if (ALLOWED_HOSTS.includes(url.hostname as (typeof ALLOWED_HOSTS)[number])) {
+      return true;
+    }
+    
+    if (url.hostname.endsWith('.procore.com') && url.hostname.split('.').length >= 3) {
+      return true;
+    }
+    
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+function formatRisk(daysAtRisk: number | null, dollarsAtRisk: number | null): string | null {
+  const parts: string[] = [];
+  
+  if (daysAtRisk !== null && Number.isFinite(daysAtRisk)) {
+    parts.push(`${daysAtRisk} ${daysAtRisk === 1 ? 'day' : 'days'}`);
+  }
+  
+  if (dollarsAtRisk !== null && Number.isFinite(dollarsAtRisk)) {
+    const absCents = Math.abs(dollarsAtRisk);
+    if (absCents > 0 && absCents < 100) {
+      parts.push(dollarsAtRisk < 0 ? 'credit under $1' : 'under $1');
+    } else {
+      const absRounded = Math.round(absCents / 100);
+      const formatter = new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        maximumFractionDigits: 0,
+      });
+      const sign = dollarsAtRisk < 0 ? '-' : '';
+      parts.push(sign + formatter.format(absRounded));
+    }
+  }
+  
+  if (parts.length === 0) {
+    return null;
+  }
+  
+  return `${parts.join(' · ')} at risk`;
+}
+
+function isValidTimeZone(tz: string): boolean {
+  try {
+    Intl.DateTimeFormat(undefined, { timeZone: tz });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function formatDueDate(isoDate: string | null, timeZone: string): string | null {
+  if (!isoDate || !isValidTimeZone(timeZone)) {
+    return null;
+  }
+  
+  try {
+    const match = isoDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!match) {
+      return null;
+    }
+    
+    const [, yearStr, monthStr, dayStr] = match;
+    const year = parseInt(yearStr, 10);
+    const month = parseInt(monthStr, 10);
+    const day = parseInt(dayStr, 10);
+    
+    const date = new Date(Date.UTC(year, month - 1, day, 12));
     
     if (isNaN(date.getTime())) {
       return null;
@@ -187,7 +287,7 @@ export function ActionCard({ data, onApprove, onEdit, onDismiss }: ActionCardPro
     <>
       <Card className="w-full">
         <CardHeader className="pb-3">
-          <h3 className="text-base font-semibold leading-snug">{data.headline}</h3>
+          <h3 className="text-base font-semibold leading-snug">{redactAddresses(data.headline)}</h3>
           
           <div className="space-y-1 text-sm text-muted-foreground">
             {riskText && <p className="font-medium text-foreground">{riskText}</p>}
@@ -227,7 +327,7 @@ export function ActionCard({ data, onApprove, onEdit, onDismiss }: ActionCardPro
             </div>
           )}
           {data.draft.kind === 'procore_paste' && (
-            <p className="text-muted-foreground line-clamp-2">{data.draft.body}</p>
+            <p className="text-muted-foreground line-clamp-2">{redactAddresses(data.draft.body)}</p>
           )}
         </div>
       </CardContent>

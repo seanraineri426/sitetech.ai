@@ -90,7 +90,7 @@ export function MeasureSchema<T extends z.ZodTypeAny>(valueSchema: T) {
   ).refine(
     data => {
       // Null value requires confirm_required
-      if (data.value === null && !data.confirm_required) {
+      if ((data as unknown as { value: unknown }).value === null && !data.confirm_required) {
         return false;
       }
       return true;
@@ -99,7 +99,7 @@ export function MeasureSchema<T extends z.ZodTypeAny>(valueSchema: T) {
   ).refine(
     data => {
       // Verified dollar values require citations
-      if (data.provenance === 'verified' && data.unit === 'usd' && data.value !== null && data.citations.length === 0) {
+      if (data.provenance === 'verified' && data.unit === 'usd' && (data as unknown as { value: unknown }).value !== null && data.citations.length === 0) {
         return false;
       }
       return true;
