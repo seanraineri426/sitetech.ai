@@ -1,21 +1,18 @@
 import Link from "next/link";
 
-const solutionLinks = [
-  { href: "/solutions#acquisitions", label: "Acquisitions" },
-  { href: "/solutions#development", label: "Development & Entitlements" },
-  { href: "/solutions#construction", label: "Construction" },
-  { href: "/solutions#brokerage", label: "Brokerage" },
-  { href: "/solutions/property-management", label: "Property Management" },
-  { href: "/solutions/affordable-housing", label: "Affordable Housing" },
-  { href: "/solutions#executive", label: "Executive Intelligence" },
+const exploreLinks = [
+  { href: "/data-fit", label: "Check your data fit" },
+  { href: "/how-it-works", label: "How it works" },
+  { href: "/#who-its-for", label: "Who it's for" },
+  { href: "/#faq", label: "FAQ" },
+  { href: "/blog", label: "Blog" },
 ];
 
 const companyLinks = [
-  { href: "/integrations", label: "Integrations" },
-  { href: "/how-it-works", label: "How It Works" },
-  { href: "/blog", label: "Blog" },
-  { href: "/pricing", label: "Engagement" },
-  { href: "/pricing#contact", label: "Book an Assessment" },
+  { href: "/contact", label: "Contact" },
+  { href: "/for-buyers", label: "For buyers & partners" },
+  { href: "/privacy", label: "Privacy" },
+  { href: "/solutions", label: "Previous services" },
 ];
 
 export function Footer() {
@@ -37,18 +34,17 @@ export function Footer() {
               </span>
             </div>
             <p className="mt-5 max-w-sm text-sm leading-relaxed text-gray-500">
-              AI infrastructure and implementation for real estate companies. We connect
-              the software you already use, deploy specialized AI agents, and manage the
-              workflows between them.
+              SiteTech helps real estate and built-environment businesses explore potential AI
+              data introductions.
             </p>
           </div>
 
           <div>
             <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-gray-500">
-              Solutions
+              Explore
             </p>
             <ul className="mt-5 space-y-3">
-              {solutionLinks.map((link) => (
+              {exploreLinks.map((link) => (
                 <li key={link.href}>
                   <Link href={link.href} className="text-sm text-gray-400 transition-colors hover:text-white">
                     {link.label}
@@ -74,12 +70,13 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-14 flex flex-col gap-3 border-t border-white/10 pt-8 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-14 flex flex-col gap-4 border-t border-white/10 pt-8 sm:flex-row sm:items-start sm:justify-between">
           <p className="font-mono text-[11px] text-gray-500">
             &copy; {new Date().getFullYear()} SiteTech AI
           </p>
-          <p className="font-mono text-[11px] text-gray-500">
-            AI should automate work, not remove accountability.
+          <p className="max-w-xl font-mono text-[11px] leading-relaxed text-gray-500 sm:text-right">
+            SiteTech facilitates introductions. Dataset evaluation and any licensing transaction
+            are handled directly between the participating businesses.
           </p>
         </div>
       </div>

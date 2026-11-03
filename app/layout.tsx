@@ -3,6 +3,7 @@ import { Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { SITE_URL } from "@/lib/site";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -15,46 +16,42 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const siteUrl = "https://sitetech.ai";
+const defaultTitle = "SiteTech AI | Data Licensing Opportunities for the Built Environment";
+const defaultDescription =
+  "Explore whether your company's project and operating records could support an AI data licensing opportunity. Start with SiteTech's short fit check.";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "SiteTech AI | AI infrastructure for real estate",
+    default: defaultTitle,
     template: "%s | SiteTech AI",
   },
-  description:
-    "SiteTech AI designs, deploys, and manages AI agents for real estate developers, owners, operators, and property managers — connecting the software your team already uses into an AI-powered operating system.",
+  description: defaultDescription,
   keywords: [
-    "AI for real estate developers",
-    "AI implementation for real estate",
-    "AI for real estate brokerages",
-    "real estate AI consulting",
-    "AI automation for property management",
-    "AI for affordable housing",
-    "affordable housing leasing AI",
-    "AI construction workflows",
-    "AI real estate acquisitions",
-    "real estate AI agents",
-    "AI development management",
+    "AI data licensing",
+    "construction data licensing",
+    "real estate data licensing",
+    "AI training data built environment",
+    "license project documentation to AI",
+    "construction imagery dataset licensing",
+    "building records AI data",
+    "data licensing referral",
   ],
   alternates: {
     canonical: "/",
   },
   openGraph: {
-    title: "SiteTech AI | AI infrastructure for real estate",
-    description:
-      "AI agents designed, deployed, and managed for real estate developers, owners, operators, and property managers — built on the software your team already uses.",
-    url: siteUrl,
+    title: defaultTitle,
+    description: defaultDescription,
+    url: SITE_URL,
     siteName: "SiteTech AI",
     type: "website",
     locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "SiteTech AI | AI infrastructure for real estate",
-    description:
-      "AI agents designed, deployed, and managed for real estate developers, owners, operators, and property managers.",
+    title: defaultTitle,
+    description: defaultDescription,
   },
   robots: {
     index: true,
@@ -78,18 +75,17 @@ const organizationSchema = {
   "@context": "https://schema.org",
   "@type": "Organization",
   name: "SiteTech AI",
-  url: siteUrl,
+  url: SITE_URL,
   description:
-    "AI infrastructure and implementation company for real estate developers, investors, owners, operators, and property managers, including affordable housing organizations.",
-  logo: `${siteUrl}/icon.png`,
+    "SiteTech helps real estate and built-environment businesses explore potential AI data licensing introductions. SiteTech facilitates introductions; dataset evaluation and any licensing transaction are handled directly between the participating businesses.",
+  logo: `${SITE_URL}/icon.png`,
   areaServed: "US",
   knowsAbout: [
     "Real estate development",
     "Construction",
-    "Property management",
-    "Affordable housing leasing and compliance",
-    "Real estate acquisitions and investment",
-    "Artificial intelligence implementation",
+    "Property and facilities management",
+    "Architecture, engineering, and surveying",
+    "AI training data licensing",
   ],
 };
 
@@ -105,8 +101,14 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
         />
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:text-black"
+        >
+          Skip to content
+        </a>
         <Header />
-        {children}
+        <div id="main">{children}</div>
         <Footer />
       </body>
     </html>

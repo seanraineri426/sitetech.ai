@@ -30,7 +30,14 @@ export default function HeroCanvas() {
       const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 200);
       camera.position.set(0, 6, 16);
 
-      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+      let renderer: import("three").WebGLRenderer;
+      try {
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+      } catch {
+        // No WebGL (headless, restricted browsers, some remote desktops):
+        // leave the solid black background in place and do nothing else.
+        return;
+      }
       renderer.setClearColor(0x000000);
       renderer.domElement.style.display = "block";
       mount.appendChild(renderer.domElement);

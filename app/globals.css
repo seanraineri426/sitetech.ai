@@ -37,6 +37,17 @@ body {
   color: var(--color-black);
 }
 
+/* Visible focus for keyboard users, in the surface's own text color. */
+:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
+/* Native <details> accordions: no marker, smooth open without JS. */
+.faq-item > summary::-webkit-details-marker {
+  display: none;
+}
+
 .section-dark {
   background-color: transparent;
   color: var(--color-white);

@@ -1,9 +1,10 @@
 import { Hero } from "@/components/Hero";
-import { Problem } from "@/components/Problem";
-import { LayerStack } from "@/components/LayerStack";
-import { FlowShowcase } from "@/components/home/FlowShowcase";
-import { AffordableSpotlight } from "@/components/home/AffordableSpotlight";
-import { HowItWorksStrip } from "@/components/home/HowItWorksStrip";
+import { Opportunity } from "@/components/home/Opportunity";
+import { Process } from "@/components/home/Process";
+import { Audience } from "@/components/home/Audience";
+import { Control } from "@/components/home/Control";
+import { FitCheckSection } from "@/components/home/FitCheckSection";
+import { FAQ } from "@/components/home/FAQ";
 import { CTA } from "@/components/CTA";
 import { Reveal } from "@/components/Reveal";
 
@@ -12,22 +13,24 @@ export default function Home() {
     <main className="relative">
       <Hero />
       <Reveal>
-        <Problem />
+        <Opportunity />
       </Reveal>
       <Reveal>
-        <LayerStack />
+        <Process />
       </Reveal>
       <Reveal>
-        <FlowShowcase />
+        <Audience />
       </Reveal>
       <Reveal>
-        <AffordableSpotlight />
+        <Control />
+      </Reveal>
+      {/* No Reveal here: the quiz must be reachable immediately from deep links and never animate while in use. */}
+      <FitCheckSection />
+      <Reveal>
+        <FAQ />
       </Reveal>
       <Reveal>
-        <HowItWorksStrip />
-      </Reveal>
-      <Reveal>
-        <CTA />
+        <CTA href="/#data-fit" />
       </Reveal>
     </main>
   );

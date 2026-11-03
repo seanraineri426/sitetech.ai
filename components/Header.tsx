@@ -5,11 +5,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navLinks = [
-  { href: "/solutions", label: "Solutions" },
-  { href: "/solutions/affordable-housing", label: "Affordable Housing" },
-  { href: "/integrations", label: "Integrations" },
-  { href: "/how-it-works", label: "How It Works" },
-  { href: "/blog", label: "Blog" },
+  { href: "/#opportunity", label: "The opportunity" },
+  { href: "/#who-its-for", label: "Who it's for" },
+  { href: "/how-it-works", label: "How it works" },
+  { href: "/#faq", label: "FAQ" },
 ];
 
 export function Header() {
@@ -31,6 +30,8 @@ export function Header() {
   }, [pathname]);
 
   const light = !isHome || scrolled;
+  // Homepage CTAs scroll to the embedded fit check; everywhere else uses the dedicated route.
+  const fitHref = isHome ? "/#data-fit" : "/data-fit";
 
   return (
     <header
@@ -58,7 +59,7 @@ export function Header() {
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-8 lg:flex">
+        <nav className="hidden items-center gap-8 lg:flex" aria-label="Primary">
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -73,22 +74,23 @@ export function Header() {
         </nav>
 
         <Link
-          href="/pricing#contact"
+          href={fitHref}
           className={`hidden border px-5 py-2.5 text-[13px] font-medium tracking-wide transition-colors lg:inline-flex lg:items-center ${
             light
               ? "border-black bg-black text-white hover:bg-transparent hover:text-black"
               : "border-white bg-white text-black hover:bg-transparent hover:text-white"
           }`}
         >
-          Book an Assessment
+          Check your data fit
         </Link>
 
         <button
           type="button"
-          className={`lg:hidden ${light ? "text-black" : "text-white"}`}
+          className={`-mr-2 flex h-11 w-11 items-center justify-center lg:hidden ${light ? "text-black" : "text-white"}`}
           onClick={() => setOpen(!open)}
-          aria-label="Toggle menu"
+          aria-label={open ? "Close menu" : "Open menu"}
           aria-expanded={open}
+          aria-controls="mobile-nav"
         >
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             {open ? (
@@ -102,27 +104,35 @@ export function Header() {
 
       {open && (
         <div
+          id="mobile-nav"
           className={`border-t px-6 py-6 lg:hidden ${
             light ? "border-gray-200 bg-white" : "border-white/10 bg-black"
           }`}
         >
-          <nav className="flex flex-col gap-5">
+          <nav className="flex flex-col gap-1" aria-label="Primary mobile">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`text-sm ${light ? "text-gray-600" : "text-gray-400"}`}
+                className={`flex min-h-[44px] items-center text-sm ${light ? "text-gray-600" : "text-gray-400"}`}
                 onClick={() => setOpen(false)}
               >
                 {link.label}
               </Link>
             ))}
             <Link
-              href="/pricing#contact"
-              className={`text-sm font-medium ${light ? "text-black" : "text-white"}`}
+              href="/for-buyers"
+              className={`flex min-h-[44px] items-center text-sm ${light ? "text-gray-600" : "text-gray-400"}`}
               onClick={() => setOpen(false)}
             >
-              Book an Assessment →
+              For buyers &amp; partners
+            </Link>
+            <Link
+              href={fitHref}
+              className={`mt-2 flex min-h-[44px] items-center text-sm font-medium ${light ? "text-black" : "text-white"}`}
+              onClick={() => setOpen(false)}
+            >
+              Check your data fit →
             </Link>
           </nav>
         </div>

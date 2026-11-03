@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "SiteTech AI | AI for the real world of real estate";
+export const alt = "SiteTech AI | Data licensing opportunities for the built environment";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -66,7 +66,7 @@ export default function OpengraphImage() {
               maxWidth: "980px",
             }}
           >
-            Turn your real estate technology stack into an AI operating system.
+            Your project files could be your next revenue stream.
           </div>
           <div
             style={{
@@ -77,8 +77,8 @@ export default function OpengraphImage() {
               maxWidth: "880px",
             }}
           >
-            AI agents designed, deployed, and managed for real estate developers,
-            owners, operators, and property managers.
+            Explore whether your company&apos;s project and operating records could
+            support an AI data licensing opportunity.
           </div>
         </div>
       </div>

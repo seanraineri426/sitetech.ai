@@ -10,9 +10,21 @@ const HeroCanvas = dynamic(() => import("./HeroCanvas"), {
 });
 
 const pillars = [
-  { label: "01", title: "Connect your stack", detail: "Email, Excel, Procore, Yardi — linked, not replaced" },
-  { label: "02", title: "Deploy specialized agents", detail: "Acquisitions to lease-up, each with defined permissions" },
-  { label: "03", title: "Stay in control", detail: "Agents automate the work. Humans keep the decisions" },
+  {
+    label: "01",
+    title: "Start with what you have",
+    detail: "A high-level description of the records your business already creates.",
+  },
+  {
+    label: "02",
+    title: "Explore a potential introduction",
+    detail: "We consider whether a relevant buyer or licensing partner may be worth approaching.",
+  },
+  {
+    label: "03",
+    title: "Decide on your terms",
+    detail: "You approve any introduction and discuss any proposed arrangement directly.",
+  },
 ];
 
 export function Hero() {
@@ -28,28 +40,32 @@ export function Hero() {
         <div className="mx-auto grid w-full max-w-[1400px] items-center gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
           <div>
             <p className="section-label mb-6 text-gray-400">
-              AI infrastructure for real estate
+              AI data opportunities for the built environment
             </p>
 
-            <h1 className="headline max-w-[16ch]">
-              Turn your real estate technology stack into an AI operating system.
+            <h1 className="headline max-w-[18ch]">
+              Your project files could be your next revenue stream.
             </h1>
 
             <p className="body-lg mt-6 max-w-2xl">
-              SiteTech designs, deploys, and manages AI agents for real estate
-              companies. We connect the software your team already uses and automate
-              the work that moves between it.
+              Your company already creates plans, reports, images, and operating records.
+              SiteTech helps you explore whether a permitted collection could be relevant to
+              an AI data buyer—and whether an introduction makes sense.
             </p>
 
             <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
-              <Link href="/pricing#contact" className="btn-primary">
-                Book an AI Workflow Assessment
+              <Link href="/#data-fit" className="btn-primary">
+                Check your data fit
               </Link>
-              <Link href="/solutions" className="link-arrow text-gray-400">
-                Explore use cases
+              <Link href="/how-it-works" className="link-arrow text-gray-400">
+                See how it works
                 <span aria-hidden>→</span>
               </Link>
             </div>
+
+            <p className="mt-6 font-mono text-[11px] tracking-wide text-gray-500">
+              8 short questions. No document uploads. No obligation.
+            </p>
           </div>
 
           <div className="hidden lg:block">

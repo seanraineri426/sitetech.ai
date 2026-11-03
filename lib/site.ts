@@ -1,25 +1,38 @@
 // ---------------------------------------------------------------------------
 // SiteTech AI site configuration
-//
-// Fill these two values in to turn on booking + lead capture:
-//
-// 1) BOOKING_URL
-//    Your Calendly (or cal.com) link. Sign up at calendly.com, create an
-//    event type like "20-minute intro call", and paste its public URL here.
-//    Example: "https://calendly.com/sitetech/intro"
-//
-// 2) CONTACT_ACCESS_KEY
-//    Your Web3Forms access key. Go to web3forms.com, enter the email where you
-//    want leads delivered, and they email you a key (a UUID). Paste it here.
-//    Every contact-form submission then arrives in that inbox. No server required.
 // ---------------------------------------------------------------------------
 
-export const BOOKING_URL = "https://calendly.com/seanvraineri/sitetech-ai";
+/**
+ * Canonical host used for metadata, sitemap, robots, and structured data.
+ *
+ * NOTE: this value predates the pivot and was kept unchanged. The site is
+ * currently served from https://www.sitetechai.com; see the handoff notes
+ * before changing it, because it affects every canonical/OG URL at once.
+ */
+export const SITE_URL = "https://sitetech.ai";
 
-export const CONTACT_ACCESS_KEY = "a6e64ba7-1616-4ec1-8414-3323e6006099";
+export const SITE_NAME = "SiteTech AI";
 
+/**
+ * Inquiry delivery (Web3Forms).
+ *
+ * Web3Forms access keys are public identifiers bound to a recipient inbox and
+ * are designed to ship in the browser bundle; this one was already committed
+ * and deployed by the original site. The plan attached to this key only
+ * accepts browser-originated submissions (server-side relays return 403
+ * without a paid plan), so the inquiry form posts directly from the client,
+ * exactly as the original contact form did.
+ *
+ * Set NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY in the hosting environment to rotate
+ * the key without a code change.
+ */
 export const CONTACT_ENDPOINT = "https://api.web3forms.com/submit";
+export const CONTACT_ACCESS_KEY =
+  process.env.NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY?.trim() || "a6e64ba7-1616-4ec1-8414-3323e6006099";
 
-// True once you've replaced the placeholder above. Used to decide whether to
-// show the booking button.
-export const BOOKING_ENABLED = !BOOKING_URL.includes("your-handle");
+/**
+ * Retained from the original site for reference only. The event is scoped to
+ * the retired "AI Workflow Assessment" offer, so it is not linked from the
+ * current site. Replace with a verified booking link before reusing.
+ */
+export const LEGACY_BOOKING_URL = "https://calendly.com/seanvraineri/sitetech-ai";

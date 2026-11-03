@@ -5,13 +5,17 @@ type CTAProps = {
   body?: string;
   href?: string;
   label?: string;
+  secondaryHref?: string;
+  secondaryLabel?: string;
 };
 
 export function CTA({
-  title = "Show us how your team works today.",
-  body = "We'll map where AI agents can eliminate repetitive work, connect your systems, and improve visibility — and tell you honestly where they can't.",
-  href = "/pricing#contact",
-  label = "Book an AI Workflow Assessment",
+  title = "Start with the records you already have.",
+  body = "Find out what may be worth a conversation—and what your team should clarify first.",
+  href = "/data-fit",
+  label = "Check your data fit",
+  secondaryHref = "/contact",
+  secondaryLabel = "Have a question? Contact SiteTech.",
 }: CTAProps) {
   return (
     <section className="section-dark-solid border-t border-white/10">
@@ -20,9 +24,17 @@ export function CTA({
           <h2 className="headline-sm max-w-[18ch] text-white">{title}</h2>
           <div>
             <p className="text-base leading-relaxed text-gray-400">{body}</p>
-            <Link href={href} className="btn-primary mt-8">
-              {label}
-            </Link>
+            <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+              <Link href={href} className="btn-primary">
+                {label}
+              </Link>
+              {secondaryHref && secondaryLabel && (
+                <Link href={secondaryHref} className="link-arrow text-gray-400">
+                  {secondaryLabel}
+                  <span aria-hidden>→</span>
+                </Link>
+              )}
+            </div>
           </div>
         </div>
       </div>

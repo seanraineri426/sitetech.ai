@@ -98,10 +98,12 @@ const spots = [
 
 const bm = { x: 150, y: 168, w: 34, h: 24 };
 
-const ledger = [
-  { id: "OAC-12", action: "actions extracted", result: "9 assigned" },
-  { id: "RFI-118", action: "aging 6 days", result: "escalated" },
-  { id: "RECERT", action: "17 due", result: "60 days" },
+// Conceptual brand visual only: illustrative categories, not live demand,
+// submitted records, transactions, or a match.
+const recordTypes = [
+  { id: "PLANS", label: "Plans & technical documentation" },
+  { id: "IMAGERY", label: "Project imagery & scans" },
+  { id: "RECORDS", label: "Building & equipment records" },
 ];
 
 export function HeroSchematic() {
@@ -206,32 +208,30 @@ export function HeroSchematic() {
       </svg>
 
       <div className="mt-2 flex items-center justify-between border-t border-white/10 pt-4">
-        <span className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-gray-500">
-          <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse-node" />
-          Operating layer
+        <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-gray-500">
+          Illustrative record types
         </span>
-        <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-gray-500">
-          live
+        <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-gray-600">
+          Examples
         </span>
       </div>
 
-      <div className="mt-4 space-y-2">
-        {ledger.map((row, i) => (
-          <div
+      <ul className="mt-4 space-y-2">
+        {recordTypes.map((row, i) => (
+          <li
             key={row.id}
             className="flex items-center gap-3 font-mono text-[10px] tracking-wide text-gray-500 animate-fade-up"
             style={{ animationDelay: `${0.8 + i * 0.25}s` }}
           >
-            <span className="h-1 w-1 shrink-0 rounded-full bg-white/50" />
+            <span aria-hidden className="h-1 w-1 shrink-0 bg-white/50" />
             <span className="w-[68px] shrink-0 text-gray-300">{row.id}</span>
-            <span className="flex-1 truncate text-gray-500">{row.action}</span>
-            <span className="shrink-0 text-gray-300">{row.result}</span>
-          </div>
+            <span className="flex-1 text-gray-500">{row.label}</span>
+          </li>
         ))}
-      </div>
+      </ul>
 
-      <p className="mt-4 font-mono text-[10px] leading-relaxed tracking-wide text-gray-500">
-        Meetings · RFIs · Approvals · Recertifications · Ledger
+      <p className="mt-4 font-mono text-[10px] leading-relaxed tracking-wide text-gray-600">
+        Conceptual illustration. Not live buyer demand or submitted records.
       </p>
     </div>
   );

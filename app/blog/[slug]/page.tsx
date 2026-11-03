@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CTA } from "@/components/CTA";
+import { ArchiveNotice } from "@/components/ArchiveNotice";
 import { insights, getInsight, formatDate, type ContentBlock } from "@/lib/insights";
-
-const siteUrl = "https://sitetech.ai";
+import { SITE_URL as siteUrl } from "@/lib/site";
 
 export function generateStaticParams() {
   return insights.map((post) => ({ slug: post.slug }));
@@ -150,6 +150,8 @@ export default async function BlogPostPage({
           <p className="mt-6 border-b border-gray-200 pb-10 text-xl leading-relaxed text-gray-500">
             {post.description}
           </p>
+
+          <ArchiveNotice className="mt-10" />
 
           <div className="mt-4">
             {post.body.map((block, i) => (

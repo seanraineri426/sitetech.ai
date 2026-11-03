@@ -2,14 +2,14 @@ import type { Metadata } from "next";
 import { PageHeader } from "@/components/PageHeader";
 import { CTA } from "@/components/CTA";
 import { Reveal } from "@/components/Reveal";
+import { ArchiveNotice } from "@/components/ArchiveNotice";
 import { insights, formatDate } from "@/lib/insights";
-
-const siteUrl = "https://sitetech.ai";
+import { SITE_URL as siteUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Blog | Affordable Housing AI, Lease-Up, and Yardi Workflows",
   description:
-    "Practical writing on affordable housing lease-up, LIHTC recertification, Yardi and OneSite overlays, and why AI should never determine eligibility. From SiteTech AI.",
+    "Articles from SiteTech AI's earlier work on affordable housing lease-up, LIHTC recertification, Yardi and OneSite overlays, and why AI should never determine eligibility. Retained for reference.",
   keywords: [
     "affordable housing lease-up",
     "LIHTC recertification",
@@ -55,11 +55,12 @@ export default function BlogPage() {
       <PageHeader
         label="Blog"
         title="How affordable housing operations actually run."
-        description="Lease-up bottlenecks, recertification queues, eligibility rules, and why we sit on Yardi and OneSite instead of replacing them. Written for occupancy, compliance, and regional PM leads."
+        description="Lease-up bottlenecks, recertification queues, eligibility rules, and property-management system overlays. Written in 2026 for occupancy, compliance, and regional PM leads, and retained here for reference."
       />
 
       <section className="section-light">
         <div className="mx-auto max-w-[1400px] px-6 py-16 lg:px-10 lg:py-24">
+          <ArchiveNotice variant="index" className="mb-12 max-w-3xl" />
           <ul className="border-t border-gray-200">
             {insights.map((post, i) => (
               <li key={post.slug}>
