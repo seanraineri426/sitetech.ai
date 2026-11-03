@@ -173,37 +173,37 @@ export function reviewQuestions(answers: CompleteAnswers): string[] {
   const out: string[] = [];
 
   if (answers.permission === "third_party_needed") {
-    out.push("Who can confirm client or third-party permission for external use?");
+    out.push("Who can confirm client or third-party permission before anything is discussed?");
   }
   if (answers.permission === "ours_needs_review") {
-    out.push("Which team can confirm that external use of company-created records is permitted?");
+    out.push("Who inside your company can confirm you own the records and can discuss outside use?");
   }
   if (answers.permission === "unsure") {
-    out.push("Who in your organization is responsible for deciding how records may be used externally?");
+    out.push("Who in your company decides whether records can be discussed with an outside company?");
   }
   if (answers.sensitivity.includes("personal")) {
     out.push(
       answers.business === "property_facilities_management" ||
         answers.business === "housing_public_sector"
-        ? "Can equipment or building records be considered separately from resident information?"
-        : "Can a collection be identified that excludes personal, customer, or employee information?",
+        ? "Can equipment or building records be separated from resident information?"
+        : "Can you set aside a safer group of records with no personal, customer, or employee details?",
     );
   }
   if (answers.sensitivity.includes("client_confidential")) {
-    out.push("Which records are company-owned rather than client-confidential, and who can confirm that?");
+    out.push("Which records are clearly your company's—not a client's—and who can confirm that?");
   }
   if (answers.sensitivity.includes("privileged")) {
-    out.push("Can privileged or protected material be kept entirely outside any collection under discussion?");
+    out.push("Can privileged or protected legal material be kept completely out of the discussion?");
   }
   if (answers.sensitivity.includes("third_party_licensed")) {
-    out.push("Which team can clarify restrictions on third-party or licensed materials?");
+    out.push("Who can explain the limits on photos, plans, content, or data that came from someone else?");
   }
   if (answers.sensitivity.includes("unsure")) {
-    out.push("Who can review the collection for personal, confidential, or third-party content?");
+    out.push("Who can check the records for private, client, or third-party material?");
   }
 
   if (out.length === 0) {
-    out.push("Who can confirm permission for the proposed external use?");
+    out.push("Who can say yes—or no—to outside use?");
   }
   return out.slice(0, 3);
 }

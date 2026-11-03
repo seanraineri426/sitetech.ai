@@ -54,7 +54,7 @@ export function ResultView({
       {result === "INVENTORY_FIRST" && copy.checklist && (
         <div className="mt-8 max-w-2xl border-t border-gray-200 pt-6">
           <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-gray-500">
-            Internal checklist
+            Your simple first checklist
           </p>
           <ol className="mt-4 space-y-3">
             {copy.checklist.map((item, i) => (
@@ -71,7 +71,7 @@ export function ResultView({
       {result === "PERMISSIONS_AND_SCOPE_REVIEW" && (
         <div className="mt-8 max-w-2xl border-t border-gray-200 pt-6">
           <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-gray-500">
-            Questions for your organization
+            What to sort out first
           </p>
           <ul className="mt-4 space-y-3">
             {reviewQuestions(answers).map((item) => (
@@ -87,13 +87,13 @@ export function ResultView({
       {result === "INITIAL_CONVERSATION" && intent === "internal_review" && (
         <div className="mt-8 max-w-2xl border-t border-gray-200 pt-6">
           <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-gray-500">
-            Useful to clarify internally
+            Worth checking before you talk
           </p>
           <ul className="mt-4 space-y-3">
             {[
-              "Which categories of records are in scope, and roughly how far back they go.",
-              "Who in your organization approves any external conversation about them.",
-              "Whether any subset should be kept out of an initial discussion.",
+              "Which kinds of records you would consider, and roughly how far back they go.",
+              "Who in your company can approve an outside conversation about them.",
+              "Which records should stay completely out of the discussion.",
             ].map((item) => (
               <li key={item} className="flex gap-4 text-sm leading-relaxed text-gray-700">
                 <span aria-hidden className="mt-[10px] h-px w-5 shrink-0 bg-gray-300" />
@@ -108,7 +108,7 @@ export function ResultView({
       <div className="mt-8 flex flex-col gap-3 border-t border-gray-200 pt-6 sm:flex-row sm:flex-wrap sm:items-center">
         {intent === "nothing" ? (
           <p className="text-sm text-gray-600">
-            Nothing further will be sent. You can restart the fit check or return to the page.
+            We'll leave it there. Nothing will be sent, and you can restart anytime.
           </p>
         ) : (
           <>
@@ -120,7 +120,7 @@ export function ResultView({
                 aria-controls="inquiry-form"
                 className={`${conversationIsPrimary ? "btn-primary" : "btn-ghost"} min-h-[44px]`}
               >
-                Request a conversation
+                Ask SiteTech to explore this
               </button>
             )}
             {showProcessQuestion && (
@@ -131,7 +131,7 @@ export function ResultView({
                 aria-controls="inquiry-form"
                 className="btn-ghost min-h-[44px]"
               >
-                Ask a general process question
+                Ask how this works
               </button>
             )}
             <Link href="/how-it-works" className="link-arrow min-h-[44px] text-gray-700">
@@ -154,13 +154,13 @@ export function ResultView({
             ctaOrigin={origin}
             heading={
               formMode === "supplier_conversation"
-                ? "Request a conversation"
-                : "Ask a general process question"
+                ? "Ask SiteTech to explore a buyer conversation"
+                : "Ask how this works"
             }
             intro={
               formMode === "supplier_conversation"
-                ? "SiteTech will review your high-level inquiry and follow up about a possible next step. Submitting this form does not share anything with a buyer."
-                : "Ask how the process works. This does not change your result above, and nothing is shared with a buyer."
+                ? "We'll review your answers and follow up if a conversation may make sense. Sending this does not share your company or records with a buyer."
+                : "Ask in plain English. This does not change your result above, and nothing is shared with a buyer."
             }
             onCancel={() => setFormMode("none")}
           />

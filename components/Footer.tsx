@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 const exploreLinks = [
-  { href: "/data-fit", label: "Check your data fit" },
+  { href: "/data-fit", label: "See if your files could be worth money" },
   { href: "/how-it-works", label: "How it works" },
   { href: "/#who-its-for", label: "Who it's for" },
   { href: "/#faq", label: "FAQ" },
@@ -34,8 +34,9 @@ export function Footer() {
               </span>
             </div>
             <p className="mt-5 max-w-sm text-sm leading-relaxed text-gray-500">
-              SiteTech helps real estate and built-environment businesses explore potential AI
-              data introductions.
+              SiteTech helps businesses in real estate, construction, and related fields
+              explore whether records they already created could lead to an AI data
+              licensing conversation.
             </p>
           </div>
 
@@ -75,8 +76,8 @@ export function Footer() {
             &copy; {new Date().getFullYear()} SiteTech AI
           </p>
           <p className="max-w-xl font-mono text-[11px] leading-relaxed text-gray-500 sm:text-right">
-            SiteTech facilitates introductions. Dataset evaluation and any licensing transaction
-            are handled directly between the participating businesses.
+            SiteTech makes introductions only. Buyers evaluate records and negotiate any
+            license directly with the business that owns them.
           </p>
         </div>
       </div>

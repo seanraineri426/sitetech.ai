@@ -1,31 +1,51 @@
 const points = [
-  "No document uploads or software connections through this site.",
-  "A specific introduction requires your approval.",
-  "Any evaluation or licensing arrangement is discussed directly with the counterparty.",
+  {
+    title: "Your files stay put",
+    detail: "This website never asks you to upload records, connect software, or share a password.",
+  },
+  {
+    title: "You choose what is in bounds",
+    detail: "Client-owned, private, privileged, or restricted material stays out unless you decide otherwise after proper review.",
+  },
+  {
+    title: "You approve the buyer conversation",
+    detail: "SiteTech names the proposed AI lab, buyer, or partner before your inquiry is shared with them.",
+  },
+  {
+    title: "You sign—or you walk away",
+    detail: "Any price, permitted use, exclusivity, and ownership terms are agreed directly by you. A conversation is not a sale.",
+  },
 ];
 
 export function Control() {
   return (
     <section className="section-dark-solid border-t border-white/10">
       <div className="mx-auto max-w-[1400px] px-6 py-16 sm:py-20 lg:px-10 lg:py-32">
-        <div className="grid gap-12 lg:grid-cols-[1.2fr_1fr] lg:gap-24">
+        <div className="grid gap-12 lg:grid-cols-[1.05fr_1fr] lg:gap-24">
           <div>
-            <p className="section-label mb-6">You control the next step</p>
+            <p className="section-label mb-6">Built to protect your business</p>
             <h2 className="headline-sm text-white">
-              Explore the possibility before sharing the records.
+              You do not hand over the keys. You open one door at a time.
             </h2>
             <p className="body-lg mt-6">
-              The fit check asks about categories, format, and permissions. It does not ask for the
-              underlying files. If an introduction becomes relevant, we explain the proposed next
-              step and ask for your permission.
+              This is not a data dump and not another software rollout. The fit check only asks
+              what kinds of records you have. Your files stay where they are, your team keeps
+              working the way it already does, and you can stop at any point.
+            </p>
+            <p className="mt-6 max-w-2xl text-base font-medium leading-relaxed text-white">
+              If a conversation ever makes sense, you will know exactly who it is, what would
+              be discussed, and what happens next—before anything moves.
             </p>
           </div>
 
           <ul className="divide-y divide-white/10 border-y border-white/10 lg:self-end">
             {points.map((point, i) => (
-              <li key={point} className="grid gap-4 py-6 sm:grid-cols-[48px_1fr]">
+              <li key={point.title} className="grid gap-4 py-6 sm:grid-cols-[48px_1fr]">
                 <span className="font-mono text-[11px] text-gray-500">{String(i + 1).padStart(2, "0")}</span>
-                <span className="text-base leading-relaxed text-gray-300">{point}</span>
+                <span>
+                  <span className="block text-base font-medium leading-relaxed text-white">{point.title}</span>
+                  <span className="mt-1 block text-sm leading-relaxed text-gray-400">{point.detail}</span>
+                </span>
               </li>
             ))}
           </ul>

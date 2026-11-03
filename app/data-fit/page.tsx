@@ -4,14 +4,14 @@ import { DataFitQuiz } from "@/components/data-fit/DataFitQuiz";
 import { SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "Data fit check",
+  title: "Could your files be worth money?",
   description:
-    "Eight short questions to find out whether your company's project and operating records could be a starting point for an AI data licensing conversation. No uploads, no obligation.",
+    "Answer 8 plain-English questions to see whether your company's plans, photos, schedules, and records could lead to an AI licensing conversation. No uploads, no client names, no obligation.",
   alternates: { canonical: "/data-fit" },
   openGraph: {
-    title: "Data fit check | SiteTech AI",
+    title: "Could your files be worth money? | SiteTech AI",
     description:
-      "Eight short questions. No document uploads. See your result before deciding whether to contact SiteTech.",
+      "8 quick questions. No files uploaded. See your result before deciding whether to contact SiteTech.",
     url: `${SITE_URL}/data-fit`,
     type: "website",
   },
@@ -21,9 +21,9 @@ export default function DataFitPage() {
   return (
     <main className="relative">
       <PageHeader
-        label="Find your starting point"
-        title="Could your company's records be relevant?"
-        description="Answer eight short questions for an initial guide to your next step. You'll see the result before deciding whether to contact SiteTech."
+        label="Start here"
+        title="Could your old files be worth money?"
+        description="Answer 8 plain-English questions. You'll see a clear result before entering any contact details—and you never upload a file."
       />
 
       <section className="section-light">

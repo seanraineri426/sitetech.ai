@@ -101,9 +101,9 @@ const bm = { x: 150, y: 168, w: 34, h: 24 };
 // Conceptual brand visual only: illustrative categories, not live demand,
 // submitted records, transactions, or a match.
 const recordTypes = [
-  { id: "PLANS", label: "Plans & technical documentation" },
-  { id: "IMAGERY", label: "Project imagery & scans" },
-  { id: "RECORDS", label: "Building & equipment records" },
+  { id: "PLANS", label: "Project plans & drawings" },
+  { id: "PHOTOS", label: "Job photos & scans" },
+  { id: "LOGS", label: "Equipment & service records" },
 ];
 
 export function HeroSchematic() {
@@ -209,7 +209,7 @@ export function HeroSchematic() {
 
       <div className="mt-2 flex items-center justify-between border-t border-white/10 pt-4">
         <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-gray-500">
-          Illustrative record types
+          Examples of records
         </span>
         <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-gray-600">
           Examples
@@ -231,7 +231,7 @@ export function HeroSchematic() {
       </ul>
 
       <p className="mt-4 font-mono text-[10px] leading-relaxed tracking-wide text-gray-600">
-        Conceptual illustration. Not live buyer demand or submitted records.
+        Examples only—not buyer requests and not files anyone submitted.
       </p>
     </div>
   );

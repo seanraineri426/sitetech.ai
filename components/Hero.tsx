@@ -12,18 +12,18 @@ const HeroCanvas = dynamic(() => import("./HeroCanvas"), {
 const pillars = [
   {
     label: "01",
-    title: "Start with what you have",
-    detail: "A high-level description of the records your business already creates.",
+    title: "You already did the hard part",
+    detail: "Your team created the plans, photos, reports, and records doing real work.",
   },
   {
     label: "02",
-    title: "Explore a potential introduction",
-    detail: "We consider whether a relevant buyer or licensing partner may be worth approaching.",
+    title: "We explore who may want to talk",
+    detail: "SiteTech looks at whether an AI lab or licensing partner conversation makes sense.",
   },
   {
     label: "03",
-    title: "Decide on your terms",
-    detail: "You approve any introduction and discuss any proposed arrangement directly.",
+    title: "Nothing happens without your yes",
+    detail: "No introduction, no files, and no deal unless you approve it first.",
   },
 ];
 
@@ -40,31 +40,32 @@ export function Hero() {
         <div className="mx-auto grid w-full max-w-[1400px] items-center gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
           <div>
             <p className="section-label mb-6 text-gray-400">
-              AI data opportunities for the built environment
+              Your old project files may have a second life
             </p>
 
             <h1 className="headline max-w-[18ch]">
-              Your project files could be your next revenue stream.
+              The jobs you already finished could pay you again.
             </h1>
 
             <p className="body-lg mt-6 max-w-2xl">
-              Your company already creates plans, reports, images, and operating records.
-              SiteTech helps you explore whether a permitted collection could be relevant to
-              an AI data buyer—and whether an introduction makes sense.
+              AI companies need real project photos, plans, schedules, and records to teach
+              their software how buildings actually get built and run. You already paid your
+              team to create those files. SiteTech helps you find out if a buyer conversation
+              is worth having—without uploading a single file.
             </p>
 
             <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
               <Link href="/#data-fit" className="btn-primary">
-                Check your data fit
+                See if my files could be worth money
               </Link>
               <Link href="/how-it-works" className="link-arrow text-gray-400">
-                See how it works
+                How this works
                 <span aria-hidden>→</span>
               </Link>
             </div>
 
             <p className="mt-6 font-mono text-[11px] tracking-wide text-gray-500">
-              8 short questions. No document uploads. No obligation.
+              8 quick questions. No uploads. No obligation. You stay in control.
             </p>
           </div>
 

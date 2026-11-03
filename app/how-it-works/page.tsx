@@ -9,12 +9,12 @@ import { SITE_URL } from "@/lib/site";
 export const metadata: Metadata = {
   title: "How it works",
   description:
-    "How SiteTech's referral process works: describe the records your company holds, clarify permissions, approve any specific introduction, and discuss terms directly with the buyer or licensing partner.",
+    "Start with 8 questions, approve any introduction, and talk terms directly with an AI lab, data buyer, or licensing partner. No uploads and no disruption to your business.",
   alternates: { canonical: "/how-it-works" },
   openGraph: {
     title: "How it works | SiteTech AI",
     description:
-      "Start with a description. Explore the opportunity from there. SiteTech's role is the introduction.",
+      "You describe what you have. SiteTech explores the conversation. You approve every next step.",
     url: `${SITE_URL}/how-it-works`,
     type: "website",
   },
@@ -22,28 +22,28 @@ export const metadata: Metadata = {
 
 const stageDetails: Record<string, string[]> = {
   "01": [
-    "Eight questions about your business and record categories",
-    "Categories only — no documents, exports, or credentials",
-    "Result shown before any contact details are requested",
-    "Optional request for a conversation",
+    "8 questions in plain English",
+    "Kinds of files only—no documents or passwords",
+    "Your result appears before contact details",
+    "Contacting SiteTech is always optional",
   ],
   "02": [
-    "Scope of the collection as you describe it",
-    "Self-reported permission status for external use",
-    "Sensitive or third-party content to keep out of scope",
-    "Questions for your organization to answer internally",
+    "What kinds of records you have and roughly how many projects they cover",
+    "Whether you believe outside use is allowed",
+    "Anything private or restricted that must stay out",
+    "Simple questions to check inside your company",
   ],
   "03": [
-    "Depends on a relevant opportunity being available",
-    "SiteTech names the proposed recipient first",
-    "Nothing is shared without your specific approval",
-    "No automatic matching or introductions",
+    "Only if a relevant opportunity may exist",
+    "SiteTech tells you who the buyer is first",
+    "Nothing is shared until you specifically say yes",
+    "No automatic introductions",
   ],
   "04": [
-    "Evaluation of the collection by the counterparty",
-    "Licensing terms, compensation, and permitted use",
-    "Exclusivity and ownership as agreed between the parties",
-    "You decide whether to proceed",
+    "The buyer explains what it wants to evaluate",
+    "You discuss price, allowed use, exclusivity, and timing",
+    "Your lawyer can review any proposed agreement",
+    "You sign only if the deal makes sense",
   ],
 };
 
@@ -51,19 +51,19 @@ const roles = [
   {
     title: "What SiteTech does",
     items: [
-      "Identifies businesses that may hold relevant records",
-      "Gathers a high-level, non-sensitive description",
-      "Explores whether a buyer or licensing partner may be worth approaching",
-      "Facilitates a permitted introduction when you approve it",
+      "Helps you describe what kinds of records you have",
+      "Explores whether an AI lab or licensing partner may want to talk",
+      "Explains the proposed introduction before it happens",
+      "Makes the introduction only after you approve it",
     ],
   },
   {
     title: "What SiteTech does not do",
     items: [
-      "Buy datasets or act as the licensing counterparty",
-      "Value a dataset or quote a price",
-      "Negotiate licensing terms on your behalf",
-      "Collect, process, clean, or anonymize records",
+      "Buy your records or become the buyer",
+      "Promise a price or guarantee a deal",
+      "Negotiate your licensing terms for you",
+      "Take, clean, process, or anonymize your files",
     ],
   },
 ];
@@ -73,7 +73,7 @@ export default function HowItWorksPage() {
     <main className="relative">
       <PageHeader
         label="How it works"
-        title="Start with a description. Explore the opportunity from there."
+        title="From 8 questions to a decision you control."
         description={processSupportingLine}
       />
 
@@ -105,12 +105,11 @@ export default function HowItWorksPage() {
         <div className="mx-auto max-w-[1400px] px-6 py-16 sm:py-20 lg:px-10 lg:py-32">
           <div className="max-w-2xl">
             <p className="section-label mb-6">SiteTech&apos;s role</p>
-            <h2 className="headline-sm text-white">The introduction is the service.</h2>
+            <h2 className="headline-sm text-white">We open the door. You decide whether to walk through it.</h2>
             <p className="body-lg mt-6">
-              SiteTech&apos;s model is to receive referral fees on eligible introductions under
-              separate agreements with buyers or partners. Any applicable referral arrangement is
-              clarified before an introduction. We do not set the price or negotiate the terms of
-              your data license.
+              SiteTech may earn a referral fee on eligible introductions under separate
+              agreements with buyers or partners. We explain that before an introduction.
+              We do not set the price for your records or negotiate your deal.
             </p>
           </div>
 
@@ -132,8 +131,8 @@ export default function HowItWorksPage() {
 
           <div className="mt-14 flex flex-col gap-4 border-t border-white/10 pt-10 sm:flex-row sm:items-center sm:justify-between">
             <p className="max-w-3xl text-base leading-relaxed text-gray-400">
-              Possessing a file does not establish permission to license it. Client material and
-              licensed third-party content may require separate authorization.
+              Having a file does not automatically mean you can license it. Keep client-owned
+              or restricted material out until the right permission is clear.
             </p>
             <Link href="/for-buyers" className="shrink-0 text-sm text-gray-500 underline-offset-4 hover:text-white hover:underline">
               Data buyer or licensing partner?

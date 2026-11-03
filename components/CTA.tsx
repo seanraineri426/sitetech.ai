@@ -10,12 +10,12 @@ type CTAProps = {
 };
 
 export function CTA({
-  title = "Start with the records you already have.",
-  body = "Find out what may be worth a conversation—and what your team should clarify first.",
+  title = "Your finished work could pay you twice.",
+  body = "You already paid your team to create the records. Answer 8 questions and find out whether a buyer conversation is even worth having.",
   href = "/data-fit",
-  label = "Check your data fit",
+  label = "See if my files could be worth money",
   secondaryHref = "/contact",
-  secondaryLabel = "Have a question? Contact SiteTech.",
+  secondaryLabel = "Have questions first? Talk to SiteTech.",
 }: CTAProps) {
   return (
     <section className="section-dark-solid border-t border-white/10">

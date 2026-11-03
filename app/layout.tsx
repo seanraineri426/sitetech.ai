@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 
 const defaultTitle = "SiteTech AI | Data Licensing Opportunities for the Built Environment";
 const defaultDescription =
-  "Explore whether your company's project and operating records could support an AI data licensing opportunity. Start with SiteTech's short fit check.";
+  "Your finished projects may have value to AI labs. Take a quick, no-upload fit check to see whether your company's plans, photos, schedules, and records could lead to a licensing conversation. You approve every step.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

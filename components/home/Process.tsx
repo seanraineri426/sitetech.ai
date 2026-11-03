@@ -3,32 +3,32 @@ import Link from "next/link";
 export const processSteps = [
   {
     num: "01",
-    title: "Tell us what your company holds",
+    title: "Tell us what you have—in plain categories",
     detail:
-      "Answer a few questions about your business and the categories of records you may want to discuss.",
+      "Answer 8 questions about the kinds of files your company has. Do not upload files or name clients.",
   },
   {
     num: "02",
-    title: "Clarify the starting point",
+    title: "We review the starting point",
     detail:
-      "Your answers highlight the scope of the collection and any permissions your team may need to review.",
+      "Your answers show whether there is a clear set to discuss or whether permission questions need to be sorted first.",
   },
   {
     num: "03",
-    title: "Consider a specific introduction",
+    title: "You approve any introduction",
     detail:
-      "If a relevant opportunity is available, SiteTech asks for your permission before introducing your business to a buyer or licensing partner.",
+      "If a buyer conversation may make sense, we tell you who it is. Nothing about your company is shared until you say yes.",
   },
   {
     num: "04",
-    title: "Evaluate the opportunity directly",
+    title: "You talk money and terms directly",
     detail:
-      "You and the counterparty discuss any evaluation, licensing terms, compensation, and permitted use. You decide whether to proceed.",
+      "You and the buyer discuss price, allowed use, exclusivity, and timing. If you do not like the offer, you walk away.",
   },
 ];
 
 export const processSupportingLine =
-  "SiteTech's role is the introduction. Your business remains responsible for deciding what it can share and which terms it accepts.";
+  "SiteTech makes the introduction. We do not take your files, set your price, or decide for you.";
 
 export function Process() {
   return (
@@ -38,7 +38,7 @@ export function Process() {
           <div className="max-w-2xl">
             <p className="section-label mb-6">How it works</p>
             <h2 className="headline-sm text-white">
-              Start with a description. Explore the opportunity from there.
+              Four steps. No disruption to your business.
             </h2>
           </div>
           <Link href="/how-it-works" className="link-arrow shrink-0 text-gray-400">
@@ -60,7 +60,7 @@ export function Process() {
         <div className="mt-12 flex flex-col gap-4 border-t border-white/10 pt-8 sm:flex-row sm:items-center sm:justify-between">
           <p className="max-w-2xl text-base leading-relaxed text-gray-400">{processSupportingLine}</p>
           <Link href="/for-buyers" className="shrink-0 text-sm text-gray-500 underline-offset-4 hover:text-white hover:underline">
-            Data buyer or licensing partner?
+            Are you an AI lab or data buyer?
           </Link>
         </div>
       </div>

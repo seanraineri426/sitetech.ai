@@ -1,39 +1,35 @@
 export const audienceGroups = [
   {
     title: "Developers, owners & REITs",
-    detail: "Company-created project histories, technical reports, and property-level operating analysis.",
+    detail: "Past project files, technical reports, budgets, and property records your company created.",
   },
   {
     title: "General & specialty contractors",
-    detail: "Permitted project imagery, schedules, quantity records, and construction documentation.",
+    detail: "Job photos, schedules, estimates, quantities, and project records you have the right to discuss.",
   },
   {
     title: "Architecture, engineering & surveying",
-    detail:
-      "Technical documentation, models, surveys, and specifications where external-use rights have been established.",
+    detail: "Drawings, models, surveys, and specs—only where client and contract rules allow outside discussion.",
   },
   {
     title: "Property & facilities management",
-    detail:
-      "Equipment, maintenance, and building-performance records that can be considered separately from personal resident information.",
+    detail: "Work orders, equipment history, inspections, and building records kept separate from tenant personal information.",
   },
   {
     title: "Brokerage, appraisal & research",
-    detail: "Company-created property and market analysis with the necessary external-use permissions.",
+    detail: "Reports, analysis, and market research your company created and is allowed to discuss.",
   },
   {
     title: "Title, legal & professional services",
-    detail:
-      "Potentially relevant nonprivileged, permitted business-record collections, subject to appropriate internal review.",
+    detail: "Only non-privileged business records, and only after the right people inside your firm review them.",
   },
   {
     title: "Housing organizations & public-sector teams",
-    detail:
-      "Permitted technical and operational collections, with personal and restricted records kept out of the inquiry.",
+    detail: "Technical and operating records with personal, resident, and restricted information left completely out.",
   },
   {
     title: "Manufacturers, suppliers & related firms",
-    detail: "Company-owned technical specifications, product documentation, and equipment records.",
+    detail: "Product documents, specifications, manuals, and equipment records your company owns.",
   },
 ];
 
@@ -42,12 +38,13 @@ export function Audience() {
     <section id="who-its-for" className="section-light scroll-mt-24 border-t border-gray-200">
       <div className="mx-auto max-w-[1400px] px-6 py-16 sm:py-20 lg:px-10 lg:py-32">
         <div className="max-w-3xl">
-          <p className="section-label mb-6">Across the built environment</p>
-          <h2 className="headline-sm">Built for the businesses behind buildings.</h2>
+          <p className="section-label mb-6">Who this is for</p>
+          <h2 className="headline-sm">If your company has years of files, start here.</h2>
           <p className="mt-6 text-base leading-relaxed text-gray-600">
-            We welcome inquiries from companies across real estate, construction, and the
-            professional services that support them. These examples help identify a starting
-            point; they are not a list of confirmed buyer requests.
+            You do not need to be an AI company, and construction does not have to be your
+            main business. If your team creates project, property, equipment, or technical
+            records, there may be a starting point. These are examples—not confirmed buyer
+            requests.
           </p>
         </div>
 
@@ -67,8 +64,9 @@ export function Audience() {
         </div>
 
         <p className="mt-10 max-w-3xl text-sm leading-relaxed text-gray-500">
-          Possessing a file does not establish permission to license it. Client material and
-          licensed third-party content may require separate authorization.
+          Having a file does not mean you are allowed to license it. If a client owns it or
+          rules restrict it, leave it out. Start with the records that are clearly yours to
+          discuss.
         </p>
       </div>
     </section>
