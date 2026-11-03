@@ -42,7 +42,7 @@ const stageDetails: Record<string, string[]> = {
   "04": [
     "The buyer explains what it wants to evaluate",
     "You discuss price, allowed use, exclusivity, and timing",
-    "Your lawyer can review any proposed agreement",
+    "Approved records are de-identified before training use",
     "You sign only if the deal makes sense",
   ],
 };
@@ -98,6 +98,59 @@ export default function HowItWorksPage() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      <section id="logistics" className="section-light scroll-mt-24 border-t border-gray-200">
+        <div className="mx-auto max-w-[1400px] px-6 py-16 sm:py-20 lg:px-10 lg:py-32">
+          <div className="max-w-3xl">
+            <p className="section-label mb-6">The logistics</p>
+            <h2 className="headline-sm">Your whole drive is never the product.</h2>
+            <p className="mt-6 text-base leading-relaxed text-gray-600">
+              A real transaction starts with rights, not file transfer. Only the records you
+              approve are evaluated. The buyer or licensing partner then prepares that
+              approved slice—removing or masking direct identifiers—so it can be used as a
+              training-ready package under the contract you sign.
+            </p>
+          </div>
+
+          <div className="mt-14 grid gap-px border border-gray-200 bg-gray-200 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              {
+                num: "01",
+                title: "Rights first",
+                detail: "Ownership and permission are sorted before any records change hands. No agreement, no handoff.",
+              },
+              {
+                num: "02",
+                title: "Approved slice only",
+                detail: "The starting point is a defined set of records—not your whole archive, client systems, or company drive.",
+              },
+              {
+                num: "03",
+                title: "De-identified before training",
+                detail: "Names, emails, phone numbers, addresses, and ID numbers are removed or masked by the buyer or partner before training use.",
+              },
+              {
+                num: "04",
+                title: "Contract controls use",
+                detail: "The agreement should spell out who can access the data, what it can be used for, how it is transferred, and how long it is kept.",
+              },
+            ].map((item) => (
+              <div key={item.num} className="bg-white p-8">
+                <p className="font-mono text-[11px] text-gray-500">{item.num}</p>
+                <h3 className="mt-4 text-base font-medium tracking-tight">{item.title}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-gray-600">{item.detail}</p>
+              </div>
+            ))}
+          </div>
+
+          <p className="mt-10 max-w-3xl text-sm leading-relaxed text-gray-500">
+            Anonymized does not mean “send anything.” Privileged material, tenant files,
+            identity documents, client secrets, and restricted content should be excluded
+            entirely—not cleaned up after the fact. SiteTech does not receive, clean, or
+            anonymize your files.
+          </p>
         </div>
       </section>
 

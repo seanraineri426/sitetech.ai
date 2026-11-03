@@ -195,7 +195,7 @@ export const QUESTIONS: readonly QuestionDef[] = [
     kind: "multi",
     legend: "Could those records include anything private or restricted?",
     helper:
-      "Most companies have a mix. That's okay. Never send the private material itself—we only need to know whether a safer, separate set may exist.",
+      "Most companies have a mix. Never send private material here. In a real deal, approved records would be de-identified—names and IDs removed or masked—before training use, but restricted material still stays out.",
     exclusive: SENSITIVITY_EXCLUSIVE,
     options: [
       { value: "personal", label: "Names or personal details about tenants, customers, residents, or employees" },

@@ -4,8 +4,14 @@ const points = [
     detail: "This website never asks you to upload records, connect software, or share a password.",
   },
   {
-    title: "You choose what is in bounds",
-    detail: "Client-owned, private, privileged, or restricted material stays out unless you decide otherwise after proper review.",
+    title: "Names and IDs come out before training use",
+    detail:
+      "For an approved package, the buyer or licensing partner de-identifies the data—removing or masking names, emails, phone numbers, addresses, and IDs—so it can be training-ready.",
+  },
+  {
+    title: "Some things are excluded, not anonymized",
+    detail:
+      "Tenant files, identity documents, privileged legal material, client secrets, and restricted records should stay out entirely. Anonymization is not a magic wand.",
   },
   {
     title: "You approve the buyer conversation",

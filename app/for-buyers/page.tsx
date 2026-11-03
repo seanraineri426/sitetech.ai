@@ -34,7 +34,7 @@ export default function ForBuyersPage() {
                 {[
                   "Businesses describe only the kinds of records they have—not the records themselves.",
                   "The owner must approve a specific introduction before SiteTech shares its inquiry with you.",
-                  "You evaluate the records and discuss price and terms directly with the owner.",
+                  "You handle rights confirmation, evaluation, de-identification, secure transfer, and training-ready preparation directly with the owner under contract.",
                   "Any referral arrangement is agreed separately and explained before an introduction.",
                 ].map((item, i) => (
                   <li key={item} className="grid gap-4 py-5 sm:grid-cols-[48px_1fr]">

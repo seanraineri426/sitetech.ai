@@ -23,7 +23,26 @@ export const processSteps = [
     num: "04",
     title: "You talk money and terms directly",
     detail:
-      "You and the buyer discuss price, allowed use, exclusivity, and timing. If you do not like the offer, you walk away.",
+      "You and the buyer discuss price, allowed use, exclusivity, and timing. Only after you agree does the buyer prepare the approved records for training use.",
+  },
+];
+
+const logistics = [
+  {
+    title: "Approved slice only",
+    detail: "Not your whole drive, not your systems, and not records you said were out of bounds.",
+  },
+  {
+    title: "Names and IDs come out",
+    detail: "The buyer or partner removes or masks direct identifiers before training use.",
+  },
+  {
+    title: "Training-ready package",
+    detail: "They prepare the approved data so researchers can use it without wasting time cleaning it up.",
+  },
+  {
+    title: "Contract controls the use",
+    detail: "Who can access it, what it can be used for, and how long it is kept should be spelled out before handoff.",
   },
 ];
 
@@ -55,6 +74,21 @@ export function Process() {
               <p className="mt-3 text-sm leading-relaxed text-gray-400">{step.detail}</p>
             </div>
           ))}
+        </div>
+
+        <div className="mt-12 border-t border-white/10 pt-8">
+          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-gray-500">
+            If it ever goes further — what happens to the data
+          </p>
+          <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {logistics.map((item, i) => (
+              <div key={item.title} className="border-l border-white/10 pl-5">
+                <p className="font-mono text-[11px] text-gray-500">{String(i + 1).padStart(2, "0")}</p>
+                <h3 className="mt-3 text-sm font-medium tracking-tight text-white">{item.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-gray-400">{item.detail}</p>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="mt-12 flex flex-col gap-4 border-t border-white/10 pt-8 sm:flex-row sm:items-center sm:justify-between">

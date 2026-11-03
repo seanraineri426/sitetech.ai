@@ -36,8 +36,12 @@ export const faqs = [
     a: "No. Do not upload files here, and do not enter passwords or connect Procore, Yardi, email, drives, or any other software. The first step is only a plain-language description of the kinds of records you have.",
   },
   {
+    q: "Is the data anonymized before an AI lab uses it?",
+    a: "Yes—that is the de-identification step that makes an approved dataset training-ready. Before training use, the buyer or licensing partner removes or masks direct identifiers like names, emails, phone numbers, addresses, and ID numbers. SiteTech does not do that processing. It happens on the buyer/partner side, only for the records you approve and under the agreement you sign.",
+  },
+  {
     q: "What if most of our records belong to clients or contain private information?",
-    a: "Leave those out. Start by asking whether there is a separate set your company owns and is allowed to discuss. Tenant files, resident information, identity documents, privileged legal material, and client secrets do not belong in this inquiry.",
+    a: "Leave those out of this inquiry. Later anonymization is not a reason to send private material here. Start by asking whether there is a separate set your company owns and is allowed to discuss. Tenant files, resident information, identity documents, privileged legal material, and client secrets may need to be excluded entirely—not anonymized into a deal.",
   },
   {
     q: "What if we are small or only have one project?",

@@ -12,7 +12,7 @@ export const RESULT_COPY: Record<ResultType, ResultCopy> = {
     label: "Your result: pause that set",
     heading: "Do not offer that set. Look for a safer one.",
     body:
-      "You told us the records you had in mind are restricted. Do not send them. Your company may have a different set that it owns and can discuss, but permission has to be sorted out before anyone talks to a buyer.",
+      "You told us the records you had in mind are restricted. Do not send them, and do not treat anonymization as a workaround. Your company may have a different set that it owns and can discuss, but permission has to be sorted out before anyone talks to a buyer.",
   },
   INVENTORY_FIRST: {
     label: "Your result: start with what you have",
@@ -29,13 +29,13 @@ export const RESULT_COPY: Record<ResultType, ResultCopy> = {
     label: "Your result: close, with one thing to sort",
     heading: "Good data still needs clean permission.",
     body:
-      "There may be something worth discussing, but your answers say ownership, client permission, or sensitive content needs a closer look. Labs care about usable data with clear rights. The easiest starting point is usually a clean, separate set: records your company owns, with private or restricted material left out.",
+      "There may be something worth discussing, but your answers say ownership, client permission, or sensitive content needs a closer look. Labs care about usable data with clear rights. A buyer or partner can de-identify approved records later, but anonymization does not fix ownership or client-permission problems. The easiest starting point is usually a clean, separate set.",
   },
   INITIAL_CONVERSATION: {
     label: "Your result: worth exploring",
     heading: "You may have the good stuff labs are looking for.",
     body:
-      "You told us you have a real set of records and that outside-use permission has already been checked. That is the combination worth exploring: real-world material a lab cannot simply scrape, with a clearer path to discuss it. No buyer has been matched yet, and your company will not be shared with one until you approve exactly who it is.",
+      "You told us you have a real set of records and that outside-use permission has already been checked. That is the combination worth exploring: real-world material a lab cannot simply scrape, with a clearer path to discuss it. If it moves forward, only approved records would be prepared, with direct identifiers removed or masked before training use. No buyer has been matched yet, and your company will not be shared with one until you approve exactly who it is.",
   },
 };
 
