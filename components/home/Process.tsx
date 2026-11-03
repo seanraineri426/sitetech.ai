@@ -9,9 +9,9 @@ export const processSteps = [
   },
   {
     num: "02",
-    title: "We review the starting point",
+    title: "We help you not walk in blind",
     detail:
-      "Your answers show whether there is a clear set to discuss or whether permission questions need to be sorted first.",
+      "Your answers show whether the records sound scarce and usable, or whether ownership and permission questions need to be sorted first.",
   },
   {
     num: "03",
@@ -28,7 +28,7 @@ export const processSteps = [
 ];
 
 export const processSupportingLine =
-  "SiteTech makes the introduction. We do not take your files, set your price, or decide for you.";
+  "SiteTech helps you get ready for the conversation and makes the introduction. We do not take your files, set your price, or decide for you.";
 
 export function Process() {
   return (

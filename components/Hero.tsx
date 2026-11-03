@@ -12,13 +12,13 @@ const HeroCanvas = dynamic(() => import("./HeroCanvas"), {
 const pillars = [
   {
     label: "01",
-    title: "You already did the hard part",
-    detail: "Your team created the plans, photos, reports, and records doing real work.",
+    title: "The labs need it all the time",
+    detail: "AI research labs and data buyers are constantly looking for fresh, real-world training data.",
   },
   {
     label: "02",
-    title: "We explore who may want to talk",
-    detail: "SiteTech looks at whether an AI lab or licensing partner conversation makes sense.",
+    title: "You should not go in blind",
+    detail: "Labs do this for a living. Most owners have never sold data once. SiteTech helps you start smart.",
   },
   {
     label: "03",
@@ -40,23 +40,23 @@ export function Hero() {
         <div className="mx-auto grid w-full max-w-[1400px] items-center gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
           <div>
             <p className="section-label mb-6 text-gray-400">
-              Your old project files may have a second life
+              AI labs are hunting for real-world data
             </p>
 
-            <h1 className="headline max-w-[18ch]">
-              The jobs you already finished could pay you again.
+            <h1 className="headline max-w-[19ch]">
+              AI labs don&apos;t need more internet data. They need yours.
             </h1>
 
             <p className="body-lg mt-6 max-w-2xl">
-              AI companies need real project photos, plans, schedules, and records to teach
-              their software how buildings actually get built and run. You already paid your
-              team to create those files. SiteTech helps you find out if a buyer conversation
-              is worth having—without uploading a single file.
+              They can scrape the web all day. They can&apos;t scrape your finished jobs: the
+              photos, plans, schedules, estimates, inspections, and service records your team
+              created over years of real work. That&apos;s the good stuff. SiteTech helps you
+              find out if a lab conversation is worth having—without uploading a single file.
             </p>
 
             <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
               <Link href="/#data-fit" className="btn-primary">
-                See if my files could be worth money
+                See if mine is the good stuff
               </Link>
               <Link href="/how-it-works" className="link-arrow text-gray-400">
                 How this works

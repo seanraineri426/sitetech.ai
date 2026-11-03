@@ -138,7 +138,8 @@ export const QUESTIONS: readonly QuestionDef[] = [
     id: "records",
     kind: "multi",
     legend: "What kinds of files or records does your company have?",
-    helper: "Pick all that sound familiar. Think broad types—not individual documents.",
+    helper:
+      "Pick all that sound familiar. Labs are not looking for stuff they can scrape or fake—real projects, real photos, and real outcomes are the good stuff.",
     exclusive: RECORD_EXCLUSIVE,
     options: [
       { value: "plans_specs_technical", label: "Plans, drawings, specs, or technical documents" },
@@ -155,6 +156,7 @@ export const QUESTIONS: readonly QuestionDef[] = [
     id: "storage",
     kind: "single",
     legend: "Where do those files live today?",
+    helper: "Digital files are usually easier for a buyer to evaluate later. Paper does not disqualify you at this stage.",
     options: [
       { value: "digital_documents", label: "Mostly on computers, shared drives, or cloud folders" },
       { value: "structured_exports", label: "Mostly in a database or system exports" },
@@ -167,6 +169,7 @@ export const QUESTIONS: readonly QuestionDef[] = [
     id: "scope",
     kind: "single",
     legend: "How much work do those records cover?",
+    helper: "More coverage can mean more examples for a buyer. A small set can still matter if it is unique or hard to copy.",
     options: [
       { value: "single", label: "One project, property, or deal" },
       { value: "several", label: "Several projects, properties, or deals" },
@@ -207,6 +210,7 @@ export const QUESTIONS: readonly QuestionDef[] = [
     id: "frequency",
     kind: "single",
     legend: "Are you still adding records like these?",
+    helper: "Data is an all-the-time business. Old collections can matter; ongoing records are a different kind of opportunity.",
     options: [
       { value: "historical", label: "No—this is mostly old or finished work" },
       { value: "occasional", label: "Now and then, as projects or deals finish" },
@@ -219,7 +223,7 @@ export const QUESTIONS: readonly QuestionDef[] = [
     kind: "single",
     legend: "What sounds best right now?",
     options: [
-      { value: "explore_introduction", label: "See if a buyer conversation is possible" },
+      { value: "explore_introduction", label: "See if a lab or buyer may want to talk" },
       { value: "internal_review", label: "Tell me what to check inside my company first" },
       { value: "learn_process", label: "Just explain how this works" },
       { value: "nothing", label: "Nothing right now" },

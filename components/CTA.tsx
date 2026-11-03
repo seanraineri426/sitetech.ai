@@ -10,10 +10,10 @@ type CTAProps = {
 };
 
 export function CTA({
-  title = "Your finished work could pay you twice.",
-  body = "You already paid your team to create the records. Answer 8 questions and find out whether a buyer conversation is even worth having.",
+  title = "The labs are looking. Find out if they are looking for yours.",
+  body = "Data buyers do this every day. Most owners never check once. Answer 8 questions and see whether your records are worth a conversation.",
   href = "/data-fit",
-  label = "See if my files could be worth money",
+  label = "See if mine is the good stuff",
   secondaryHref = "/contact",
   secondaryLabel = "Have questions first? Talk to SiteTech.",
 }: CTAProps) {

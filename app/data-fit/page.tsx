@@ -22,7 +22,7 @@ export default function DataFitPage() {
     <main className="relative">
       <PageHeader
         label="Start here"
-        title="Could your old files be worth money?"
+        title="Is yours the good stuff?"
         description="Answer 8 plain-English questions. You'll see a clear result before entering any contact details—and you never upload a file."
       />
 

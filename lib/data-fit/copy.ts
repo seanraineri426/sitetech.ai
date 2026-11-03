@@ -16,7 +16,7 @@ export const RESULT_COPY: Record<ResultType, ResultCopy> = {
   },
   INVENTORY_FIRST: {
     label: "Your result: start with what you have",
-    heading: "First, find out what you actually have.",
+    heading: "First, find out whether you have the good stuff.",
     body:
       "You cannot talk about money until you know what exists. Make a simple list of the kinds of files your company has, where they live, and who can say whether outside use is allowed.",
     checklist: [
@@ -27,15 +27,15 @@ export const RESULT_COPY: Record<ResultType, ResultCopy> = {
   },
   PERMISSIONS_AND_SCOPE_REVIEW: {
     label: "Your result: close, with one thing to sort",
-    heading: "You are not blocked. You just need to sort permission first.",
+    heading: "Good data still needs clean permission.",
     body:
-      "There may be something worth discussing, but your answers say ownership, client permission, or sensitive content needs a closer look. The easiest starting point is usually a clean, separate set: records your company owns, with private or restricted material left out.",
+      "There may be something worth discussing, but your answers say ownership, client permission, or sensitive content needs a closer look. Labs care about usable data with clear rights. The easiest starting point is usually a clean, separate set: records your company owns, with private or restricted material left out.",
   },
   INITIAL_CONVERSATION: {
     label: "Your result: worth exploring",
-    heading: "You may have something worth a buyer conversation.",
+    heading: "You may have the good stuff labs are looking for.",
     body:
-      "You told us you have a real set of records and that outside-use permission has already been checked. That is enough to ask SiteTech to explore whether an AI lab or licensing partner may want to talk. No buyer has been matched yet, and your company will not be shared with one until you approve exactly who it is.",
+      "You told us you have a real set of records and that outside-use permission has already been checked. That is the combination worth exploring: real-world material a lab cannot simply scrape, with a clearer path to discuss it. No buyer has been matched yet, and your company will not be shared with one until you approve exactly who it is.",
   },
 };
 

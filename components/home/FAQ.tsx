@@ -8,12 +8,24 @@ export const faqs = [
     a: "Because they came from real work. Generic examples cannot easily show the messy details of a real building, project, repair, or inspection. Your records may contain years of that real-world detail. That does not guarantee a buyer will want them, but it is why a conversation can be worth exploring.",
   },
   {
+    q: "Why don't AI labs just use the internet?",
+    a: "Because the internet is mostly generic, public, and easy for everyone to copy. The harder thing to find is proprietary data from real work: what a site actually looked like, what a repair actually found, what a project actually cost, and what happened after the building opened. That is why brokers talk about 'the good stuff.'",
+  },
+  {
+    q: "What makes records 'good stuff' instead of just old files?",
+    a: "Usually some mix of real-world detail, uniqueness, coverage, and clear permission. A buyer cares whether the records teach something hard to fake, whether there is enough of it to be useful, and whether your company is actually allowed to license it. The quiz checks the starting point; it does not score or price the records.",
+  },
+  {
     q: "How much money could we make?",
     a: "There is no honest number anyone can give from an 8-question quiz. Price depends on what the buyer needs, how useful and usable the records are, what rights you can grant, and the deal you negotiate. SiteTech does not value your records or promise a payout.",
   },
   {
     q: "Is this guaranteed income?",
     a: "No. Think of it as a possible new return on work you already completed—not a promise and not automatic recurring revenue. A deal could be one-time or structured another way, but only if you and a buyer agree to it.",
+  },
+  {
+    q: "Is this a one-time fad or an ongoing market?",
+    a: "Data buying is an ongoing business because AI systems keep needing fresh, real-world examples. That does not mean any one company gets recurring revenue. It means old records can be relevant now, and new records may create future conversations if a buyer wants them.",
   },
   {
     q: "Will this disrupt or change how our business operates?",

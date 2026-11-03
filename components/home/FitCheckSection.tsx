@@ -13,11 +13,11 @@ export function FitCheckSection() {
         <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-24">
           <div className="lg:sticky lg:top-32 lg:self-start">
             <p className="section-label mb-6">Start here</p>
-            <h2 className="headline-sm">Could your files be worth money to an AI lab?</h2>
+            <h2 className="headline-sm">Is yours the good stuff the labs are looking for?</h2>
             <p className="mt-6 text-base leading-relaxed text-gray-600">
-              Answer 8 plain-English questions. You will get a clear next step before entering
-              any contact details. If the answer is “not yet,” the result will show what to
-              sort out first.
+              Answer 8 plain-English questions about what you have, whether it is yours to
+              discuss, and whether anything sensitive needs to stay out. You will get a clear
+              next step before entering any contact details.
             </p>
             <ul className="mt-8 divide-y divide-gray-200 border-y border-gray-200">
               {reassurances.map((item, i) => (
