@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { DataFitQuiz } from "@/components/data-fit/DataFitQuiz";
+import { PUBLISHED_RANGE_QUALIFIER, PUBLISHED_RANGE_TEXT } from "@/lib/data-fit/benchmarks";
 
 export function FitCheckSection() {
   return (
@@ -12,7 +13,10 @@ export function FitCheckSection() {
             <p className="mt-6 text-base leading-relaxed text-gray-600">
               Answer eight short questions. Tap once to advance. Chips and a safety meter climb as you
               go, then your email opens the vault on a modeled value you can calculate and cite.
+              Buyers publicly state offer ranges of {PUBLISHED_RANGE_TEXT} for construction and design
+              records, and the result shows where your collection lands against them.
             </p>
+            <p className="mt-3 text-xs leading-relaxed text-gray-500">{PUBLISHED_RANGE_QUALIFIER}</p>
 
             <div className="relative mt-10 aspect-[16/10] overflow-hidden border border-gray-200">
               <Image

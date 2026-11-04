@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
+import { PUBLISHED_RANGE_TEXT } from "@/lib/data-fit/benchmarks";
 import { motion, useReducedMotion } from "framer-motion";
 
 const HeroCanvas = dynamic(() => import("./HeroCanvas"), {
@@ -71,6 +72,15 @@ export function Hero() {
               an AI data buyer, and whether an introduction makes sense.
             </p>
 
+            <p className="mt-5 max-w-2xl border-l-2 border-gold pl-4 text-base leading-relaxed text-gray-200">
+              AI data buyers publish offer ranges of{" "}
+              <span className="font-semibold text-gold">{PUBLISHED_RANGE_TEXT}</span> for construction and
+              design records.{" "}
+              <span className="text-gray-500">
+                Published offers, not completed sales or a promise of payment.
+              </span>
+            </p>
+
             <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
               <Link href="/#data-fit" className="btn-primary">
                 Check your data fit
@@ -108,7 +118,7 @@ export function Hero() {
                 </p>
                 <p className="mt-2 text-2xl font-medium tracking-tight">See what your archive could unlock</p>
                 <p className="mt-2 text-sm text-gray-400">
-                  Chips and a safety meter climb as you answer.
+                  Published buyer ranges: {PUBLISHED_RANGE_TEXT}. Your own modeled value opens at the end.
                 </p>
               </div>
             </div>

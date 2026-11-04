@@ -11,7 +11,7 @@ type CTAProps = {
 
 export function CTA({
   title = "Start with the records you already have.",
-  body = "Find out what may be worth a conversation, and what your team should clarify first.",
+  body = "Buyers publish offer ranges of up to $5M for construction and design records (published offers, not guarantees). Find out where your collection lands, and what your team should clarify first.",
   href = "/data-fit",
   label = "Check your data fit",
   secondaryHref = "/contact",

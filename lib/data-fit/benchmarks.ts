@@ -87,3 +87,21 @@ export const REALIZED_SALES = {
 
 export const BENCHMARK_CAVEAT =
   "These are what buyers and brokers publish they might offer, not what companies have been paid. Only four public completed sales with a stated amount exist for company records, with a median near $28K. Many firms receive less than the published ranges, or no offer at all.";
+
+const offerRanges = BENCHMARKS.filter((b) => b.kind === "published offer range");
+
+/** Widest span across the published offer ranges, for attributed marketing copy. */
+export const PUBLISHED_OFFER_SPAN = {
+  lowUsd: Math.min(...offerRanges.map((b) => b.lowUsd)),
+  highUsd: Math.max(...offerRanges.map((b) => b.highUsd)),
+};
+
+function compactUsd(n: number) {
+  return n >= 1_000_000 ? `$${n / 1_000_000}M` : `$${Math.round(n / 1000)}K`;
+}
+
+/** "$100K to $5M". Always pair with PUBLISHED_RANGE_QUALIFIER nearby. */
+export const PUBLISHED_RANGE_TEXT = `${compactUsd(PUBLISHED_OFFER_SPAN.lowUsd)} to ${compactUsd(PUBLISHED_OFFER_SPAN.highUsd)}`;
+
+export const PUBLISHED_RANGE_QUALIFIER =
+  "Published offer ranges from AI data buyers and brokers for construction and design records. Not completed sales, not a promise of payment.";
