@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BOOKING_URL } from "@/lib/site";
 
 type CTAProps = {
   title?: string;
@@ -28,6 +29,15 @@ export function CTA({
               <Link href={href} className="btn-primary">
                 {label}
               </Link>
+              <a
+                href={BOOKING_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="link-arrow text-white"
+              >
+                Book a call
+                <span aria-hidden>→</span>
+              </a>
               {secondaryHref && secondaryLabel && (
                 <Link href={secondaryHref} className="link-arrow text-gray-400">
                   {secondaryLabel}

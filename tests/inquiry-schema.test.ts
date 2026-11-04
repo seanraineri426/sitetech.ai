@@ -5,8 +5,9 @@ import { QUIZ_VERSION } from "../lib/data-fit/questions.ts";
 
 const favorableAnswers = {
   business: "contracting",
+  size: "small",
   records: ["plans_specs_technical"],
-  storage: "digital_documents",
+  software: ["shared_drive"],
   scope: "several",
   permission: "confirmed",
   sensitivity: ["none_identified"],

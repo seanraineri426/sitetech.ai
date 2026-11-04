@@ -5,6 +5,8 @@ import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
 import { DataFitQuiz } from "@/components/data-fit/DataFitQuiz";
 import { PUBLISHED_RANGE_TEXT } from "@/lib/data-fit/benchmarks";
+import { QUESTION_COUNT } from "@/lib/data-fit/questions";
+import { BOOKING_URL } from "@/lib/site";
 
 const HeroCanvas = dynamic(() => import("./HeroCanvas"), {
   ssr: false,
@@ -66,7 +68,7 @@ export function Hero() {
               >
                 <span className="flex flex-col leading-tight">
                   <span>See what my data is worth</span>
-                  <span className="mt-0.5 text-xs font-medium text-black/60">8 quick questions. Tap to answer.</span>
+                  <span className="mt-0.5 text-xs font-medium text-black/60">{QUESTION_COUNT} quick taps. No typing until the end.</span>
                 </span>
                 <span className="cta-arrow flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-black text-gold" aria-hidden>
                   <svg viewBox="0 0 24 24" className="h-5 w-5 lg:hidden" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
@@ -77,6 +79,17 @@ export function Hero() {
                   </svg>
                 </span>
               </a>
+              <p className="mt-3 text-sm text-gray-400">
+                Prefer to talk?{" "}
+                <a
+                  href={BOOKING_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gold underline-offset-4 hover:underline"
+                >
+                  Book a call
+                </a>
+              </p>
             </div>
 
             <p className="mt-6 max-w-xl border-l-2 border-gold pl-4 text-sm leading-relaxed text-gray-200 sm:text-base">

@@ -27,6 +27,7 @@ import {
   type Scope,
   type Sensitivity,
   type StorageFormat,
+  storageFromSoftware,
 } from "./questions.ts";
 
 export const MODEL_ID = "SiteTech Data Fit Model v2";
@@ -154,8 +155,6 @@ export type Valuation = {
   amountUsd: number;
   lowUsd: number;
   highUsd: number;
-  /** 0 to 100 readiness score from rights and cleanliness. */
-  safety: number;
   tier: Tier;
   held: null | "restricted" | "no_collection";
   boosts: Boost[];
@@ -173,7 +172,7 @@ function productPct(factors: readonly Factor[]): number {
 function factorsFor(a: CompleteAnswers): Factor[] {
   return [
     { key: "coverage", label: "Coverage", choice: SCOPE_NAME[a.scope], pct: SCOPE_PCT[a.scope] },
-    { key: "format", label: "Format", choice: FORMAT_NAME[a.storage], pct: FORMAT_PCT[a.storage] },
+    { key: "format", label: "Format", choice: FORMAT_NAME[storageFromSoftware(a.software)], pct: FORMAT_PCT[storageFromSoftware(a.software)] },
     { key: "freshness", label: "Freshness", choice: FRESHNESS_NAME[a.frequency], pct: FRESHNESS_PCT[a.frequency] },
     { key: "rights", label: "Rights", choice: RIGHTS_NAME[a.permission], pct: RIGHTS_PCT[a.permission] },
     { key: "cleanliness", label: "Cleanliness", choice: cleanlinessName(a.sensitivity), pct: cleanlinessPct(a.sensitivity) },
@@ -185,13 +184,6 @@ function rawFor(a: CompleteAnswers): { baseUsd: number; items: BaseItem[]; facto
   const factors = factorsFor(a);
   const rawUsd = (baseUsd * productPct(factors)) / 1e10;
   return { baseUsd, items, factors, rawUsd };
-}
-
-/** 0 to 100. Missing answers use neutral assumptions so the live meter works mid-quiz. */
-export function safetyScore(a: Answers): number {
-  const rights = (a.permission ? RIGHTS_PCT[a.permission] : 35) / 100;
-  const clean = a.sensitivity?.length ? (cleanlinessPct(a.sensitivity) - 50) / 50 : 0.6;
-  return Math.round(100 * (0.6 * rights + 0.4 * clean));
 }
 
 function tierFor(amountUsd: number): Tier {
@@ -209,7 +201,7 @@ export function referenceCode(a: CompleteAnswers): string {
     QUIZ_VERSION,
     a.business,
     [...a.records].sort().join("+"),
-    a.storage,
+    storageFromSoftware(a.software),
     a.scope,
     a.permission,
     [...a.sensitivity].sort().join("+"),
@@ -254,7 +246,6 @@ export function computeValuation(a: CompleteAnswers): Valuation {
     amountUsd,
     lowUsd: roundTo100(rawUsd * 0.7),
     highUsd: roundTo100(rawUsd * 1.4),
-    safety: safetyScore(a),
     tier: tierFor(amountUsd),
     held,
     boosts,
@@ -269,7 +260,8 @@ export function chipsFor(a: Answers): number {
     const real = a.records.filter((r) => r !== "unsure" && r !== "none").length;
     chips += 100 + Math.min(real, 6) * 40;
   }
-  if (a.storage) chips += 100;
+  if (a.size) chips += 100;
+  if (a.software?.length) chips += 100 + (a.software.some((t) => t === "procore" || t === "autodesk") ? 40 : 0);
   if (a.scope) chips += 100 + (a.scope === "portfolio" ? 80 : a.scope === "several" ? 40 : 0);
   if (a.permission) chips += 100 + (a.permission === "confirmed" ? 150 : a.permission === "ours_needs_review" ? 60 : 0);
   if (a.sensitivity?.length) chips += 100 + (a.sensitivity.includes("none_identified") ? 100 : 0);

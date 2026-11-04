@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
 import { ContactForms } from "@/components/ContactForms";
-import { SITE_URL } from "@/lib/site";
+import { BOOKING_URL, SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Contact",
@@ -45,10 +45,21 @@ export default function ContactPage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/#quiz" className="link-arrow mt-8 text-black">
-                Check your data fit
-                <span aria-hidden>→</span>
-              </Link>
+              <a
+                href={BOOKING_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="cta-gold mt-8 inline-flex min-h-[52px] w-full items-center justify-between gap-4 rounded-xl px-5 text-left text-sm font-semibold sm:w-auto sm:min-w-[16rem]"
+              >
+                <span>Prefer to talk? Book a call</span>
+                <span aria-hidden className="text-lg">↗</span>
+              </a>
+              <div className="mt-6">
+                <Link href="/#quiz" className="link-arrow text-black">
+                  Check your data fit
+                  <span aria-hidden>→</span>
+                </Link>
+              </div>
             </div>
 
             <ContactForms />

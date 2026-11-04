@@ -31,8 +31,11 @@ export const CONTACT_ACCESS_KEY =
   process.env.NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY?.trim() || "a6e64ba7-1616-4ec1-8414-3323e6006099";
 
 /**
- * Retained from the original site for reference only. The event is scoped to
- * the retired "AI Workflow Assessment" offer, so it is not linked from the
- * current site. Replace with a verified booking link before reusing.
+ * Calendar booking page. Linked as a plain URL (no names, emails, or quiz
+ * answers are ever appended to it). Set NEXT_PUBLIC_BOOKING_URL in the hosting
+ * environment to point at a dedicated event without a code change.
+ *
+ * The default is the 30 minute SiteTech AI Calendly event.
  */
-export const LEGACY_BOOKING_URL = "https://calendly.com/seanvraineri/sitetech-ai";
+export const BOOKING_URL =
+  process.env.NEXT_PUBLIC_BOOKING_URL?.trim() || "https://calendly.com/sean-sitetechai/30min";

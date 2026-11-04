@@ -77,7 +77,7 @@ export default function OpengraphImage() {
               maxWidth: "880px",
             }}
           >
-            Answer 8 quick questions and see a modeled value for your
+            Answer a few quick questions and see a modeled value for your
             project records.
           </div>
         </div>

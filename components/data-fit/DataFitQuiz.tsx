@@ -250,7 +250,7 @@ export function DataFitQuiz({
                 </h3>
                 <p className="mt-4 max-w-xl text-sm leading-relaxed text-gray-300">{QUIZ_INTRO_HELPER}</p>
                 <p className="mt-3 max-w-xl text-sm leading-relaxed text-gray-400">
-                  Tap an answer and you move on. Collect chips, fill your safety meter, and unlock a modeled
+                  Tap an answer and you move on. Collect chips as you go and unlock a modeled
                   value you can calculate and cite. Your email opens the vault at the end.
                 </p>
                 <button

@@ -1,14 +1,14 @@
 // ---------------------------------------------------------------------------
 // Data fit check: authoritative question definitions.
 //
-// This is the single source of truth for the eight questions rendered by the
+// This is the single source of truth for the questions rendered by the
 // homepage and /data-fit. Option values are stable string ids; the result
 // function in ./result.ts depends on them. Bump QUIZ_VERSION when ids change.
 //
 // Intentionally free of framework imports so it can be unit-tested with Node.
 // ---------------------------------------------------------------------------
 
-export const QUIZ_VERSION = "2026-11-03.1";
+export const QUIZ_VERSION = "2026-11-04.1";
 
 export const BUSINESS_TYPES = [
   "development_owner_reit",
@@ -43,6 +43,55 @@ export const STORAGE_FORMATS = [
   "unsure",
 ] as const;
 export type StorageFormat = (typeof STORAGE_FORMATS)[number];
+
+export const TEAM_SIZES = ["micro", "small", "mid", "large"] as const;
+export type TeamSize = (typeof TEAM_SIZES)[number];
+
+/**
+ * Systems where the records live. Buyers ask for this first: a system of record
+ * such as Procore or Autodesk Construction Cloud can export clean, structured
+ * data, while a shared drive or paper cannot.
+ */
+export const SOFTWARE_TOOLS = [
+  "procore",
+  "autodesk",
+  "bluebeam",
+  "field_apps",
+  "property_systems",
+  "accounting_scheduling",
+  "shared_drive",
+  "paper",
+  "other_software",
+  "unsure",
+] as const;
+export type SoftwareTool = (typeof SOFTWARE_TOOLS)[number];
+export const SOFTWARE_EXCLUSIVE: readonly SoftwareTool[] = ["unsure"];
+
+const STRUCTURED_TOOLS: readonly SoftwareTool[] = [
+  "procore",
+  "autodesk",
+  "field_apps",
+  "property_systems",
+  "accounting_scheduling",
+];
+
+/**
+ * The model's format input, inferred from the tools a visitor picked:
+ *   unsure                       -> unsure
+ *   paper plus any digital tool  -> mixed digital and paper
+ *   paper only                   -> paper or scanned
+ *   any system of record         -> structured exports
+ *   otherwise                    -> digital documents
+ */
+export function storageFromSoftware(software: readonly SoftwareTool[]): StorageFormat {
+  if (software.includes("unsure")) return "unsure";
+  const hasPaper = software.includes("paper");
+  const hasDigital = software.some((t) => t !== "paper");
+  if (hasPaper && hasDigital) return "mixed_digital_paper";
+  if (hasPaper) return "paper_scanned";
+  if (software.some((t) => STRUCTURED_TOOLS.includes(t))) return "structured_exports";
+  return "digital_documents";
+}
 
 export const SCOPES = ["single", "several", "portfolio", "unsure"] as const;
 export type Scope = (typeof SCOPES)[number];
@@ -81,8 +130,9 @@ export type NextStep = (typeof NEXT_STEPS)[number];
 /** Partial answer set held in memory while the visitor is mid-quiz. */
 export type Answers = {
   business?: BusinessType;
+  size?: TeamSize;
   records?: RecordType[];
-  storage?: StorageFormat;
+  software?: SoftwareTool[];
   scope?: Scope;
   permission?: Permission;
   sensitivity?: Sensitivity[];
@@ -99,14 +149,14 @@ export type Option<V extends string = string> = { value: V; label: string };
 
 export type QuestionDef =
   | {
-      id: "business" | "storage" | "scope" | "permission" | "frequency" | "next";
+      id: "business" | "size" | "scope" | "permission" | "frequency" | "next";
       kind: "single";
       legend: string;
       helper?: string;
       options: readonly Option[];
     }
   | {
-      id: "records" | "sensitivity";
+      id: "records" | "software" | "sensitivity";
       kind: "multi";
       legend: string;
       helper?: string;
@@ -122,119 +172,115 @@ export const QUESTIONS: readonly QuestionDef[] = [
   {
     id: "business",
     kind: "single",
-    legend: "What kind of business do you operate?",
+    legend: "What kind of business are you?",
     options: [
-      { value: "development_owner_reit", label: "Development, ownership, or REIT." },
-      { value: "contracting", label: "General or specialty contracting." },
-      { value: "architecture_engineering_surveying", label: "Architecture, engineering, or surveying." },
-      { value: "property_facilities_management", label: "Property or facilities management." },
-      { value: "brokerage_appraisal_research", label: "Brokerage, appraisal, or property research." },
-      { value: "title_legal_professional", label: "Title, legal, or other professional services." },
-      { value: "housing_public_sector", label: "Housing organization or public-sector team." },
-      {
-        value: "manufacturer_supplier_other",
-        label: "Manufacturer, supplier, or any other type of business.",
-      },
+      { value: "development_owner_reit", label: "Developer, owner, or REIT" },
+      { value: "contracting", label: "General or specialty contractor" },
+      { value: "architecture_engineering_surveying", label: "Architecture, engineering, or surveying" },
+      { value: "property_facilities_management", label: "Property or facilities management" },
+      { value: "brokerage_appraisal_research", label: "Brokerage, appraisal, or property research" },
+      { value: "title_legal_professional", label: "Title, legal, or other professional services" },
+      { value: "housing_public_sector", label: "Housing organization or public sector" },
+      { value: "manufacturer_supplier_other", label: "Manufacturer, supplier, or any other business" },
+    ],
+  },
+  {
+    id: "size",
+    kind: "single",
+    legend: "How big is your team?",
+    options: [
+      { value: "micro", label: "1 to 10 people" },
+      { value: "small", label: "11 to 50 people" },
+      { value: "mid", label: "51 to 250 people" },
+      { value: "large", label: "More than 250 people" },
     ],
   },
   {
     id: "records",
     kind: "multi",
-    legend: "What types of records might you want to discuss?",
+    legend: "What records do you have? Pick all that apply.",
     exclusive: RECORD_EXCLUSIVE,
     options: [
-      { value: "plans_specs_technical", label: "Plans, specifications, or technical documentation." },
-      { value: "imagery_scans", label: "Project photographs, video, scans, or imagery." },
-      {
-        value: "cost_quantity_schedule",
-        label: "Cost, quantity, schedule, or project-performance records.",
-      },
-      {
-        value: "equipment_maintenance_building",
-        label: "Equipment, maintenance, or building-performance records.",
-      },
-      { value: "property_market_research", label: "Company-created property or market research." },
-      { value: "other_company_record", label: "Another type of company-created record." },
-      { value: "unsure", label: "I am not sure what we have." },
-      { value: "none", label: "We do not currently have an identifiable collection." },
+      { value: "plans_specs_technical", label: "Plans, drawings, specs, or models" },
+      { value: "imagery_scans", label: "Site photos, video, or scans" },
+      { value: "cost_quantity_schedule", label: "Bids, costs, quantities, or schedules" },
+      { value: "equipment_maintenance_building", label: "Equipment, maintenance, or building performance" },
+      { value: "property_market_research", label: "Property or market research" },
+      { value: "other_company_record", label: "Another kind of company record" },
+      { value: "unsure", label: "I am not sure what we have" },
+      { value: "none", label: "We do not have an identifiable collection" },
     ],
   },
   {
-    id: "storage",
-    kind: "single",
-    legend: "How are those records stored?",
+    id: "software",
+    kind: "multi",
+    legend: "Where do those records live? Pick all that apply.",
+    helper: "Software names only. This shows how the records could be exported.",
+    exclusive: SOFTWARE_EXCLUSIVE,
     options: [
-      { value: "digital_documents", label: "Mainly digital documents, images, or spreadsheets." },
-      { value: "structured_exports", label: "Mainly structured exports or databases." },
-      { value: "mixed_digital_paper", label: "A mix of digital and paper records." },
-      { value: "paper_scanned", label: "Mainly paper or scanned archives." },
-      { value: "unsure", label: "I am not sure / not applicable yet." },
+      { value: "procore", label: "Procore" },
+      { value: "autodesk", label: "Autodesk (Construction Cloud, BIM 360, Revit, AutoCAD)" },
+      { value: "bluebeam", label: "Bluebeam" },
+      { value: "field_apps", label: "Buildertrend, CompanyCam, Fieldwire, or similar" },
+      { value: "property_systems", label: "Yardi, AppFolio, MRI, RealPage, or similar" },
+      {
+        value: "accounting_scheduling",
+        label: "Sage, Viewpoint, QuickBooks, Primavera, or MS Project",
+      },
+      { value: "shared_drive", label: "SharePoint, Box, Dropbox, Google Drive, or shared folders" },
+      { value: "paper", label: "Paper or scanned files" },
+      { value: "other_software", label: "Other software" },
+      { value: "unsure", label: "I am not sure" },
     ],
   },
   {
     id: "scope",
     kind: "single",
-    legend: "How broadly does the collection cover your work?",
+    legend: "How much work does that cover?",
     options: [
-      { value: "single", label: "One project, property, or transaction." },
-      { value: "several", label: "Several projects, properties, or transactions." },
-      { value: "portfolio", label: "An ongoing portfolio or company-wide operation." },
-      { value: "unsure", label: "I am not sure / not applicable yet." },
-    ],
-  },
-  {
-    id: "permission",
-    kind: "single",
-    legend: "What do you know about permission for external use?",
-    options: [
-      {
-        value: "confirmed",
-        label:
-          "Our team has confirmed ownership and permission for the proposed external use.",
-      },
-      {
-        value: "ours_needs_review",
-        label: "We believe the records are ours, but external use still needs review.",
-      },
-      { value: "third_party_needed", label: "Client or third-party permissions may be needed." },
-      { value: "restricted", label: "We know the proposed use is currently restricted." },
-      { value: "unsure", label: "I am not sure / not applicable yet." },
-    ],
-  },
-  {
-    id: "sensitivity",
-    kind: "multi",
-    legend: "Could the collection include any of the following?",
-    helper:
-      "Many businesses have a mixture of records. A separate permitted collection may be worth discussing. Keep restricted contents out of this inquiry.",
-    exclusive: SENSITIVITY_EXCLUSIVE,
-    options: [
-      {
-        value: "personal",
-        label: "Personal, resident, customer, or employee information.",
-      },
-      {
-        value: "client_confidential",
-        label: "Client-confidential or commercially restricted information.",
-      },
-      { value: "privileged", label: "Privileged or otherwise protected legal material." },
-      {
-        value: "third_party_licensed",
-        label: "Third-party materials or licensed content with use restrictions.",
-      },
-      { value: "none_identified", label: "None identified in our initial internal review." },
-      { value: "unsure", label: "I am not sure / not applicable yet." },
+      { value: "single", label: "One project or property" },
+      { value: "several", label: "A few (2 to 20)" },
+      { value: "portfolio", label: "Many (20 or more), or company-wide" },
+      { value: "unsure", label: "I am not sure" },
     ],
   },
   {
     id: "frequency",
     kind: "single",
-    legend: "How often are new records added?",
+    legend: "Do you keep adding new records?",
     options: [
-      { value: "historical", label: "This is a historical collection." },
-      { value: "occasional", label: "Occasionally as projects or transactions finish." },
-      { value: "regular", label: "Regularly through ongoing operations." },
-      { value: "unsure", label: "I am not sure / not applicable yet." },
+      { value: "regular", label: "Yes, all the time" },
+      { value: "occasional", label: "Now and then, as projects finish" },
+      { value: "historical", label: "No, it is mostly an archive" },
+      { value: "unsure", label: "I am not sure" },
+    ],
+  },
+  {
+    id: "permission",
+    kind: "single",
+    legend: "Could you share the records with an outside company?",
+    options: [
+      { value: "confirmed", label: "Yes, we own them and have confirmed we can" },
+      { value: "ours_needs_review", label: "They are ours, but we would need to check" },
+      { value: "third_party_needed", label: "We would need a client or partner to approve" },
+      { value: "restricted", label: "No, we are not allowed to" },
+      { value: "unsure", label: "I am not sure" },
+    ],
+  },
+  {
+    id: "sensitivity",
+    kind: "multi",
+    legend: "Do the records include any of these? Pick all that apply.",
+    helper:
+      "Most businesses have a mix. A separate, permitted set can still be worth discussing. Keep restricted contents out of this inquiry.",
+    exclusive: SENSITIVITY_EXCLUSIVE,
+    options: [
+      { value: "personal", label: "Personal info (residents, customers, employees)" },
+      { value: "client_confidential", label: "Client-confidential or restricted information" },
+      { value: "privileged", label: "Legally privileged material" },
+      { value: "third_party_licensed", label: "Licensed or third-party content" },
+      { value: "none_identified", label: "None that we know of" },
+      { value: "unsure", label: "I am not sure" },
     ],
   },
   {
@@ -242,10 +288,10 @@ export const QUESTIONS: readonly QuestionDef[] = [
     kind: "single",
     legend: "What would you like to do next?",
     options: [
-      { value: "explore_introduction", label: "Explore whether an introduction may make sense." },
-      { value: "internal_review", label: "Understand what to review internally first." },
-      { value: "learn_process", label: "Learn how the process works." },
-      { value: "nothing", label: "Nothing further right now." },
+      { value: "explore_introduction", label: "See if an introduction makes sense" },
+      { value: "internal_review", label: "Learn what to check internally first" },
+      { value: "learn_process", label: "Learn how this works" },
+      { value: "nothing", label: "Nothing right now" },
     ],
   },
 ];

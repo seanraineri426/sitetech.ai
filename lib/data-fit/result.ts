@@ -18,7 +18,9 @@ import {
   SCOPES,
   SENSITIVITIES,
   SENSITIVITY_EXCLUSIVE,
-  STORAGE_FORMATS,
+  SOFTWARE_EXCLUSIVE,
+  SOFTWARE_TOOLS,
+  TEAM_SIZES,
   type Answers,
   type CompleteAnswers,
   type QuestionId,
@@ -67,11 +69,12 @@ export function validateAnswers(input: unknown): ValidationResult {
     };
   }
 
-  const { business, records, storage, scope, permission, sensitivity, frequency, next } = a;
+  const { business, size, records, software, scope, permission, sensitivity, frequency, next } = a;
 
   const okBusiness = isOneOf(BUSINESS_TYPES, business);
   const okRecords = validMulti(RECORD_TYPES, RECORD_EXCLUSIVE, records);
-  const okStorage = isOneOf(STORAGE_FORMATS, storage);
+  const okSize = isOneOf(TEAM_SIZES, size);
+  const okSoftware = validMulti(SOFTWARE_TOOLS, SOFTWARE_EXCLUSIVE, software);
   const okScope = isOneOf(SCOPES, scope);
   const okPermission = isOneOf(PERMISSIONS, permission);
   const okSensitivity = validMulti(SENSITIVITIES, SENSITIVITY_EXCLUSIVE, sensitivity);
@@ -80,7 +83,8 @@ export function validateAnswers(input: unknown): ValidationResult {
 
   if (!okBusiness) errors.business = "Choose one option to continue.";
   if (!okRecords) errors.records = "Select at least one option to continue.";
-  if (!okStorage) errors.storage = "Choose one option to continue.";
+  if (!okSize) errors.size = "Choose one option to continue.";
+  if (!okSoftware) errors.software = "Select at least one option to continue.";
   if (!okScope) errors.scope = "Choose one option to continue.";
   if (!okPermission) errors.permission = "Choose one option to continue.";
   if (!okSensitivity) errors.sensitivity = "Select at least one option to continue.";
@@ -88,7 +92,7 @@ export function validateAnswers(input: unknown): ValidationResult {
   if (!okNext) errors.next = "Choose one option to continue.";
 
   if (
-    !okBusiness || !okRecords || !okStorage || !okScope ||
+    !okBusiness || !okSize || !okRecords || !okSoftware || !okScope ||
     !okPermission || !okSensitivity || !okFrequency || !okNext
   ) {
     return { ok: false, errors };
@@ -98,8 +102,9 @@ export function validateAnswers(input: unknown): ValidationResult {
     ok: true,
     answers: {
       business,
+      size,
       records: [...records],
-      storage,
+      software: [...software],
       scope,
       permission,
       sensitivity: [...sensitivity],
@@ -115,7 +120,8 @@ export function validateQuestion(id: QuestionId, answers: Answers): string | nul
   const full = validateAnswers({
     business: "development_owner_reit",
     records: ["plans_specs_technical"],
-    storage: "digital_documents",
+    size: "small",
+    software: ["shared_drive"],
     scope: "single",
     permission: "confirmed",
     sensitivity: ["none_identified"],
@@ -134,7 +140,7 @@ export function validateQuestion(id: QuestionId, answers: Answers): string | nul
  *      restricted category, or sensitivity unsure  -> PERMISSIONS_AND_SCOPE_REVIEW
  *   4. Otherwise                                   -> INITIAL_CONVERSATION
  *
- * Industry, storage format, scope, and frequency never change the result.
+ * Industry, team size, software, scope, and frequency never change the result.
  */
 export function computeResult(answers: CompleteAnswers): ResultType {
   if (answers.permission === "restricted") return "CURRENT_SCOPE_RESTRICTED";

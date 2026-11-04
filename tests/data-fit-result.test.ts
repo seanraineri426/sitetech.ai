@@ -16,8 +16,9 @@ import {
 
 const favorable: CompleteAnswers = {
   business: "contracting",
+  size: "small",
   records: ["plans_specs_technical", "imagery_scans"],
-  storage: "digital_documents",
+  software: ["shared_drive"],
   scope: "portfolio",
   permission: "confirmed",
   sensitivity: ["none_identified"],
@@ -71,19 +72,19 @@ test("5. confirmed permission + any sensitive category or uncertainty -> PERMISS
   }
 });
 
-test("6. small scope, paper storage, historical-only, or any industry never changes the result", () => {
+test("6. small scope, paper only, historical-only, or any industry never changes the result", () => {
   assert.equal(
     computeResult({
       ...favorable,
       scope: "single",
-      storage: "paper_scanned",
+      software: ["paper"],
       frequency: "historical",
       business: "title_legal_professional",
     }),
     "INITIAL_CONVERSATION",
   );
   assert.equal(
-    computeResult({ ...favorable, scope: "unsure", storage: "unsure", frequency: "unsure" }),
+    computeResult({ ...favorable, scope: "unsure", software: ["unsure"], size: "micro", frequency: "unsure" }),
     "INITIAL_CONVERSATION",
   );
 });
@@ -180,4 +181,24 @@ test("review questions are relevant, 1–3 items, and framed for the visitor's o
 
   const q3 = reviewQuestions({ ...favorable, permission: "ours_needs_review" });
   assert.equal(q3.length, 1);
+});
+
+test("software choices map to the model's format input", async () => {
+  const { storageFromSoftware } = await import("../lib/data-fit/questions.ts");
+  assert.equal(storageFromSoftware(["procore"]), "structured_exports");
+  assert.equal(storageFromSoftware(["procore", "autodesk", "bluebeam"]), "structured_exports");
+  assert.equal(storageFromSoftware(["bluebeam"]), "digital_documents");
+  assert.equal(storageFromSoftware(["shared_drive", "other_software"]), "digital_documents");
+  assert.equal(storageFromSoftware(["paper"]), "paper_scanned");
+  assert.equal(storageFromSoftware(["procore", "paper"]), "mixed_digital_paper");
+  assert.equal(storageFromSoftware(["unsure"]), "unsure");
+});
+
+test("software and team size are validated; unsure is exclusive", () => {
+  const ok = { ...favorable, software: ["procore", "bluebeam"] };
+  assert.equal(evaluate(ok).status, "complete");
+  assert.equal(evaluate({ ...favorable, software: [] }).status, "incomplete");
+  assert.equal(evaluate({ ...favorable, software: ["unsure", "procore"] }).status, "incomplete");
+  assert.equal(evaluate({ ...favorable, software: ["notatool"] }).status, "incomplete");
+  assert.equal(evaluate({ ...favorable, size: "huge" }).status, "incomplete");
 });

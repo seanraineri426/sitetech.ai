@@ -52,7 +52,7 @@ no longer exists (history only) · **New** = added by the pivot.
 - No route redirects to the homepage.
 - No redirect chains (every 307/308 resolves in one hop to a 200).
 - No `/terms` page was invented; none existed and no verified terms text was available.
-- The Calendly link was not carried into the new funnel (its event is scoped to the retired assessment offer). It remains in `lib/site.ts` as `LEGACY_BOOKING_URL` for reference.
+- "Book a call" links use `BOOKING_URL` in `lib/site.ts`, which defaults to `https://calendly.com/sean-sitetechai/30min` and can be overridden with `NEXT_PUBLIC_BOOKING_URL`. The old original-site Calendly event (`seanvraineri/sitetech-ai`) is recorded only in `ORIGINAL_FRONTEND_ARCHIVE.md`.
 - `origin/main` (the separate product app) was not modified.
 
 ## Verification (2026-11-03, `next start` on :8000)
@@ -87,7 +87,7 @@ This deliberately changes two rules from the original pivot brief. Review before
 - **Email gate before results.** The quiz now ends with a "vault sealed" step that collects name, work email, company, and the consent checkbox. The result and the modeled value open only after the delivery service confirms receipt. A failed or unconfigured delivery keeps the vault sealed and keeps the form filled in for retry. Answers are sent only at that moment, together with the contact details, as `supplier_conversation` (INITIAL_CONVERSATION) or `process_question` (all other results). `/privacy` was updated to say so.
 - **Modeled value.** `lib/data-fit/valuation.ts` computes `BASE x coverage x format x freshness x rights x cleanliness` in integer hundredths, rounds to the nearest $100, and shows the full breakdown, the assumption tables, a deterministic reference code (for example `STV2-XXXXXX`), and a copy-ready citation. The constants are SiteTech modeling assumptions, calibrated (and unit-tested in `tests/data-fit-valuation.test.ts`) against published buyer ranges for construction and design records, kept with source URLs in `lib/data-fit/benchmarks.ts` (checked 2026-11-03). Those are published offers and indicative prices, not completed sales; the only public completed sales with a stated amount for company records are four, with a median near $28K. Re-check the sources before launch and update `benchmarks.ts` if they changed. The number is always labeled a modeled estimate, not a quote, appraisal, offer, or promise of payment.
 - **Editing answers after the reveal** reruns the formula, and the visitor confirms their details again before the new number opens, because SiteTech received the earlier answers only.
-- **Test safely.** Submitting the gate sends a real email through Web3Forms. When testing in a browser, stub `window.fetch` for the Web3Forms host rather than submitting real inquiries.
+- **Testing.** Submitting the gate sends a real email through Web3Forms. When testing in a browser, stub `window.fetch` for the Web3Forms host rather than submitting real inquiries.
 
 ## Three-page site (supersedes the route table above)
 
@@ -103,3 +103,10 @@ The site is now `/`, `/contact`, and `/privacy`. The quiz sits in the homepage h
 | `/blog`, `/blog/*`, `/insights`, `/insights/*` | 307 to `/` |
 
 The retired pages, the blog articles (`lib/insights.ts`), and the unused homepage sections were deleted from the working tree. They remain in Git history and in the archive branch, tag, and bundle described in `ORIGINAL_FRONTEND_ARCHIVE.md`. Redirects are temporary (307) so routes can be restored without fighting cached permanent redirects.
+
+## Nine questions, lead signals, and booking (latest)
+
+- **Nine questions.** The quiz adds `size` (team size) and replaces the old storage-format question with `software` (what the records live in), for nine in total. `QUESTION_COUNT` in `lib/data-fit/questions.ts` is the single source for the count shown in the UI.
+- **Lead qualification signals.** Team size and software are sent with the inquiry so SiteTech can qualify the lead. Team size does not change the number. Software affects the dollar value only through the inferred format factor (`storageFromSoftware()`), which replaces the old direct format question.
+- **Booking.** "Book a call" links in the header, footer, closing CTA, hero, result view, and contact page use `BOOKING_URL` from `lib/site.ts` (default `https://calendly.com/sean-sitetechai/30min`, override with `NEXT_PUBLIC_BOOKING_URL`). `/privacy` has a "Booking a call" section describing that scheduling happens on Calendly.
+- **Meter removed.** The third meter was removed from the HUD, the reveal, and the valuation code. Rights and Cleanliness remain as valuation factors.

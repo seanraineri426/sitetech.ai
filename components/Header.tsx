@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { BOOKING_URL } from "@/lib/site";
 
 const navLinks = [
   { href: "/#how", label: "How it works" },
@@ -70,6 +71,16 @@ export function Header() {
               {link.label}
             </Link>
           ))}
+          <a
+            href={BOOKING_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`text-[13px] tracking-wide transition-colors ${
+              light ? "text-gray-500 hover:text-black" : "text-gray-400 hover:text-white"
+            }`}
+          >
+            Book a call
+          </a>
         </nav>
 
         <Link
@@ -119,6 +130,15 @@ export function Header() {
                 {link.label}
               </Link>
             ))}
+            <a
+              href={BOOKING_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`flex min-h-[44px] items-center text-sm ${light ? "text-gray-600" : "text-gray-400"}`}
+              onClick={() => setOpen(false)}
+            >
+              Book a call
+            </a>
             <Link
               href={fitHref}
               className={`mt-2 flex min-h-[44px] items-center text-sm font-medium ${light ? "text-black" : "text-white"}`}

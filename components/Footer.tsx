@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BOOKING_URL } from "@/lib/site";
 
 const exploreLinks = [
   { href: "/#quiz", label: "Check your data fit" },
@@ -59,6 +60,16 @@ export function Footer() {
               Company
             </p>
             <ul className="mt-5 space-y-3">
+              <li>
+                <a
+                  href={BOOKING_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-gray-400 transition-colors hover:text-white"
+                >
+                  Book a call
+                </a>
+              </li>
               {companyLinks.map((link) => (
                 <li key={link.href}>
                   <Link

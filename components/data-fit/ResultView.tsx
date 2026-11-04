@@ -7,6 +7,7 @@ import { QUESTIONS, optionLabel, type CompleteAnswers } from "@/lib/data-fit/que
 import { reviewQuestions, type ResultType } from "@/lib/data-fit/result";
 import { INVENTORY_NO_TASKS_NOTE, RESULT_COMMON_NOTE, RESULT_COPY } from "@/lib/data-fit/copy";
 import { computeValuation } from "@/lib/data-fit/valuation";
+import { BOOKING_URL } from "@/lib/site";
 import { CasinoReveal } from "./CasinoReveal";
 
 type Props = {
@@ -57,6 +58,21 @@ export function ResultView({
               is not an introduction, a match, or a transaction. Any introduction would need your separate
               approval, naming the recipient and the information to be shared.
             </p>
+          </div>
+
+          <div className="mx-auto mt-6 max-w-2xl">
+            <a
+              href={BOOKING_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="cta-gold inline-flex min-h-[56px] w-full items-center justify-between gap-4 rounded-xl px-6 text-left text-base font-semibold sm:w-auto sm:min-w-[20rem]"
+            >
+              <span className="flex flex-col leading-tight">
+                <span>Book a call about this number</span>
+                <span className="mt-0.5 text-xs font-medium text-black/60">Opens a scheduling page in a new tab.</span>
+              </span>
+              <span aria-hidden className="text-xl">↗</span>
+            </a>
           </div>
 
           <div className="mx-auto mt-10 max-w-2xl">

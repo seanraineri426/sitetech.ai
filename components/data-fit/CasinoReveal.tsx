@@ -17,7 +17,7 @@ import {
   formatUsd,
   type Valuation,
 } from "@/lib/data-fit/valuation";
-import { CoinBurst, ShieldIcon, useTween } from "./casino-bits";
+import { CoinBurst } from "./casino-bits";
 import { BenchmarkGauge } from "./BenchmarkGauge";
 import { ReelNumber } from "./Reels";
 
@@ -63,8 +63,6 @@ export function CasinoReveal({
   const [settled, setSettled] = useState(false);
   const [copied, setCopied] = useState(false);
   const v = valuation;
-  const safety = useTween(settled ? v.safety : 0, 1100);
-
   const citation = `${v.model}. Ref ${v.reference}. Modeled value ${formatUsd(v.amountUsd)} (range ${formatUsd(
     v.lowUsd,
   )} to ${formatUsd(v.highUsd)}). Quiz ${v.quizVersion}. Based on self-reported answers; not an appraisal, quote, or offer.`;
@@ -134,25 +132,6 @@ export function CasinoReveal({
                 : "Held. No identifiable record category was selected, so the base value is $0. Identify at least one category to give the model something to work with."}
             </motion.div>
           )}
-
-          {/* Safety */}
-          <motion.div variants={item}>
-            <div className="flex items-center justify-between font-mono text-[11px] uppercase tracking-[0.2em] text-gold/80">
-              <span className="flex items-center gap-2">
-                <ShieldIcon className="h-4 w-4" /> Safety readiness
-              </span>
-              <span className="text-white">{safety}%</span>
-            </div>
-            <div className="mt-2 h-2.5 w-full overflow-hidden bg-white/10">
-              <div
-                className="h-full bg-gradient-to-r from-gold-deep via-gold to-gold-soft"
-                style={{ width: `${safety}%`, transition: reduce ? undefined : "width 1.1s cubic-bezier(0.22,1,0.36,1)" }}
-              />
-            </div>
-            <p className="mt-2 text-xs text-gray-400">
-              Built from your Rights and Cleanliness answers: 60% permission, 40% sensitive content.
-            </p>
-          </motion.div>
 
           {/* Formula */}
           <motion.div variants={item}>
@@ -267,6 +246,12 @@ export function CasinoReveal({
               SiteTech chose these multipliers and calibrated them so a strong, fully permitted collection
               lands inside the published buyer ranges shown above. They are modeling assumptions, not
               market prices, and no buyer has agreed to them.
+            </p>
+            <p className="mt-3 text-xs leading-relaxed text-gray-500">
+              Format is inferred from the software you picked. A system of record such as Procore,
+              Autodesk, or Yardi counts as structured exports, shared drives and Bluebeam count as digital
+              documents, and paper counts down. Team size and the specific tools do not change the number
+              on their own. SiteTech uses them to understand which buyers could be a fit.
             </p>
           </motion.details>
 

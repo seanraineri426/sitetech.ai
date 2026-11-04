@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import type { Answers } from "@/lib/data-fit/questions";
-import { chipsFor, safetyScore } from "@/lib/data-fit/valuation";
-import { CoinIcon, LockIcon, ShieldIcon, useTween } from "./casino-bits";
+import { chipsFor } from "@/lib/data-fit/valuation";
+import { CoinIcon, LockIcon, useTween } from "./casino-bits";
 
 /**
  * The jackpot window: a masked, pulsing placeholder. It never shows digits, so
@@ -47,8 +47,6 @@ export function CasinoHud({
 }) {
   const chips = chipsFor(answers);
   const shown = useTween(chips, 650);
-  const safety = safetyScore(answers);
-  const safeShown = useTween(safety, 650);
   const prev = useRef(chips);
   const [gain, setGain] = useState<{ id: number; amount: number } | null>(null);
   const [jolt, setJolt] = useState(0);
@@ -64,14 +62,14 @@ export function CasinoHud({
 
   return (
     <div className="border-b border-gold/20 bg-black/40 px-5 py-4 sm:px-8">
-      <div className="grid grid-cols-[1fr_auto] items-center gap-x-6 gap-y-4 sm:grid-cols-[1.2fr_1fr_1fr]">
+      <div className="flex items-start justify-between gap-6">
         <LockedJackpot round={round} total={total} />
 
-        <div className="relative">
+        <div className="relative text-right">
           <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-gold/80">Chips</p>
           <p
             key={jolt}
-            className={`mt-1 flex items-center gap-1.5 font-mono text-2xl font-semibold tabular-nums text-white sm:text-3xl ${jolt && !reduce ? "hud-jolt" : ""}`}
+            className={`mt-1 flex items-center justify-end gap-1.5 font-mono text-2xl font-semibold tabular-nums text-white sm:text-3xl ${jolt && !reduce ? "hud-jolt" : ""}`}
           >
             <CoinIcon className="h-6 w-6 text-gold" />
             {shown.toLocaleString("en-US")}
@@ -93,28 +91,6 @@ export function CasinoHud({
           </AnimatePresence>
         </div>
 
-        <div className="col-span-2 sm:col-span-1">
-          <p className="flex items-center justify-between font-mono text-[10px] uppercase tracking-[0.22em] text-gold/80">
-            <span className="flex items-center gap-1.5">
-              <ShieldIcon className="h-3.5 w-3.5" /> Safety
-            </span>
-            <span className="tabular-nums text-white">{safeShown}%</span>
-          </p>
-          <div
-            role="progressbar"
-            aria-label="Safety meter"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={safety}
-            className="mt-2 h-2 w-full overflow-hidden bg-white/10"
-          >
-            <motion.div
-              className="h-full bg-gradient-to-r from-gold-deep via-gold to-gold-soft"
-              animate={{ width: `${safety}%` }}
-              transition={{ duration: reduce ? 0 : 0.7, ease: [0.22, 1, 0.36, 1] }}
-            />
-          </div>
-        </div>
       </div>
 
       <div className="mt-4 flex items-center gap-3">

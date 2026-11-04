@@ -7,14 +7,14 @@ import {
   computeBase,
   computeValuation,
   referenceCode,
-  safetyScore,
 } from "../lib/data-fit/valuation.ts";
 import type { CompleteAnswers } from "../lib/data-fit/questions.ts";
 
 const favorable: CompleteAnswers = {
   business: "contracting",
+  size: "small",
   records: ["plans_specs_technical", "imagery_scans"],
-  storage: "digital_documents",
+  software: ["shared_drive"],
   scope: "portfolio",
   permission: "confirmed",
   sensitivity: ["none_identified"],
@@ -61,7 +61,7 @@ test("coverage, freshness, and rights move the number in the right direction", (
   const portfolio = computeValuation(favorable).amountUsd;
   assert.ok(portfolio > single);
 
-  const paper = computeValuation({ ...favorable, storage: "paper_scanned" }).amountUsd;
+  const paper = computeValuation({ ...favorable, software: ["paper"] }).amountUsd;
   assert.ok(paper < portfolio);
   assert.ok(paper > 0, "paper alone never zeroes the model");
 
@@ -92,11 +92,9 @@ test("reference code is deterministic and ignores the next-step answer", () => {
   assert.match(referenceCode(favorable), /^STV2-[0-9A-F]{6}$/);
 });
 
-test("live safety and chips rise as answers accumulate", () => {
+test("live chips rise as answers accumulate", () => {
   const early = { business: "contracting" } as const;
   assert.ok(chipsFor(favorable) > chipsFor(early));
-  assert.ok(safetyScore(favorable) > safetyScore(early));
-  assert.equal(safetyScore({ ...favorable, permission: "restricted" }) < safetyScore(favorable), true);
 });
 
 test("answersKey is order independent for multi-select answers", () => {
@@ -118,7 +116,7 @@ test("calibration: model output stays inside published buyer ranges", async () =
   const median = computeValuation({
     ...favorable,
     records: ["imagery_scans"],
-    storage: "mixed_digital_paper",
+    software: ["shared_drive", "paper"],
   }).amountUsd;
   assert.ok(median >= OFFER_INDEX.q1Usd && median <= OFFER_INDEX.q3Usd, `mid path ${median} should sit in the IQR`);
 
@@ -133,7 +131,7 @@ test("calibration: model output stays inside published buyer ranges", async () =
       "property_market_research",
       "other_company_record",
     ],
-    storage: "structured_exports",
+    software: ["procore", "autodesk"],
   }).amountUsd;
   assert.ok(ceiling <= topPublished, `ceiling ${ceiling} must not exceed ${topPublished}`);
 });
