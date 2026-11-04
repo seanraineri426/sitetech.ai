@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 const exploreLinks = [
-  { href: "/data-fit", label: "See if your files could be worth money" },
-  { href: "/how-it-works", label: "How it works" },
+  { href: "/data-fit", label: "Fit check" },
+  { href: "/how-it-works", label: "Process" },
   { href: "/#who-its-for", label: "Who it's for" },
   { href: "/#faq", label: "FAQ" },
   { href: "/blog", label: "Blog" },
@@ -10,7 +10,7 @@ const exploreLinks = [
 
 const companyLinks = [
   { href: "/contact", label: "Contact" },
-  { href: "/for-buyers", label: "For buyers & partners" },
+  { href: "/for-buyers", label: "Buyer / partner inquiry" },
   { href: "/privacy", label: "Privacy" },
   { href: "/solutions", label: "Previous services" },
 ];
@@ -34,9 +34,8 @@ export function Footer() {
               </span>
             </div>
             <p className="mt-5 max-w-sm text-sm leading-relaxed text-gray-500">
-              SiteTech helps businesses in real estate, construction, and related fields
-              explore whether records they already created could lead to an AI data
-              licensing conversation.
+              SiteTech helps real estate and built-environment businesses explore potential
+              AI data introductions.
             </p>
           </div>
 
@@ -47,7 +46,10 @@ export function Footer() {
             <ul className="mt-5 space-y-3">
               {exploreLinks.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-sm text-gray-400 transition-colors hover:text-white">
+                  <Link
+                    href={link.href}
+                    className="text-sm text-gray-400 transition-colors hover:text-white"
+                  >
                     {link.label}
                   </Link>
                 </li>
@@ -62,7 +64,10 @@ export function Footer() {
             <ul className="mt-5 space-y-3">
               {companyLinks.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-sm text-gray-400 transition-colors hover:text-white">
+                  <Link
+                    href={link.href}
+                    className="text-sm text-gray-400 transition-colors hover:text-white"
+                  >
                     {link.label}
                   </Link>
                 </li>
@@ -76,8 +81,8 @@ export function Footer() {
             &copy; {new Date().getFullYear()} SiteTech AI
           </p>
           <p className="max-w-xl font-mono text-[11px] leading-relaxed text-gray-500 sm:text-right">
-            SiteTech makes introductions only. Buyers evaluate records and negotiate any
-            license directly with the business that owns them.
+            SiteTech facilitates introductions. Dataset evaluation and any licensing
+            transaction are handled directly between the participating businesses.
           </p>
         </div>
       </div>

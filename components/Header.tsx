@@ -81,7 +81,7 @@ export function Header() {
               : "border-white bg-white text-black hover:bg-transparent hover:text-white"
           }`}
         >
-          See if my files fit
+          Check your data fit
         </Link>
 
         <button
@@ -132,7 +132,7 @@ export function Header() {
               className={`mt-2 flex min-h-[44px] items-center text-sm font-medium ${light ? "text-black" : "text-white"}`}
               onClick={() => setOpen(false)}
             >
-              See if my files could be worth money →
+              Check your data fit →
             </Link>
           </nav>
         </div>

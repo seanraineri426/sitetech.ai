@@ -3,51 +3,32 @@ import Link from "next/link";
 export const processSteps = [
   {
     num: "01",
-    title: "Tell us what you have—in plain categories",
+    title: "Tell us what your company holds",
     detail:
-      "Answer 8 questions about the kinds of files your company has. Do not upload files or name clients.",
+      "Answer a few questions about your business and the categories of records you may want to discuss.",
   },
   {
     num: "02",
-    title: "We help you not walk in blind",
+    title: "Clarify the starting point",
     detail:
-      "Your answers show whether the records sound scarce and usable, or whether ownership and permission questions need to be sorted first.",
+      "Your answers highlight the scope of the collection and any permissions your team may need to review.",
   },
   {
     num: "03",
-    title: "You approve any introduction",
+    title: "Consider a specific introduction",
     detail:
-      "If a buyer conversation may make sense, we tell you who it is. Nothing about your company is shared until you say yes.",
+      "If a relevant opportunity is available, SiteTech asks for your permission before introducing your business to a buyer or licensing partner.",
   },
   {
     num: "04",
-    title: "You talk money and terms directly",
+    title: "Evaluate the opportunity directly",
     detail:
-      "You and the buyer discuss price, allowed use, exclusivity, and timing. Only after you agree does the buyer prepare the approved records for training use.",
-  },
-];
-
-const logistics = [
-  {
-    title: "Approved slice only",
-    detail: "Not your whole drive, not your systems, and not records you said were out of bounds.",
-  },
-  {
-    title: "Names and IDs come out",
-    detail: "The buyer or partner removes or masks direct identifiers before training use.",
-  },
-  {
-    title: "Training-ready package",
-    detail: "They prepare the approved data so researchers can use it without wasting time cleaning it up.",
-  },
-  {
-    title: "Contract controls the use",
-    detail: "Who can access it, what it can be used for, and how long it is kept should be spelled out before handoff.",
+      "You and the counterparty discuss any evaluation, licensing terms, compensation, and permitted use. You decide whether to proceed.",
   },
 ];
 
 export const processSupportingLine =
-  "SiteTech helps you get ready for the conversation and makes the introduction. We do not take your files, set your price, or decide for you.";
+  "SiteTech's role is the introduction. Your business remains responsible for deciding what it can share and which terms it accepts.";
 
 export function Process() {
   return (
@@ -57,7 +38,7 @@ export function Process() {
           <div className="max-w-2xl">
             <p className="section-label mb-6">How it works</p>
             <h2 className="headline-sm text-white">
-              Four steps. No disruption to your business.
+              Start with a description. Explore the opportunity from there.
             </h2>
           </div>
           <Link href="/how-it-works" className="link-arrow shrink-0 text-gray-400">
@@ -76,25 +57,13 @@ export function Process() {
           ))}
         </div>
 
-        <div className="mt-12 border-t border-white/10 pt-8">
-          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-gray-500">
-            If it ever goes further — what happens to the data
-          </p>
-          <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {logistics.map((item, i) => (
-              <div key={item.title} className="border-l border-white/10 pl-5">
-                <p className="font-mono text-[11px] text-gray-500">{String(i + 1).padStart(2, "0")}</p>
-                <h3 className="mt-3 text-sm font-medium tracking-tight text-white">{item.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-gray-400">{item.detail}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
         <div className="mt-12 flex flex-col gap-4 border-t border-white/10 pt-8 sm:flex-row sm:items-center sm:justify-between">
           <p className="max-w-2xl text-base leading-relaxed text-gray-400">{processSupportingLine}</p>
-          <Link href="/for-buyers" className="shrink-0 text-sm text-gray-500 underline-offset-4 hover:text-white hover:underline">
-            Are you an AI lab or data buyer?
+          <Link
+            href="/for-buyers"
+            className="shrink-0 text-sm text-gray-500 underline-offset-4 hover:text-white hover:underline"
+          >
+            Are you a data buyer or licensing partner?
           </Link>
         </div>
       </div>

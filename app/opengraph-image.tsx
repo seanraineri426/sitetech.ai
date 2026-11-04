@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "SiteTech AI | Your finished work could pay you again";
+export const alt = "SiteTech AI | Data Licensing Opportunities for the Built Environment";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -38,7 +38,7 @@ export default function OpengraphImage() {
               justifyContent: "center",
               fontSize: "36px",
               fontWeight: 600,
-              borderRadius: "8px",
+              borderRadius: "2px",
             }}
           >
             S
@@ -59,26 +59,26 @@ export default function OpengraphImage() {
           <div
             style={{
               color: "#ffffff",
-              fontSize: "64px",
-              fontWeight: 600,
+              fontSize: "58px",
+              fontWeight: 500,
               lineHeight: 1.08,
-              letterSpacing: "-0.02em",
+              letterSpacing: "-0.03em",
               maxWidth: "980px",
             }}
           >
-            The jobs you already finished could pay you again.
+            Your project files could be your next revenue stream.
           </div>
           <div
             style={{
               marginTop: "32px",
               color: "#a3a3a3",
-              fontSize: "28px",
-              lineHeight: 1.3,
+              fontSize: "26px",
+              lineHeight: 1.35,
               maxWidth: "880px",
             }}
           >
-            See whether your company&apos;s plans, photos, schedules, and records
-            could lead to a licensing conversation.
+            Explore whether a permitted collection could support an AI data
+            opportunity—starting with an eight-question fit check.
           </div>
         </div>
       </div>

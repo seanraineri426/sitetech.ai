@@ -1,35 +1,43 @@
 export const audienceGroups = [
   {
     title: "Developers, owners & REITs",
-    detail: "Past project files, technical reports, budgets, and property records your company created.",
+    detail:
+      "Company-created project histories, technical reports, and property-level operating analysis.",
   },
   {
     title: "General & specialty contractors",
-    detail: "Job photos, schedules, estimates, quantities, and project records you have the right to discuss.",
+    detail:
+      "Permitted project imagery, schedules, quantity records, and construction documentation.",
   },
   {
     title: "Architecture, engineering & surveying",
-    detail: "Drawings, models, surveys, and specs—only where client and contract rules allow outside discussion.",
+    detail:
+      "Technical documentation, models, surveys, and specifications where external-use rights have been established.",
   },
   {
     title: "Property & facilities management",
-    detail: "Work orders, equipment history, inspections, and building records kept separate from tenant personal information.",
+    detail:
+      "Equipment, maintenance, and building-performance records that can be considered separately from personal resident information.",
   },
   {
     title: "Brokerage, appraisal & research",
-    detail: "Reports, analysis, and market research your company created and is allowed to discuss.",
+    detail:
+      "Company-created property and market analysis with the necessary external-use permissions.",
   },
   {
     title: "Title, legal & professional services",
-    detail: "Only non-privileged business records, and only after the right people inside your firm review them.",
+    detail:
+      "Potentially relevant nonprivileged, permitted business-record collections, subject to appropriate internal review.",
   },
   {
     title: "Housing organizations & public-sector teams",
-    detail: "Technical and operating records with personal, resident, and restricted information left completely out.",
+    detail:
+      "Permitted technical and operational collections, with personal and restricted records kept out of the inquiry.",
   },
   {
     title: "Manufacturers, suppliers & related firms",
-    detail: "Product documents, specifications, manuals, and equipment records your company owns.",
+    detail:
+      "Company-owned technical specifications, product documentation, and equipment records.",
   },
 ];
 
@@ -38,13 +46,12 @@ export function Audience() {
     <section id="who-its-for" className="section-light scroll-mt-24 border-t border-gray-200">
       <div className="mx-auto max-w-[1400px] px-6 py-16 sm:py-20 lg:px-10 lg:py-32">
         <div className="max-w-3xl">
-          <p className="section-label mb-6">Who this is for</p>
-          <h2 className="headline-sm">If your company has years of files, start here.</h2>
+          <p className="section-label mb-6">Across the built environment</p>
+          <h2 className="headline-sm">Built for the businesses behind buildings.</h2>
           <p className="mt-6 text-base leading-relaxed text-gray-600">
-            You do not need to be an AI company, and construction does not have to be your
-            main business. If your team creates project, property, equipment, or technical
-            records, there may be a starting point. These are examples—not confirmed buyer
-            requests.
+            We welcome inquiries from companies across real estate, construction, and the
+            professional services that support them. These examples help identify a starting
+            point; they are not a list of confirmed buyer requests.
           </p>
         </div>
 
@@ -56,7 +63,9 @@ export function Audience() {
                 i % 2 === 1 ? "sm:border-l sm:pl-8 lg:border-l-0 lg:pl-0" : ""
               } ${i % 4 !== 0 ? "lg:border-l lg:pl-8" : ""}`}
             >
-              <p className="font-mono text-[11px] text-gray-500">{String(i + 1).padStart(2, "0")}</p>
+              <p className="font-mono text-[11px] text-gray-500">
+                {String(i + 1).padStart(2, "0")}
+              </p>
               <h3 className="mt-4 text-base font-medium tracking-tight">{group.title}</h3>
               <p className="mt-3 text-sm leading-relaxed text-gray-600">{group.detail}</p>
             </div>
@@ -64,9 +73,8 @@ export function Audience() {
         </div>
 
         <p className="mt-10 max-w-3xl text-sm leading-relaxed text-gray-500">
-          Having a file does not mean you are allowed to license it. If a client owns it or
-          rules restrict it, leave it out. Start with the records that are clearly yours to
-          discuss.
+          Possessing a file does not establish permission to license it. Client material and
+          licensed third-party content may require separate authorization.
         </p>
       </div>
     </section>

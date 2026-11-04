@@ -7,11 +7,11 @@ import { SITE_URL } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Contact",
   description:
-    "Ask SiteTech a plain-English question about whether your company's records could lead to an AI licensing conversation.",
+    "Contact SiteTech about AI data opportunities for the built environment. Keep confidential contents out of the form.",
   alternates: { canonical: "/contact" },
   openGraph: {
     title: "Contact | SiteTech AI",
-    description: "Still not sure how this works? Ask SiteTech.",
+    description: "Ask a general process question or request a conversation.",
     url: `${SITE_URL}/contact`,
     type: "website",
   },
@@ -22,8 +22,8 @@ export default function ContactPage() {
     <main className="relative">
       <PageHeader
         label="Contact"
-        title="Still not sure? Ask us in plain English."
-        description="Use this form if the idea makes sense but the details do not yet. If you already know what kinds of files your company has, the 8-question check is faster."
+        title="Have a question? Contact SiteTech."
+        description="Prefer a general conversation before the fit check, or need clarification on the process? Send a high-level note. Keep confidential content out of this form."
       />
 
       <section className="section-light">
@@ -33,18 +33,20 @@ export default function ContactPage() {
               <p className="section-label mb-6">Before you write</p>
               <ul className="divide-y divide-gray-200 border-y border-gray-200">
                 {[
-                  "Do not send file contents, client details, resident information, or passwords.",
-                  "Asking a question does not share anything with a buyer or partner.",
-                  "SiteTech cannot price your records or tell you what the law allows—only where to start.",
+                  "Do not include document contents, client details, resident information, or credentials.",
+                  "Submitting this form sends the inquiry only to SiteTech—not to buyers.",
+                  "SiteTech does not provide dataset valuations or legal determinations from this form.",
                 ].map((item, i) => (
                   <li key={item} className="grid gap-4 py-5 sm:grid-cols-[48px_1fr]">
-                    <span className="font-mono text-[11px] text-gray-500">{String(i + 1).padStart(2, "0")}</span>
+                    <span className="font-mono text-[11px] text-gray-500">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
                     <span className="text-sm leading-relaxed text-gray-700">{item}</span>
                   </li>
                 ))}
               </ul>
               <Link href="/data-fit" className="link-arrow mt-8 text-black">
-                See if my files could be worth money
+                Check your data fit
                 <span aria-hidden>→</span>
               </Link>
             </div>

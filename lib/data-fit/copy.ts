@@ -9,38 +9,38 @@ export type ResultCopy = {
 
 export const RESULT_COPY: Record<ResultType, ResultCopy> = {
   CURRENT_SCOPE_RESTRICTED: {
-    label: "Your result: pause that set",
-    heading: "Do not offer that set. Look for a safer one.",
+    label: "Starting point",
+    heading: "Start by reviewing this collection's restrictions.",
     body:
-      "You told us the records you had in mind are restricted. Do not send them, and do not treat anonymization as a workaround. Your company may have a different set that it owns and can discuss, but permission has to be sorted out before anyone talks to a buyer.",
+      "Your answers indicate that the proposed external use is currently restricted. Do not send these records. Your organization may have a separate collection that can be considered after the relevant permissions are confirmed.",
   },
   INVENTORY_FIRST: {
-    label: "Your result: start with what you have",
-    heading: "First, find out whether you have the good stuff.",
+    label: "Starting point",
+    heading: "Start with a high-level inventory.",
     body:
-      "You cannot talk about money until you know what exists. Make a simple list of the kinds of files your company has, where they live, and who can say whether outside use is allowed.",
+      "Before exploring an introduction, identify the types of records your business holds, how they are stored, and who can confirm permission for external use.",
     checklist: [
-      "List the kinds of files, photos, reports, or logs you have.",
-      "Write down where they live: a drive, a system, paper files, or a mix.",
-      "Find the person who can approve—or rule out—outside use.",
+      "Identify categories.",
+      "Identify the responsible team.",
+      "Clarify permissions.",
     ],
   },
   PERMISSIONS_AND_SCOPE_REVIEW: {
-    label: "Your result: close, with one thing to sort",
-    heading: "Good data still needs clean permission.",
+    label: "Starting point",
+    heading: "Clarify the permitted collection first.",
     body:
-      "There may be something worth discussing, but your answers say ownership, client permission, or sensitive content needs a closer look. Labs care about usable data with clear rights. A buyer or partner can de-identify approved records later, but anonymization does not fix ownership or client-permission problems. The easiest starting point is usually a clean, separate set.",
+      "There may be a collection worth discussing, but your answers suggest that permissions or sensitive content need review. A separate permitted subset may provide a clearer starting point.",
   },
   INITIAL_CONVERSATION: {
-    label: "Your result: worth exploring",
-    heading: "You may have the good stuff labs are looking for.",
+    label: "Starting point",
+    heading: "You have a starting point for an initial conversation.",
     body:
-      "You told us you have a real set of records and that outside-use permission has already been checked. That is the combination worth exploring: real-world material a lab cannot simply scrape, with a clearer path to discuss it. If it moves forward, only approved records would be prepared, with direct identifiers removed or masked before training use. No buyer has been matched yet, and your company will not be shared with one until you approve exactly who it is.",
+      "You have identified a collection and reported that external-use permissions have been reviewed. A short conversation can clarify its scope and whether a potential introduction is worth exploring.",
   },
 };
 
 export const RESULT_COMMON_NOTE =
-  "This is not a price quote and not a promise of a deal. SiteTech has not seen your files, and no buyer has agreed to anything. It is a plain first step based only on your answers.";
+  "This is a first-pass guide based on your answers. SiteTech has not reviewed your records or confirmed buyer interest.";
 
 export const INVENTORY_NO_TASKS_NOTE =
-  "For this step, you do not need to buy software, upload files, or clean everything up.";
+  "No export, document upload, software purchase, or data-cleaning task is required.";

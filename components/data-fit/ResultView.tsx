@@ -108,7 +108,7 @@ export function ResultView({
       <div className="mt-8 flex flex-col gap-3 border-t border-gray-200 pt-6 sm:flex-row sm:flex-wrap sm:items-center">
         {intent === "nothing" ? (
           <p className="text-sm text-gray-600">
-            We'll leave it there. Nothing will be sent, and you can restart anytime.
+            Nothing further will be requested. You can review your answers or restart anytime.
           </p>
         ) : (
           <>
@@ -120,7 +120,7 @@ export function ResultView({
                 aria-controls="inquiry-form"
                 className={`${conversationIsPrimary ? "btn-primary" : "btn-ghost"} min-h-[44px]`}
               >
-                Ask SiteTech to explore this
+                Request a conversation
               </button>
             )}
             {showProcessQuestion && (
@@ -131,7 +131,7 @@ export function ResultView({
                 aria-controls="inquiry-form"
                 className="btn-ghost min-h-[44px]"
               >
-                Ask how this works
+                Ask a general process question
               </button>
             )}
             <Link href="/how-it-works" className="link-arrow min-h-[44px] text-gray-700">
@@ -154,13 +154,13 @@ export function ResultView({
             ctaOrigin={origin}
             heading={
               formMode === "supplier_conversation"
-                ? "Ask SiteTech to explore a buyer conversation"
-                : "Ask how this works"
+                ? "Request a conversation"
+                : "Ask a general process question"
             }
             intro={
               formMode === "supplier_conversation"
-                ? "We'll review your answers and follow up if a conversation may make sense. Sending this does not share your company or records with a buyer."
-                : "Ask in plain English. This does not change your result above, and nothing is shared with a buyer."
+                ? "SiteTech will review your high-level answers and follow up about a possible next step. Submitting does not authorize sharing your inquiry with a buyer."
+                : "Ask a process question without requesting an introduction. Nothing is shared with a buyer."
             }
             onCancel={() => setFormMode("none")}
           />

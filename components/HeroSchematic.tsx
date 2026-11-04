@@ -101,9 +101,9 @@ const bm = { x: 150, y: 168, w: 34, h: 24 };
 // Conceptual brand visual only: illustrative categories, not live demand,
 // submitted records, transactions, or a match.
 const recordTypes = [
-  { id: "PLANS", label: "Project plans & drawings" },
-  { id: "PHOTOS", label: "Job photos & scans" },
-  { id: "LOGS", label: "Equipment & service records" },
+  { id: "PLANS", label: "Plans & technical documentation" },
+  { id: "IMAGERY", label: "Project imagery & scans" },
+  { id: "RECORDS", label: "Building & equipment records" },
 ];
 
 export function HeroSchematic() {
@@ -118,7 +118,6 @@ export function HeroSchematic() {
       />
 
       <svg viewBox="0 0 360 360" className="relative w-full" fill="none" aria-hidden>
-        {/* contour lines */}
         <g className="animate-topo-breathe">
           {contours.map((c, k) => (
             <path
@@ -141,7 +140,6 @@ export function HeroSchematic() {
           ))}
         </g>
 
-        {/* property boundary */}
         <rect
           x={16}
           y={16}
@@ -153,7 +151,6 @@ export function HeroSchematic() {
           rx={1}
         />
 
-        {/* spot heights */}
         {spots.map((s, i) => (
           <g key={i}>
             <line x1={s.x - 3.5} y1={s.y} x2={s.x + 3.5} y2={s.y} stroke="rgba(255,255,255,0.55)" strokeWidth={1} />
@@ -171,7 +168,6 @@ export function HeroSchematic() {
           </g>
         ))}
 
-        {/* benchmark / buildable pad */}
         <g>
           <rect
             x={bm.x}
@@ -209,7 +205,7 @@ export function HeroSchematic() {
 
       <div className="mt-2 flex items-center justify-between border-t border-white/10 pt-4">
         <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-gray-500">
-          Examples of records
+          Illustrative record types
         </span>
         <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-gray-600">
           Examples
@@ -231,7 +227,7 @@ export function HeroSchematic() {
       </ul>
 
       <p className="mt-4 font-mono text-[10px] leading-relaxed tracking-wide text-gray-600">
-        Examples only—not buyer requests and not files anyone submitted.
+        Conceptual illustration. Not live buyer demand or submitted records.
       </p>
     </div>
   );

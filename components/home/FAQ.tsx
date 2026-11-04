@@ -1,71 +1,47 @@
 export const faqs = [
   {
-    q: "In plain English, what would an AI company do with records like ours?",
-    a: "It would use approved examples to teach or test software. Real photos can show what job sites and buildings actually look like. Plans, schedules, estimates, and service records can add the context behind those images. The exact use depends on the buyer and the agreement you approve.",
+    q: "What kinds of records can I ask about?",
+    a: "Start with high-level categories such as technical documentation, project imagery, equipment records, or company-created research. Relevance depends on the collection and its permitted uses. The site does not accept underlying documents or datasets.",
   },
   {
-    q: "Why would files from finished jobs be valuable?",
-    a: "Because they came from real work. Generic examples cannot easily show the messy details of a real building, project, repair, or inspection. Your records may contain years of that real-world detail. That does not guarantee a buyer will want them, but it is why a conversation can be worth exploring.",
+    q: "How much could our data earn?",
+    a: "There is no reliable amount to quote from a short questionnaire. Any commercial terms depend on a buyer's requirements, the specific collection, permitted uses, and the agreement between the parties. SiteTech does not provide dataset valuations.",
   },
   {
-    q: "Why don't AI labs just use the internet?",
-    a: "Because the internet is mostly generic, public, and easy for everyone to copy. The harder thing to find is proprietary data from real work: what a site actually looked like, what a repair actually found, what a project actually cost, and what happened after the building opened. That is why brokers talk about 'the good stuff.'",
+    q: "Would this be a one-time payment or ongoing revenue?",
+    a: "An opportunity could involve a one-time license or another arrangement agreed directly with the counterparty. New records do not automatically create recurring revenue, and no payment structure is guaranteed.",
   },
   {
-    q: "What makes records 'good stuff' instead of just old files?",
-    a: "Usually some mix of real-world detail, uniqueness, coverage, and clear permission. A buyer cares whether the records teach something hard to fake, whether there is enough of it to be useful, and whether your company is actually allowed to license it. The quiz checks the starting point; it does not score or price the records.",
+    q: "Do we have to upload anything or connect our software?",
+    a: "No. The fit check and initial inquiry use a high-level description. Any later sharing would be a separate step that your organization evaluates and approves directly with the relevant party.",
   },
   {
-    q: "How much money could we make?",
-    a: "There is no honest number anyone can give from an 8-question quiz. Price depends on what the buyer needs, how useful and usable the records are, what rights you can grant, and the deal you negotiate. SiteTech does not value your records or promise a payout.",
+    q: "Do we have to give up ownership?",
+    a: "Ownership, permitted use, exclusivity, and other rights depend on the specific agreement. A licensing discussion does not by itself determine those terms. Your organization reviews any proposal before deciding whether to proceed.",
   },
   {
-    q: "Is this guaranteed income?",
-    a: "No. Think of it as a possible new return on work you already completed—not a promise and not automatic recurring revenue. A deal could be one-time or structured another way, but only if you and a buyer agree to it.",
+    q: "What if our records contain client, tenant, or confidential information?",
+    a: "Keep that information out of this website and the initial inquiry. Your organization should determine whether a separate permitted collection exists and which permissions or restrictions apply. The fit check is not a review of your records or a legal determination.",
   },
   {
-    q: "Is this a one-time fad or an ongoing market?",
-    a: "Data buying is an ongoing business because AI systems keep needing fresh, real-world examples. That does not mean any one company gets recurring revenue. It means old records can be relevant now, and new records may create future conversations if a buyer wants them.",
-  },
-  {
-    q: "Will this disrupt or change how our business operates?",
-    a: "The fit check will not. It takes a few minutes, asks only for categories, and does not connect to your systems. If a buyer later wants to evaluate a specific set of records, that is a separate step you can approve, limit, or decline.",
-  },
-  {
-    q: "Do we have to upload files or give SiteTech access to our systems?",
-    a: "No. Do not upload files here, and do not enter passwords or connect Procore, Yardi, email, drives, or any other software. The first step is only a plain-language description of the kinds of records you have.",
-  },
-  {
-    q: "Is the data anonymized before an AI lab uses it?",
-    a: "Yes—that is the de-identification step that makes an approved dataset training-ready. Before training use, the buyer or licensing partner removes or masks direct identifiers like names, emails, phone numbers, addresses, and ID numbers. SiteTech does not do that processing. It happens on the buyer/partner side, only for the records you approve and under the agreement you sign.",
-  },
-  {
-    q: "What if most of our records belong to clients or contain private information?",
-    a: "Leave those out of this inquiry. Later anonymization is not a reason to send private material here. Start by asking whether there is a separate set your company owns and is allowed to discuss. Tenant files, resident information, identity documents, privileged legal material, and client secrets may need to be excluded entirely—not anonymized into a deal.",
-  },
-  {
-    q: "What if we are small or only have one project?",
-    a: "You can still check. The quiz does not reject a company just because the set is small, old, or on paper. Size and format help explain the starting point; they do not decide the answer by themselves.",
-  },
-  {
-    q: "Do we lose ownership or control of our records?",
-    a: "Not by taking the quiz or having a conversation. Ownership, allowed use, exclusivity, and other rights are set by the agreement you review and sign directly with a buyer. If the terms are wrong, you do not sign.",
+    q: "Do we need to clean or organize everything first?",
+    a: "You can begin with a general understanding of what you have. Any preparation requirements would depend on a specific opportunity. SiteTech does not process, clean, or anonymize datasets.",
   },
   {
     q: "Who would we be introduced to?",
-    a: "Possibly an AI lab, a data buyer, or a licensing partner—but only if a relevant opportunity appears to exist. SiteTech will name the proposed recipient and ask for your permission before sharing your inquiry. Taking the quiz does not mean a buyer has already been found.",
+    a: "A potential introduction could involve an AI data buyer or a licensing partner relevant to the collection. We identify the proposed recipient and ask for permission before sharing your inquiry with that recipient. Completing the quiz does not mean a buyer has been found.",
   },
   {
     q: "How does SiteTech make money?",
-    a: "SiteTech's model is to earn a referral fee on eligible introductions under separate agreements with buyers or partners. That arrangement is clarified before an introduction. SiteTech does not set the price for your records or negotiate your licensing deal.",
+    a: "SiteTech's model is to receive referral fees on eligible introductions under separate agreements with buyers or partners. Any applicable referral arrangement and next steps are clarified before an introduction. We do not set the price or negotiate the terms of your data license.",
   },
   {
-    q: "What happens after I answer the questions?",
-    a: "You see your result first. If you choose to contact SiteTech, we review the high-level answers and follow up about whether a next step makes sense. You are not obligated to meet a buyer, share records, or accept any deal.",
+    q: "What happens after I contact you?",
+    a: "SiteTech reviews your high-level inquiry and follows up about a possible next step. An introduction depends on fit and opportunity availability. You have no obligation to enter a transaction.",
   },
   {
-    q: "I work for an AI lab or data buyer. Can we talk?",
-    a: "Yes. Use the buyer and partner page to describe your organization and the broad categories you want to discuss. Please do not send confidential buying requirements or underlying materials through the form.",
+    q: "I am a data buyer or licensing partner. Can we connect?",
+    a: "Yes. Use the buyer and partner inquiry option to describe your organization and the categories you are interested in discussing. Please keep confidential requirements and underlying materials out of the form.",
   },
 ];
 
@@ -82,16 +58,15 @@ export function FAQ() {
 
   return (
     <section id="faq" className="section-dark-solid scroll-mt-24 border-t border-white/10">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
       <div className="mx-auto max-w-[1400px] px-6 py-16 sm:py-20 lg:px-10 lg:py-32">
         <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:gap-24">
           <div className="lg:sticky lg:top-32 lg:self-start">
-            <p className="section-label mb-6">Straight answers</p>
-            <h2 className="headline-sm text-white">The questions every owner asks first.</h2>
-            <p className="body-lg mt-6">
-              No AI background required. If something here still does not make sense, ask us
-              before doing anything else.
-            </p>
+            <p className="section-label mb-6">FAQ</p>
+            <h2 className="headline-sm text-white">Common questions.</h2>
           </div>
 
           <div className="divide-y divide-white/10 border-y border-white/10">

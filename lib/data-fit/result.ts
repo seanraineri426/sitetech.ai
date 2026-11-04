@@ -173,37 +173,34 @@ export function reviewQuestions(answers: CompleteAnswers): string[] {
   const out: string[] = [];
 
   if (answers.permission === "third_party_needed") {
-    out.push("Who can confirm client or third-party permission before anything is discussed?");
+    out.push("Who can confirm client permission?");
   }
-  if (answers.permission === "ours_needs_review") {
-    out.push("Who inside your company can confirm you own the records and can discuss outside use?");
-  }
-  if (answers.permission === "unsure") {
-    out.push("Who in your company decides whether records can be discussed with an outside company?");
+  if (answers.permission === "ours_needs_review" || answers.permission === "unsure") {
+    out.push("Who can confirm ownership and permission for the proposed external use?");
   }
   if (answers.sensitivity.includes("personal")) {
     out.push(
       answers.business === "property_facilities_management" ||
         answers.business === "housing_public_sector"
-        ? "Can equipment or building records be separated from resident information?"
-        : "Can you set aside a safer group of records with no personal, customer, or employee details?",
+        ? "Can equipment records be considered separately from resident information?"
+        : "Can a permitted collection be considered separately from personal information?",
     );
   }
   if (answers.sensitivity.includes("client_confidential")) {
-    out.push("Which records are clearly your company's—not a client's—and who can confirm that?");
+    out.push("Which records are clearly company-created and free of client-confidential limits?");
   }
   if (answers.sensitivity.includes("privileged")) {
-    out.push("Can privileged or protected legal material be kept completely out of the discussion?");
+    out.push("Can privileged or otherwise protected legal material be kept entirely out of scope?");
   }
   if (answers.sensitivity.includes("third_party_licensed")) {
-    out.push("Who can explain the limits on photos, plans, content, or data that came from someone else?");
+    out.push("Which team can clarify restrictions on third-party materials?");
   }
   if (answers.sensitivity.includes("unsure")) {
-    out.push("Who can check the records for private, client, or third-party material?");
+    out.push("Who can review the collection for personal, client, or third-party restrictions?");
   }
 
   if (out.length === 0) {
-    out.push("Who can say yes—or no—to outside use?");
+    out.push("Who can confirm permission for the proposed external use?");
   }
   return out.slice(0, 3);
 }
