@@ -114,9 +114,9 @@ export function ResultView({
                 <p className={eyebrow}>Worth checking before you talk</p>
                 <ul className="mt-4 space-y-3">
                   {[
-                    "Which kinds of records you would consider, and roughly how far back they go.",
-                    "Who in your company can approve an outside conversation about them.",
-                    "Which records should stay completely out of the discussion.",
+                    "Which record categories you would put on the table, and roughly how far back they go.",
+                    "Who in your company can green-light an outside conversation.",
+                    "What you would keep out of a first deal.",
                   ].map((it) => (
                     <li key={it} className="flex gap-4 text-sm leading-relaxed text-gray-200">
                       <Dash />

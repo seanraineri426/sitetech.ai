@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   answersKey,
-  chipsFor,
   cleanlinessPct,
   computeBase,
   computeValuation,
@@ -90,11 +89,6 @@ test("reference code is deterministic and ignores the next-step answer", () => {
   assert.equal(referenceCode(favorable), referenceCode({ ...favorable, next: "nothing" }));
   assert.notEqual(referenceCode(favorable), referenceCode({ ...favorable, scope: "single" }));
   assert.match(referenceCode(favorable), /^STV2-[0-9A-F]{6}$/);
-});
-
-test("live chips rise as answers accumulate", () => {
-  const early = { business: "contracting" } as const;
-  assert.ok(chipsFor(favorable) > chipsFor(early));
 });
 
 test("answersKey is order independent for multi-select answers", () => {

@@ -99,14 +99,14 @@ export const FRESHNESS_NAME: Record<Frequency, string> = {
   unsure: "Frequency unsure",
 };
 export const RIGHTS_NAME: Record<Permission, string> = {
-  confirmed: "Outside use confirmed",
-  ours_needs_review: "Ours, needs review",
-  third_party_needed: "Third party may need to approve",
-  restricted: "Known restriction",
-  unsure: "Permission unsure",
+  confirmed: "Introduction green-lit",
+  ours_needs_review: "Ours, needs a quick check",
+  third_party_needed: "Client or partner sign-off needed",
+  restricted: "Outside use off-limits",
+  unsure: "Rights unsure",
 };
 
-/** Cleanliness multiplier (percent): 100 when nothing sensitive is flagged. */
+/** Cleanliness multiplier (percent): 100 when the set is clear to license as-is. */
 export function cleanlinessPct(sensitivity: readonly Sensitivity[]): number {
   if (sensitivity.includes("none_identified")) return 100;
   const flags = sensitivity.filter((s) => s !== "unsure" && s !== "none_identified").length;
@@ -115,10 +115,10 @@ export function cleanlinessPct(sensitivity: readonly Sensitivity[]): number {
 }
 
 export function cleanlinessName(sensitivity: readonly Sensitivity[]): string {
-  if (sensitivity.includes("none_identified")) return "No sensitive content flagged";
-  if (sensitivity.length === 1 && sensitivity[0] === "unsure") return "Sensitivity unsure";
+  if (sensitivity.includes("none_identified")) return "Clear to license as-is";
+  if (sensitivity.length === 1 && sensitivity[0] === "unsure") return "Deal scope unsure";
   const flags = sensitivity.filter((s) => s !== "unsure" && s !== "none_identified").length;
-  return `${flags} sensitive categor${flags === 1 ? "y" : "ies"} flagged`;
+  return `${flags} carve-out${flags === 1 ? "" : "s"} flagged`;
 }
 
 export type BaseItem = { key: Category; name: string; valueUsd: number; weightPct: number; contributionUsd: number };
@@ -223,12 +223,12 @@ export function computeValuation(a: CompleteAnswers): Valuation {
   if (RIGHTS_PCT[a.permission] < 100) {
     const better = rawFor({ ...a, permission: "confirmed" }).rawUsd;
     const delta = roundTo100(better) - amountUsd;
-    if (delta > 0) boosts.push({ key: "rights", label: "Outside use permission confirmed by your team", deltaUsd: delta });
+    if (delta > 0) boosts.push({ key: "rights", label: "Introduction green-lit by your team", deltaUsd: delta });
   }
   if (cleanlinessPct(a.sensitivity) < 100) {
     const better = rawFor({ ...a, sensitivity: ["none_identified"] }).rawUsd;
     const delta = roundTo100(better) - amountUsd;
-    if (delta > 0) boosts.push({ key: "cleanliness", label: "A separate set with no sensitive content", deltaUsd: delta });
+    if (delta > 0) boosts.push({ key: "cleanliness", label: "A separate set clear to license as-is", deltaUsd: delta });
   }
   boosts.sort((x, y) => y.deltaUsd - x.deltaUsd);
 
@@ -250,24 +250,6 @@ export function computeValuation(a: CompleteAnswers): Valuation {
     held,
     boosts,
   };
-}
-
-/** Chips are the game score shown during the quiz. They never feed the dollar number. */
-export function chipsFor(a: Answers): number {
-  let chips = 0;
-  if (a.business) chips += 100;
-  if (a.records?.length) {
-    const real = a.records.filter((r) => r !== "unsure" && r !== "none").length;
-    chips += 100 + Math.min(real, 6) * 40;
-  }
-  if (a.size) chips += 100;
-  if (a.software?.length) chips += 100 + (a.software.some((t) => t === "procore" || t === "autodesk") ? 40 : 0);
-  if (a.scope) chips += 100 + (a.scope === "portfolio" ? 80 : a.scope === "several" ? 40 : 0);
-  if (a.permission) chips += 100 + (a.permission === "confirmed" ? 150 : a.permission === "ours_needs_review" ? 60 : 0);
-  if (a.sensitivity?.length) chips += 100 + (a.sensitivity.includes("none_identified") ? 100 : 0);
-  if (a.frequency) chips += 100 + (a.frequency === "regular" ? 60 : 0);
-  if (a.next) chips += 100;
-  return chips;
 }
 
 export function formatUsd(n: number): string {

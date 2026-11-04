@@ -1,10 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import type { Answers } from "@/lib/data-fit/questions";
-import { chipsFor } from "@/lib/data-fit/valuation";
-import { CoinIcon, LockIcon, useTween } from "./casino-bits";
+import { motion, useReducedMotion } from "framer-motion";
+import { LockIcon } from "./casino-bits";
 
 /**
  * The jackpot window: a masked, pulsing placeholder. It never shows digits, so
@@ -34,63 +31,31 @@ function LockedJackpot({ round, total }: { round: number; total: number }) {
 }
 
 export function CasinoHud({
-  answers,
   round,
   total,
   sealed = false,
 }: {
-  answers: Answers;
+  /** Kept for call-site stability; chip score UI was removed. */
+  answers?: unknown;
   /** Number of rounds completed so far, 0 to total. */
   round: number;
   total: number;
   sealed?: boolean;
 }) {
-  const chips = chipsFor(answers);
-  const shown = useTween(chips, 650);
-  const prev = useRef(chips);
-  const [gain, setGain] = useState<{ id: number; amount: number } | null>(null);
-  const [jolt, setJolt] = useState(0);
   const reduce = useReducedMotion();
-
-  useEffect(() => {
-    if (chips > prev.current) {
-      setGain({ id: Date.now(), amount: chips - prev.current });
-      setJolt((j) => j + 1);
-    }
-    prev.current = chips;
-  }, [chips]);
+  const pct = Math.round((Math.min(round, total) / total) * 100);
 
   return (
     <div className="border-b border-gold/20 bg-black/40 px-5 py-4 sm:px-8">
       <div className="flex items-start justify-between gap-6">
         <LockedJackpot round={round} total={total} />
 
-        <div className="relative text-right">
-          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-gold/80">Chips</p>
-          <p
-            key={jolt}
-            className={`mt-1 flex items-center justify-end gap-1.5 font-mono text-2xl font-semibold tabular-nums text-white sm:text-3xl ${jolt && !reduce ? "hud-jolt" : ""}`}
-          >
-            <CoinIcon className="h-6 w-6 text-gold" />
-            {shown.toLocaleString("en-US")}
+        <div className="text-right">
+          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-gold/80">Progress</p>
+          <p className="mt-1 font-mono text-2xl font-semibold tabular-nums text-white sm:text-3xl">
+            {sealed ? "100%" : `${pct}%`}
           </p>
-          <AnimatePresence>
-            {gain && (
-              <motion.span
-                key={gain.id}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: [0, 1, 1, 0], y: -26 }}
-                transition={{ duration: 1.1 }}
-                onAnimationComplete={() => setGain(null)}
-                className="pointer-events-none absolute -top-1 right-0 font-mono text-sm font-semibold text-gold"
-                aria-hidden
-              >
-                +{gain.amount}
-              </motion.span>
-            )}
-          </AnimatePresence>
         </div>
-
       </div>
 
       <div className="mt-4 flex items-center gap-3">

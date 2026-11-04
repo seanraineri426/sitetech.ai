@@ -10,32 +10,32 @@ export type ResultCopy = {
 export const RESULT_COPY: Record<ResultType, ResultCopy> = {
   CURRENT_SCOPE_RESTRICTED: {
     label: "Starting point",
-    heading: "Start by reviewing this collection's restrictions.",
+    heading: "This set is not ready for an introduction yet.",
     body:
-      "Your answers indicate that the proposed external use is currently restricted. Do not send these records. Your organization may have a separate collection that can be considered after the relevant permissions are confirmed.",
+      "Your answers point to a known limit on outside use for this collection. A different set with clearer rights may still be worth discussing.",
   },
   INVENTORY_FIRST: {
     label: "Starting point",
-    heading: "Start with a high-level inventory.",
+    heading: "Map what you have before chasing a number.",
     body:
-      "Before exploring an introduction, identify the types of records your business holds, how they are stored, and who can confirm permission for external use.",
+      "Before exploring an introduction, note the record categories you hold, where they live, and who can green-light a conversation.",
     checklist: [
-      "Identify categories.",
-      "Identify the responsible team.",
-      "Clarify permissions.",
+      "Name the categories.",
+      "Name the team that owns them.",
+      "Name who can approve an intro.",
     ],
   },
   PERMISSIONS_AND_SCOPE_REVIEW: {
     label: "Starting point",
-    heading: "Clarify the permitted collection first.",
+    heading: "Lock the deal-ready set first.",
     body:
-      "There may be a collection worth discussing, but your answers suggest that permissions or sensitive content need review. A separate permitted subset may provide a clearer starting point.",
+      "There may be a collection worth discussing. Your answers suggest rights or scope need a quick internal check before an introduction makes sense. A cleaner subset can still be a strong fit.",
   },
   INITIAL_CONVERSATION: {
     label: "Starting point",
-    heading: "You have a starting point for an initial conversation.",
+    heading: "You have a starting point for an introduction.",
     body:
-      "You have identified a collection and reported that external-use permissions have been reviewed. A short conversation can clarify its scope and whether a potential introduction is worth exploring.",
+      "You named a collection and said an outside conversation is on the table. A short call can clarify scope and whether an introduction is worth exploring.",
   },
 };
 

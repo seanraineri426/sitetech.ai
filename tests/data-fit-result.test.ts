@@ -169,7 +169,7 @@ test("8. Q8 never changes the readiness conclusion", () => {
 test("review questions are relevant, 1–3 items, and framed for the visitor's organization", () => {
   const q1 = reviewQuestions({ ...favorable, permission: "third_party_needed", sensitivity: ["personal", "privileged", "unsure"] });
   assert.ok(q1.length >= 2 && q1.length <= 3);
-  assert.ok(q1[0].includes("client permission"));
+  assert.ok(q1[0].includes("green-light"));
 
   const q2 = reviewQuestions({
     ...favorable,
@@ -177,7 +177,7 @@ test("review questions are relevant, 1–3 items, and framed for the visitor's o
     permission: "confirmed",
     sensitivity: ["personal"],
   });
-  assert.ok(q2.some((q) => q.includes("resident information")));
+  assert.ok(q2.some((q) => q.includes("resident")));
 
   const q3 = reviewQuestions({ ...favorable, permission: "ours_needs_review" });
   assert.equal(q3.length, 1);

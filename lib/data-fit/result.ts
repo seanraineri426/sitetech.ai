@@ -136,8 +136,8 @@ export function validateQuestion(id: QuestionId, answers: Answers): string | nul
  * Result precedence (strict, in order):
  *   1. Known restriction on the proposed use      -> CURRENT_SCOPE_RESTRICTED
  *   2. Unsure what exists / no collection          -> INVENTORY_FIRST
- *   3. Permission not confirmed, or any sensitive/
- *      restricted category, or sensitivity unsure  -> PERMISSIONS_AND_SCOPE_REVIEW
+ *   3. Permission not confirmed, or any carve-out /
+ *      deal-scope flag, or scope unsure            -> PERMISSIONS_AND_SCOPE_REVIEW
  *   4. Otherwise                                   -> INITIAL_CONVERSATION
  *
  * Industry, team size, software, scope, and frequency never change the result.
@@ -171,42 +171,42 @@ export function evaluate(input: unknown): Evaluation {
 }
 
 /**
- * For PERMISSIONS_AND_SCOPE_REVIEW: two or three questions the visitor's
- * organization may want to answer internally, chosen from their answers.
- * These are prompts for them, not an assessment by SiteTech.
+ * For PERMISSIONS_AND_SCOPE_REVIEW: two or three commercial next checks the
+ * visitor's organization may want to answer internally. Prompts only — not an
+ * assessment by SiteTech.
  */
 export function reviewQuestions(answers: CompleteAnswers): string[] {
   const out: string[] = [];
 
   if (answers.permission === "third_party_needed") {
-    out.push("Who can confirm client permission?");
+    out.push("Who can green-light a client or partner intro?");
   }
   if (answers.permission === "ours_needs_review" || answers.permission === "unsure") {
-    out.push("Who can confirm ownership and permission for the proposed external use?");
+    out.push("Who can green-light an outside conversation on this set?");
   }
   if (answers.sensitivity.includes("personal")) {
     out.push(
       answers.business === "property_facilities_management" ||
         answers.business === "housing_public_sector"
-        ? "Can equipment records be considered separately from resident information?"
-        : "Can a permitted collection be considered separately from personal information?",
+        ? "Can you package equipment or building records without resident details?"
+        : "Can you package a subset without customer or employee details?",
     );
   }
   if (answers.sensitivity.includes("client_confidential")) {
-    out.push("Which records are clearly company-created and free of client-confidential limits?");
+    out.push("Which company-created records could sit in a first deal?");
   }
   if (answers.sensitivity.includes("privileged")) {
-    out.push("Can privileged or otherwise protected legal material be kept entirely out of scope?");
+    out.push("Can legal or attorney material stay completely out of scope?");
   }
   if (answers.sensitivity.includes("third_party_licensed")) {
-    out.push("Which team can clarify restrictions on third-party materials?");
+    out.push("Who can confirm what third-party content can be included?");
   }
   if (answers.sensitivity.includes("unsure")) {
-    out.push("Who can review the collection for personal, client, or third-party restrictions?");
+    out.push("Who can name a clean subset for a first conversation?");
   }
 
   if (out.length === 0) {
-    out.push("Who can confirm permission for the proposed external use?");
+    out.push("Who can green-light an outside conversation on this set?");
   }
   return out.slice(0, 3);
 }

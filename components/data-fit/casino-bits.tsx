@@ -12,16 +12,6 @@ export function LockIcon({ className = "h-5 w-5", open = false }: { className?: 
   );
 }
 
-export function CoinIcon({ className = "h-5 w-5" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className} aria-hidden>
-      <circle cx="12" cy="12" r="8.5" />
-      <circle cx="12" cy="12" r="5.2" opacity="0.5" />
-      <path d="M12 8.6v6.8M10.2 10.4c0-.8.8-1.2 1.8-1.2s1.8.4 1.8 1.2c0 1.7-3.6.8-3.6 2.4 0 .8.8 1.2 1.8 1.2s1.8-.4 1.8-1.2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 export function CheckIcon({ className = "h-4 w-4" }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className={className} aria-hidden>

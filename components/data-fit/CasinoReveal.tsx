@@ -128,8 +128,8 @@ export function CasinoReveal({
           {v.held && (
             <motion.div variants={item} className="border border-white/30 p-4 text-sm leading-relaxed text-gray-200">
               {v.held === "restricted"
-                ? "Held. You reported a known restriction on outside use, so the Rights multiplier is x0.00 and the model returns $0. Do not send these records. The boost below shows what the model would give a separate, permitted collection."
-                : "Held. No identifiable record category was selected, so the base value is $0. Identify at least one category to give the model something to work with."}
+                ? "Held. Outside use is off-limits for this set, so the Rights multiplier is x0.00 and the model returns $0. The boost below shows what a separate, green-lit collection would model."
+                : "Held. No identifiable record category was selected, so the base value is $0. Name at least one category to give the model something to work with."}
             </motion.div>
           )}
 
@@ -235,9 +235,9 @@ export function CasinoReveal({
               <Table
                 title="Cleanliness"
                 rows={[
-                  ["Nothing sensitive flagged", "x1.00"],
-                  ["Each sensitive category flagged", "minus 0.12"],
-                  ["Sensitivity unsure", "x0.80"],
+                  ["Clear to license as-is", "x1.00"],
+                  ["Each carve-out flagged", "minus 0.12"],
+                  ["Deal scope unsure", "x0.80"],
                   ["Floor", "x0.50"],
                 ]}
               />
