@@ -29,19 +29,19 @@ import {
   type StorageFormat,
 } from "./questions.ts";
 
-export const MODEL_ID = "SiteTech Data Fit Model v1";
-export const MODEL_VERSION = "1";
+export const MODEL_ID = "SiteTech Data Fit Model v2";
+export const MODEL_VERSION = "2";
 
 type Category = Exclude<RecordType, "unsure" | "none">;
 
 /** Base value in USD for the first record category of each kind. */
 export const CATEGORY_BASE_USD: Record<Category, number> = {
-  imagery_scans: 26000,
-  plans_specs_technical: 22000,
-  equipment_maintenance_building: 20000,
-  cost_quantity_schedule: 18000,
-  property_market_research: 16000,
-  other_company_record: 10000,
+  imagery_scans: 150000,
+  plans_specs_technical: 125000,
+  equipment_maintenance_building: 110000,
+  cost_quantity_schedule: 100000,
+  property_market_research: 90000,
+  other_company_record: 50000,
 };
 
 export const CATEGORY_NAME: Record<Category, string> = {
@@ -56,7 +56,7 @@ export const CATEGORY_NAME: Record<Category, string> = {
 /** Diminishing weight (percent) applied to the 1st, 2nd, 3rd... category, highest value first. */
 export const CATEGORY_WEIGHTS_PCT = [100, 80, 65, 50, 40, 30] as const;
 
-export const SCOPE_PCT: Record<Scope, number> = { single: 60, several: 100, portfolio: 170, unsure: 70 };
+export const SCOPE_PCT: Record<Scope, number> = { single: 50, several: 100, portfolio: 250, unsure: 60 };
 export const FORMAT_PCT: Record<StorageFormat, number> = {
   digital_documents: 100,
   structured_exports: 115,
@@ -196,9 +196,9 @@ export function safetyScore(a: Answers): number {
 
 function tierFor(amountUsd: number): Tier {
   if (amountUsd <= 0) return "Held";
-  if (amountUsd < 15000) return "Bronze";
-  if (amountUsd < 50000) return "Silver";
-  if (amountUsd < 150000) return "Gold";
+  if (amountUsd < 50000) return "Bronze";
+  if (amountUsd < 200000) return "Silver";
+  if (amountUsd < 600000) return "Gold";
   return "Black";
 }
 

@@ -23,13 +23,13 @@ const favorable: CompleteAnswers = {
 };
 
 test("the headline number is exactly recomputable by hand", () => {
-  // Base: imagery 26,000 x 100% + plans 22,000 x 80% = 43,600
-  // Then x1.70 coverage x1.00 format x1.25 freshness x1.00 rights x1.00 cleanliness = 92,650
+  // Base: imagery 150,000 x 100% + plans 125,000 x 80% = 250,000
+  // Then x2.50 coverage x1.00 format x1.25 freshness x1.00 rights x1.00 cleanliness = 781,250
   const v = computeValuation(favorable);
-  assert.equal(v.baseUsd, 43600);
-  assert.equal(v.rawUsd, 92650);
-  assert.equal(v.amountUsd, 92700);
-  assert.equal(v.tier, "Gold");
+  assert.equal(v.baseUsd, 250000);
+  assert.equal(v.rawUsd, 781250);
+  assert.equal(v.amountUsd, 781300);
+  assert.equal(v.tier, "Black");
   assert.equal(v.held, null);
 });
 
@@ -37,7 +37,7 @@ test("base uses diminishing weights, highest value first", () => {
   const { baseUsd, items } = computeBase(["other_company_record", "imagery_scans", "plans_specs_technical"]);
   assert.deepEqual(items.map((i) => i.weightPct), [100, 80, 65]);
   assert.equal(items[0].key, "imagery_scans");
-  assert.equal(baseUsd, 26000 + 17600 + 6500);
+  assert.equal(baseUsd, 150000 + 100000 + 32500);
 });
 
 test("known restriction zeroes the number and marks it held", () => {
@@ -89,7 +89,7 @@ test("boosts are computed from the same model and are positive", () => {
 test("reference code is deterministic and ignores the next-step answer", () => {
   assert.equal(referenceCode(favorable), referenceCode({ ...favorable, next: "nothing" }));
   assert.notEqual(referenceCode(favorable), referenceCode({ ...favorable, scope: "single" }));
-  assert.match(referenceCode(favorable), /^STV1-[0-9A-F]{6}$/);
+  assert.match(referenceCode(favorable), /^STV2-[0-9A-F]{6}$/);
 });
 
 test("live safety and chips rise as answers accumulate", () => {
