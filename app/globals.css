@@ -75,6 +75,45 @@ body {
   @apply text-[clamp(2.25rem,5vw,4.5rem)] font-medium leading-[1.05] tracking-[-0.03em];
 }
 
+.headline-xl {
+  @apply text-[clamp(3rem,7.2vw,6.75rem)] font-medium leading-[0.94] tracking-[-0.045em];
+}
+
+.eyebrow-pill {
+  @apply inline-flex items-center gap-3 border border-white/20 px-3 py-2 font-mono text-[11px] uppercase tracking-[0.22em] text-gray-300;
+}
+
+.hero-panel {
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    radial-gradient(circle at 70% 20%, rgba(255, 255, 255, 0.13), transparent 34rem),
+    #000;
+  background-size: 56px 56px, 56px 56px, auto, auto;
+}
+
+.record-chip {
+  @apply inline-flex items-center gap-2 border px-3 py-2 font-mono text-[10px] uppercase tracking-[0.16em];
+}
+
+@keyframes drift {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+.animate-drift {
+  animation: drift 28s linear infinite;
+}
+
+@keyframes float-card {
+  0%, 100% { transform: translateY(0) rotate(var(--float-rotate, 0deg)); }
+  50% { transform: translateY(-8px) rotate(var(--float-rotate, 0deg)); }
+}
+
+.float-card {
+  animation: float-card 7s ease-in-out infinite;
+}
+
 .headline-sm {
   @apply text-[clamp(1.75rem,3.5vw,3rem)] font-medium leading-[1.1] tracking-[-0.025em];
 }
@@ -188,7 +227,9 @@ body {
   .animate-fade-up,
   .animate-panel-glow,
   .animate-pulse-node,
-  .animate-topo-breathe {
+  .animate-topo-breathe,
+  .animate-drift,
+  .float-card {
     animation: none;
   }
 }

@@ -1,5 +1,6 @@
 import { Hero } from "@/components/Hero";
 import { Opportunity } from "@/components/home/Opportunity";
+import { DataJourney } from "@/components/home/DataJourney";
 import { Process } from "@/components/home/Process";
 import { Audience } from "@/components/home/Audience";
 import { Control } from "@/components/home/Control";
@@ -14,6 +15,9 @@ export default function Home() {
       <Hero />
       <Reveal>
         <Opportunity />
+      </Reveal>
+      <Reveal>
+        <DataJourney />
       </Reveal>
       <Reveal>
         <Process />

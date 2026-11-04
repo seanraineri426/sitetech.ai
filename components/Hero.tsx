@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { HeroSchematic } from "./HeroSchematic";
+import { HeroVisual } from "./home/HeroVisual";
 
 const HeroCanvas = dynamic(() => import("./HeroCanvas"), {
   ssr: false,
@@ -29,7 +29,7 @@ const pillars = [
 
 export function Hero() {
   return (
-    <section className="section-dark-solid relative flex min-h-screen flex-col overflow-hidden text-white">
+    <section className="section-dark-solid hero-panel relative flex min-h-screen flex-col overflow-hidden text-white">
       <div className="absolute inset-0 z-0" aria-hidden>
         <HeroCanvas />
       </div>
@@ -39,11 +39,12 @@ export function Hero() {
       <div className="relative z-[2] flex flex-1 flex-col justify-center px-6 pt-28 lg:px-10">
         <div className="mx-auto grid w-full max-w-[1400px] items-center gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
           <div>
-            <p className="section-label mb-6 text-gray-400">
+            <p className="eyebrow-pill mb-7">
+              <span aria-hidden className="h-1.5 w-1.5 bg-white" />
               AI labs are hunting for real-world data
             </p>
 
-            <h1 className="headline max-w-[19ch]">
+            <h1 className="headline-xl max-w-[10.5ch] text-balance">
               AI labs don&apos;t need more internet data. They need yours.
             </h1>
 
@@ -69,8 +70,8 @@ export function Hero() {
             </p>
           </div>
 
-          <div className="hidden lg:block">
-            <HeroSchematic />
+          <div className="min-w-0 lg:pl-4">
+            <HeroVisual />
           </div>
         </div>
       </div>
