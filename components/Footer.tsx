@@ -31,7 +31,7 @@ export function Footer() {
               </span>
             </div>
             <p className="mt-5 max-w-sm text-sm leading-relaxed text-gray-500">
-              SiteTech helps real estate and built-environment businesses explore potential
+              SiteTech helps businesses in real estate, construction, design, and other industries explore potential
               AI data introductions.
             </p>
           </div>

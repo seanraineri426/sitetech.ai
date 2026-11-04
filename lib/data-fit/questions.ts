@@ -133,7 +133,7 @@ export const QUESTIONS: readonly QuestionDef[] = [
       { value: "housing_public_sector", label: "Housing organization or public-sector team." },
       {
         value: "manufacturer_supplier_other",
-        label: "Manufacturer, supplier, or another built-environment business.",
+        label: "Manufacturer, supplier, or any other type of business.",
       },
     ],
   },

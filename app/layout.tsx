@@ -16,9 +16,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const defaultTitle = "SiteTech AI | What is your construction data worth to AI companies?";
+const defaultTitle = "SiteTech AI | What is your company's data worth to AI companies?";
 const defaultDescription =
-  "AI data buyers publish offer ranges of $100K to $5M for construction and design records. Answer 8 quick questions and see a modeled value for yours.";
+  "AI data buyers publish offer ranges of $100K to $5M for construction and design records. Answer 8 quick questions and see a modeled value for your company's data.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -29,6 +29,8 @@ export const metadata: Metadata = {
   description: defaultDescription,
   keywords: [
     "AI data licensing",
+    "sell company data to AI",
+    "business data licensing",
     "construction data licensing",
     "real estate data licensing",
     "AI training data built environment",
@@ -77,7 +79,7 @@ const organizationSchema = {
   name: "SiteTech AI",
   url: SITE_URL,
   description:
-    "SiteTech helps real estate and built-environment businesses explore potential AI data licensing introductions. SiteTech facilitates introductions; dataset evaluation and any licensing transaction are handled directly between the participating businesses.",
+    "SiteTech helps businesses in real estate, construction, design, and other industries explore potential AI data licensing introductions. SiteTech facilitates introductions; dataset evaluation and any licensing transaction are handled directly between the participating businesses.",
   logo: `${SITE_URL}/icon.png`,
   areaServed: "US",
   knowsAbout: [

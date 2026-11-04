@@ -66,7 +66,7 @@ export default function OpengraphImage() {
               maxWidth: "980px",
             }}
           >
-            AI companies want construction data. What is yours worth?
+            AI companies buy business data. What is yours worth?
           </div>
           <div
             style={{

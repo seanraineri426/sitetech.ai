@@ -7,7 +7,7 @@ import { SITE_URL } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Contact",
   description:
-    "Contact SiteTech about AI data opportunities for the built environment. Keep confidential contents out of the form.",
+    "Contact SiteTech about AI data opportunities for your business. Keep confidential contents out of the form.",
   alternates: { canonical: "/contact" },
   openGraph: {
     title: "Contact | SiteTech AI",

@@ -45,21 +45,21 @@ export function Hero() {
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           >
             <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-gold">
-              AI data licensing for construction and real estate
+              AI data licensing for businesses
             </p>
 
             <h1 className="mt-4 max-w-[16ch] text-[clamp(2.4rem,6.2vw,4.6rem)] font-medium leading-[1.02] tracking-tight">
-              AI companies want construction data. What is yours worth?
+              AI companies buy business data. What is yours worth?
             </h1>
 
             <p className="mt-5 max-w-xl text-lg leading-relaxed text-gray-300">
-              SiteTech introduces construction, real estate, and design firms to AI data buyers. Answer 8
-              quick questions and see a modeled value.
+              SiteTech introduces companies in construction, real estate, design, and other industries to AI
+              data buyers. Answer 8 quick questions and see a modeled value.
             </p>
 
             <p className="mt-5 max-w-xl border-l-2 border-gold pl-4 text-base leading-relaxed text-gray-200">
               Buyers publish offer ranges of{" "}
-              <span className="font-semibold text-gold">{PUBLISHED_RANGE_TEXT}</span> for these records.{" "}
+              <span className="font-semibold text-gold">{PUBLISHED_RANGE_TEXT}</span> for construction and design records.{" "}
               <span className="text-gray-500">Published offers, not completed sales or a promise of payment.</span>
             </p>
           </motion.div>
