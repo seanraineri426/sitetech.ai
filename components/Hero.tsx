@@ -22,21 +22,38 @@ export function Hero() {
 
   return (
     <section className="section-dark-solid relative flex min-h-[100svh] flex-col overflow-hidden text-white">
-      <div className="absolute inset-0 z-0" aria-hidden>
+      {/* Backdrop: generated art, darkest on the left where the headline sits. */}
+      <div className="absolute inset-0 z-0 overflow-hidden bg-black" aria-hidden>
+        <div className="hero-backdrop-drift absolute inset-0">
+          <Image
+            src="/higgsfield/hero-backdrop-mobile.webp"
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-[72%_center] md:hidden"
+          />
+          <Image
+            src="/higgsfield/hero-backdrop.webp"
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="hidden object-cover object-right md:block"
+          />
+        </div>
+      </div>
+
+      {/* Particles blend on top of the art (screen: the canvas black adds nothing). */}
+      <div className="absolute inset-0 z-[1] opacity-50 mix-blend-screen" aria-hidden>
         <HeroCanvas />
       </div>
 
-      <div className="absolute inset-0 z-[1]" aria-hidden>
-        <Image
-          src="/higgsfield/hero-topo.png"
-          alt=""
-          fill
-          priority
-          className="object-cover opacity-45"
-          sizes="100vw"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/85 to-black/50" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black" />
+      {/* Readability overlays for headline, button, note and quiz card. */}
+      <div className="pointer-events-none absolute inset-0 z-[1]" aria-hidden>
+        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/70 to-black/35 md:from-black/90 md:via-black/35 md:to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/85" />
+        <div className="absolute inset-x-0 top-1/4 h-1/2 bg-black/35 md:hidden" />
       </div>
 
       <div className="relative z-[2] flex flex-1 flex-col justify-center px-5 pb-12 pt-20 sm:px-6 lg:px-10 lg:pt-24">
@@ -95,7 +112,7 @@ export function Hero() {
             <p className="mt-6 max-w-xl border-l-2 border-gold pl-4 text-sm leading-relaxed text-gray-200 sm:text-base">
               Buyers publish offer ranges of{" "}
               <span className="font-semibold text-gold">{PUBLISHED_RANGE_TEXT}</span> for construction and design records.{" "}
-              <span className="text-gray-500">Published offers, not completed sales or a promise of payment.</span>
+              <span className="text-gray-400">Published offers, not completed sales or a promise of payment.</span>
             </p>
           </motion.div>
 

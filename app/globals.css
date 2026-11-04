@@ -236,9 +236,12 @@ body {
 
 .casino-inner {
   position: relative;
+  /* Translucent so the hero art glows through the panel; blur keeps text crisp. */
   background:
     radial-gradient(900px 400px at 50% -10%, rgba(245, 196, 81, 0.14), transparent 60%),
-    #050505;
+    rgba(5, 5, 5, 0.74);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  backdrop-filter: blur(14px) saturate(1.1);
   color: #fff;
 }
 
@@ -355,7 +358,21 @@ body {
   100% { transform: translateX(0); }
 }
 
+@keyframes hero-backdrop-drift {
+  0% { transform: scale(1.04) translate3d(0, 0, 0); }
+  100% { transform: scale(1.1) translate3d(-1.2%, -0.8%, 0); }
+}
+
+.hero-backdrop-drift {
+  animation: hero-backdrop-drift 40s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .hero-backdrop-drift {
+    animation: none;
+    transform: none;
+  }
   .animate-flow-down,
   .animate-shimmer,
   .animate-fade-up,
