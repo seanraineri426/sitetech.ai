@@ -5,7 +5,6 @@ import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
 import { DataFitQuiz } from "@/components/data-fit/DataFitQuiz";
 import { PUBLISHED_RANGE_TEXT } from "@/lib/data-fit/benchmarks";
-import { QUESTION_COUNT } from "@/lib/data-fit/questions";
 import { BOOKING_URL } from "@/lib/site";
 
 const HeroCanvas = dynamic(() => import("./HeroCanvas"), {
@@ -83,10 +82,7 @@ export function Hero() {
                 href="#quiz"
                 className="cta-gold group inline-flex min-h-[60px] w-full items-center justify-between gap-4 rounded-xl px-6 text-left text-base font-semibold sm:w-auto sm:min-w-[22rem] sm:text-lg"
               >
-                <span className="flex flex-col leading-tight">
-                  <span>See what my data is worth</span>
-                  <span className="mt-0.5 text-xs font-medium text-black/60">{QUESTION_COUNT} quick taps. No typing until the end.</span>
-                </span>
+                <span>See what my data is worth</span>
                 <span className="cta-arrow flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-black text-gold" aria-hidden>
                   <svg viewBox="0 0 24 24" className="h-5 w-5 lg:hidden" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M12 5v14M6 13l6 6 6-6" />
