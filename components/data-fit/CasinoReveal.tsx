@@ -18,6 +18,7 @@ import {
   type Valuation,
 } from "@/lib/data-fit/valuation";
 import { CoinBurst, ShieldIcon, useTween } from "./casino-bits";
+import { BenchmarkGauge } from "./BenchmarkGauge";
 import { ReelNumber } from "./Reels";
 
 const container: Variants = {
@@ -195,6 +196,10 @@ export function CasinoReveal({
             </p>
           </motion.div>
 
+          <motion.div variants={item}>
+            <BenchmarkGauge amountUsd={v.amountUsd} />
+          </motion.div>
+
           {/* Boosts */}
           {v.boosts.length > 0 && (
             <motion.div variants={item}>
@@ -259,7 +264,8 @@ export function CasinoReveal({
               />
             </div>
             <p className="mt-4 text-xs leading-relaxed text-gray-500">
-              These are modeling assumptions chosen by SiteTech for a first-pass estimate. They are not
+              SiteTech chose these multipliers and calibrated them so a strong, fully permitted collection
+              lands inside the published buyer ranges shown above. They are modeling assumptions, not
               market prices, and no buyer has agreed to them.
             </p>
           </motion.details>

@@ -105,3 +105,35 @@ test("answersKey is order independent for multi-select answers", () => {
     answersKey({ ...favorable, records: ["imagery_scans", "plans_specs_technical"] }),
   );
 });
+
+test("calibration: model output stays inside published buyer ranges", async () => {
+  const { BENCHMARKS, OFFER_INDEX } = await import("../lib/data-fit/benchmarks.ts");
+  const topPublished = Math.max(...BENCHMARKS.map((b) => b.highUsd));
+
+  // Strongest realistic path sits in the published offer band, below the top of every range.
+  const best = computeValuation(favorable).amountUsd;
+  assert.ok(best >= 115_000 && best <= 1_000_000, `best path ${best} should sit inside $115K to $1M`);
+
+  // A single strong category at portfolio scale lands inside the middle half of published offers.
+  const median = computeValuation({
+    ...favorable,
+    records: ["imagery_scans"],
+    storage: "mixed_digital_paper",
+  }).amountUsd;
+  assert.ok(median >= OFFER_INDEX.q1Usd && median <= OFFER_INDEX.q3Usd, `mid path ${median} should sit in the IQR`);
+
+  // The absolute ceiling of the model (everything maxed) never exceeds the highest published figure.
+  const ceiling = computeValuation({
+    ...favorable,
+    records: [
+      "imagery_scans",
+      "plans_specs_technical",
+      "equipment_maintenance_building",
+      "cost_quantity_schedule",
+      "property_market_research",
+      "other_company_record",
+    ],
+    storage: "structured_exports",
+  }).amountUsd;
+  assert.ok(ceiling <= topPublished, `ceiling ${ceiling} must not exceed ${topPublished}`);
+});

@@ -5,7 +5,7 @@ export const faqs = [
   },
   {
     q: "How much could our data earn?",
-    a: "The fit check shows a modeled estimate computed from your own answers with a published formula, so you can see and cite exactly how it was calculated. It is not a quote or an appraisal. Real terms depend on a buyer's requirements, the specific collection, permitted uses, and the agreement between the parties. SiteTech does not appraise datasets or negotiate terms.",
+    a: "The fit check shows a modeled estimate computed from your own answers with a published formula and compared against the ranges buyers and brokers publicly state for construction and design records. Those are published offers, not completed sales, and the estimate is not a quote or an appraisal. Real terms depend on a buyer's requirements, the specific collection, permitted uses, and the agreement between the parties. SiteTech does not appraise datasets or negotiate terms.",
   },
   {
     q: "Would this be a one-time payment or ongoing revenue?",
