@@ -53,8 +53,8 @@ export default function PreviousServicesPage() {
               <p className="section-label mb-6">What SiteTech does now</p>
               <p className="text-base leading-relaxed text-gray-700">
                 SiteTech helps businesses across the built environment find out whether the
-                records they already create—plans, imagery, equipment and building records,
-                company-created research—could be relevant to an AI data buyer, and facilitates
+                records they already create (plans, imagery, equipment and building records,
+                company-created research) could be relevant to an AI data buyer, and facilitates
                 a permitted introduction when one makes sense. The business decides on any
                 introduction and discusses terms directly with the counterparty.
               </p>

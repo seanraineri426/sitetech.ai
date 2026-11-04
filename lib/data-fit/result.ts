@@ -1,10 +1,10 @@
 // ---------------------------------------------------------------------------
-// Data fit check — validation and the pure, deterministic result function.
+// Data fit check: validation and the pure, deterministic result function.
 //
 // No LLM, no scoring, no probabilities. The result is a routing guide for the
 // visitor's next step, not a valuation or a qualification. The same function
 // runs on the client (to render the result) and on the server (to recompute
-// the result before an inquiry is forwarded — client classification is
+// the result before an inquiry is forwarded; client classification is
 // never trusted).
 // ---------------------------------------------------------------------------
 
@@ -156,7 +156,7 @@ export type Evaluation =
 
 /**
  * Validate then compute. An incomplete or invalid answer set can never
- * produce a result — callers must handle the "incomplete" branch.
+ * produce a result, so callers must handle the "incomplete" branch.
  */
 export function evaluate(input: unknown): Evaluation {
   const v = validateAnswers(input);

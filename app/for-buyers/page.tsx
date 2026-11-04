@@ -33,7 +33,7 @@ export default function ForBuyersPage() {
               <p className="section-label mb-6">How introductions work</p>
               <ul className="divide-y divide-gray-200 border-y border-gray-200">
                 {[
-                  "Businesses describe record categories at a high level—not underlying files.",
+                  "Businesses describe record categories at a high level, not underlying files.",
                   "A specific introduction requires the company's approval and identifies the proposed recipient.",
                   "Dataset evaluation and any licensing transaction are handled directly between the parties.",
                   "Any referral arrangement is agreed separately and clarified before an introduction.",

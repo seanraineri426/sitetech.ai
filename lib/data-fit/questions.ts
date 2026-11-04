@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// Data fit check — authoritative question definitions.
+// Data fit check: authoritative question definitions.
 //
 // This is the single source of truth for the eight questions rendered by the
 // homepage and /data-fit. Option values are stable string ids; the result
@@ -90,7 +90,7 @@ export type Answers = {
   next?: NextStep;
 };
 
-/** Fully validated answer set — only produced by validateAnswers(). */
+/** Fully validated answer set, only produced by validateAnswers(). */
 export type CompleteAnswers = Required<Answers>;
 
 export type QuestionId = keyof Answers;

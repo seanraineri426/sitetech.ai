@@ -24,7 +24,7 @@ const stageDetails: Record<string, string[]> = {
   "01": [
     "Eight short questions about your business and record categories",
     "No document uploads or software connections",
-    "You see the result before any contact capture",
+    "Your email unlocks the modeled result at the end",
     "Contacting SiteTech remains optional",
   ],
   "02": [

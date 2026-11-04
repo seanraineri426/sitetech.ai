@@ -11,7 +11,7 @@ type CTAProps = {
 
 export function CTA({
   title = "Start with the records you already have.",
-  body = "Find out what may be worth a conversation—and what your team should clarify first.",
+  body = "Find out what may be worth a conversation, and what your team should clarify first.",
   href = "/data-fit",
   label = "Check your data fit",
   secondaryHref = "/contact",

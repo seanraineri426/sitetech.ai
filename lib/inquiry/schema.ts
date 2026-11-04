@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// Inquiry payload — shared shape and validation for the client form and the
+// Inquiry payload: shared shape and validation for the client form and the
 // /api/inquiry route handler. Dependency-free so it can be unit-tested.
 // ---------------------------------------------------------------------------
 

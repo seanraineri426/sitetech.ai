@@ -29,7 +29,7 @@ const sections: { title: string; paragraphs: (string | string[])[] }[] = [
     title: "The fit check",
     paragraphs: [
       "The fit check asks eight multiple-choice questions about your business type, categories of records, storage format, scope, permission status, possible sensitive content, how often records are added, and what you would like to do next.",
-      "Your selections are held in your browser's memory while you use the page. They are not sent anywhere, stored in cookies or browser storage, or placed in the page URL. If you close or reload the page, they are gone. The result is calculated in your browser from fixed rules; no AI system reviews your answers.",
+      "Your selections are held in your browser's memory while you use the page. They are not stored in cookies or browser storage, or placed in the page URL, and if you close or reload the page they are gone. Nothing is sent while you answer. At the end, the fit check asks for your name, work email, and company before it opens your result. Only at that point are your answers sent to SiteTech together with those details. The result and the modeled value are calculated in your browser from fixed, published rules; no AI system reviews your answers.",
     ],
   },
   {
@@ -40,7 +40,7 @@ const sections: { title: string; paragraphs: (string | string[])[] }[] = [
         "Name, work email, and company name (required).",
         "Role and company website (optional).",
         "A short optional note on the contact and buyer/partner forms.",
-        "Your fit-check selections, if you started the request from a fit-check result. These are shown to you before you send.",
+        "Your fit-check answers, which are sent with your details when you unlock the result at the end of the fit check.",
         "Your confirmation of the consent statement shown next to the checkbox, and the version of that statement.",
         "The page you were on and which button you used (for example, the homepage fit check), so SiteTech knows the context of your request. This does not include your full address bar, search terms, or referrer.",
       ],
@@ -77,7 +77,7 @@ const sections: { title: string; paragraphs: (string | string[])[] }[] = [
   {
     title: "Your choices",
     paragraphs: [
-      "You can take the fit check without providing any contact details. You can choose \"Nothing further right now\" and finish without a form. To ask SiteTech to correct or delete a request you have already sent, reply to the follow-up you receive or use the contact form.",
+      "You can answer the fit check questions without providing any contact details, but the result and modeled value open only after you submit your details at the end. To ask SiteTech to correct or delete a request you have already sent, reply to the follow-up you receive or use the contact form.",
     ],
   },
   {

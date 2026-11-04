@@ -184,7 +184,7 @@ export function InquiryForm({
         </div>
       )}
 
-      {/* Honeypot — hidden from people, tempting to bots. Never populated by the UI. */}
+      {/* Honeypot: hidden from people, tempting to bots. Never populated by the UI. */}
       <div aria-hidden className="hidden">
         <label htmlFor={`${ctaOrigin}-botcheck`}>Leave this field empty</label>
         <input id={`${ctaOrigin}-botcheck`} name="botcheck" type="text" tabIndex={-1} autoComplete="off" />
@@ -353,7 +353,7 @@ export function InquiryForm({
           <p className="mt-1 text-gray-700">
             {failure === "not_configured"
               ? "Your details were not sent. Please try again later."
-              : "Nothing was sent. Your details are still in the form — please try again."}
+              : "Nothing was sent. Your details are still in the form. Please try again."}
           </p>
         </div>
       )}

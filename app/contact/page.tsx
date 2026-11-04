@@ -34,7 +34,7 @@ export default function ContactPage() {
               <ul className="divide-y divide-gray-200 border-y border-gray-200">
                 {[
                   "Do not include document contents, client details, resident information, or credentials.",
-                  "Submitting this form sends the inquiry only to SiteTech—not to buyers.",
+                  "Submitting this form sends the inquiry only to SiteTech, not to buyers.",
                   "SiteTech does not provide dataset valuations or legal determinations from this form.",
                 ].map((item, i) => (
                   <li key={item} className="grid gap-4 py-5 sm:grid-cols-[48px_1fr]">

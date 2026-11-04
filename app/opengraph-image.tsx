@@ -78,7 +78,7 @@ export default function OpengraphImage() {
             }}
           >
             Explore whether a permitted collection could support an AI data
-            opportunity—starting with an eight-question fit check.
+            opportunity, starting with an eight-question fit check.
           </div>
         </div>
       </div>

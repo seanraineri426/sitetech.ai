@@ -6,12 +6,12 @@ import { SITE_URL } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Check your data fit",
   description:
-    "Answer eight short questions for an initial guide to your next step. No document uploads. No obligation. See the result before deciding whether to contact SiteTech.",
+    "Answer eight short questions for an initial guide to your next step. No document uploads. No obligation. Enter your email at the end to unlock a modeled value and your next step.",
   alternates: { canonical: "/data-fit" },
   openGraph: {
     title: "Check your data fit | SiteTech AI",
     description:
-      "Eight short questions. No document uploads. See your result before deciding whether to contact SiteTech.",
+      "Eight short questions. No document uploads. Enter your email at the end to unlock a modeled value.",
     url: `${SITE_URL}/data-fit`,
     type: "website",
   },
@@ -23,7 +23,7 @@ export default function DataFitPage() {
       <PageHeader
         label="Find your starting point"
         title="Could your company's records be relevant?"
-        description="Answer eight short questions for an initial guide to your next step. You'll see the result before deciding whether to contact SiteTech."
+        description="Answer eight short questions for an initial guide to your next step. Your email unlocks a modeled value and your next step at the end."
       />
 
       <section className="section-light">

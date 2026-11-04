@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// Client-side delivery adapter — the only place the form talks to the network.
+// Client-side delivery adapter: the only place the form talks to the network.
 //
 // Posts a validated InquiryPayload to the configured Web3Forms inbox from the
 // browser. Web3Forms stamps its own receipt time and emails SiteTech. Nothing
@@ -19,9 +19,9 @@ export type SubmitOutcome =
   | { ok: false; kind: "network" };
 
 const SUBJECTS: Record<InquiryPayload["inquiryType"], string> = {
-  supplier_conversation: "SiteTech inquiry — data fit conversation request",
-  process_question: "SiteTech inquiry — process question",
-  buyer_partner: "SiteTech inquiry — buyer / partner",
+  supplier_conversation: "SiteTech inquiry: data fit conversation request",
+  process_question: "SiteTech inquiry: process question",
+  buyer_partner: "SiteTech inquiry: buyer / partner",
 };
 
 function formatAnswers(payload: InquiryPayload): string {
