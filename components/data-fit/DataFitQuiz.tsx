@@ -134,6 +134,8 @@ export type DataFitQuizProps = {
   returnHref?: string;
   returnLabel?: string;
   startLabel?: string;
+  /** Sits inside another page's hero: opens on Q1, no exit link, no Back on Q1. */
+  embedded?: boolean;
 };
 
 export function DataFitQuiz({
@@ -142,9 +144,10 @@ export function DataFitQuiz({
   returnHref = "/",
   returnLabel = "Return to the page",
   startLabel = "Start the fit check",
+  embedded = false,
 }: DataFitQuizProps) {
   const [state, dispatch] = useReducer(reducer, initial, (s) =>
-    autoStart ? { ...s, phase: "question" as Phase } : s,
+    autoStart || embedded ? { ...s, phase: "question" as Phase } : s,
   );
   const headingRef = useRef<HTMLHeadingElement>(null);
   const errorRef = useRef<HTMLParagraphElement>(null);
@@ -205,7 +208,7 @@ export function DataFitQuiz({
   const stageKey = state.phase === "question" ? `q-${state.step}` : state.phase;
 
   return (
-    <div className="casino-border" data-step={state.step + 1} data-phase={state.phase}>
+    <div className="casino-border @container" data-step={state.step + 1} data-phase={state.phase}>
       <div className="casino-inner overflow-hidden">
         <div className="casino-bulbs" aria-hidden />
         {state.phase !== "reveal" && (
@@ -291,7 +294,7 @@ export function DataFitQuiz({
                     </p>
                   )}
 
-                  <div className="mt-6 grid gap-2.5 sm:grid-cols-2">
+                  <div className="mt-6 grid gap-2.5 @2xl:grid-cols-2">
                     {q.options.map((opt, i) => {
                       const checked =
                         q.kind === "multi"
@@ -345,14 +348,16 @@ export function DataFitQuiz({
                         Lock it in
                       </button>
                     )}
-                    <button
-                      type="button"
-                      onClick={() => dispatch({ type: "back" })}
-                      disabled={state.advancing}
-                      className="min-h-[44px] px-2 font-mono text-xs uppercase tracking-[0.2em] text-gray-400 transition hover:text-white"
-                    >
-                      Back
-                    </button>
+                    {!(embedded && state.step === 0) && (
+                      <button
+                        type="button"
+                        onClick={() => dispatch({ type: "back" })}
+                        disabled={state.advancing}
+                        className="min-h-[44px] px-2 font-mono text-xs uppercase tracking-[0.2em] text-gray-400 transition hover:text-white"
+                      >
+                        Back
+                      </button>
+                    )}
                     {state.fromResult && complete && (
                       <button
                         type="button"
@@ -363,7 +368,7 @@ export function DataFitQuiz({
                       </button>
                     )}
                   </div>
-                  {autoStart ? (
+                  {embedded ? null : autoStart ? (
                     <Link href={returnHref} className="link-arrow min-h-[44px] text-gray-400">
                       {returnLabel}
                     </Link>
@@ -402,7 +407,7 @@ export function DataFitQuiz({
                 onEdit={(step) => dispatch({ type: "edit", step })}
                 onRestart={() => dispatch({ type: "restart" })}
                 returnHref={returnHref}
-                returnLabel={returnLabel}
+                returnLabel={embedded ? "" : returnLabel}
               />
             )}
 

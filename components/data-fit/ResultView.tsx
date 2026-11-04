@@ -112,7 +112,7 @@ export function ResultView({
             )}
 
             <div className="mt-8 flex flex-col gap-3 border-t border-white/10 pt-6 sm:flex-row sm:flex-wrap sm:items-center">
-              <Link href="/how-it-works" className="link-arrow min-h-[44px] text-gray-200">
+              <Link href="/#how" className="link-arrow min-h-[44px] text-gray-200">
                 See how the process works <span aria-hidden>→</span>
               </Link>
               {intent === "learn_process" && (
@@ -167,11 +167,13 @@ export function ResultView({
 
             <p className="mt-8 text-sm leading-relaxed text-gray-400">{RESULT_COMMON_NOTE}</p>
 
-            <div className="mt-6">
-              <Link href={returnHref} className="link-arrow text-gray-300">
-                {returnLabel}
-              </Link>
-            </div>
+            {returnLabel && (
+              <div className="mt-6">
+                <Link href={returnHref} className="link-arrow text-gray-300">
+                  {returnLabel}
+                </Link>
+              </div>
+            )}
           </div>
         </motion.div>
       )}

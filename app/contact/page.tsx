@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeader } from "@/components/PageHeader";
-import { InquiryForm } from "@/components/data-fit/InquiryForm";
+import { ContactForms } from "@/components/ContactForms";
 import { SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/contact" },
   openGraph: {
     title: "Contact | SiteTech AI",
-    description: "Ask a general process question or request a conversation.",
+    description: "Ask a process question or start a buyer or partner conversation.",
     url: `${SITE_URL}/contact`,
     type: "website",
   },
@@ -23,7 +23,7 @@ export default function ContactPage() {
       <PageHeader
         label="Contact"
         title="Have a question? Contact SiteTech."
-        description="Prefer a general conversation before the fit check, or need clarification on the process? Send a high-level note. Keep confidential content out of this form."
+        description="A question about the process, or a data buyer or partner who wants to talk? Send a high-level note. Keep confidential content out of this form."
       />
 
       <section className="section-light">
@@ -35,7 +35,7 @@ export default function ContactPage() {
                 {[
                   "Do not include document contents, client details, resident information, or credentials.",
                   "Submitting this form sends the inquiry only to SiteTech, not to buyers.",
-                  "SiteTech does not provide dataset valuations or legal determinations from this form.",
+                  "SiteTech does not appraise datasets or make legal determinations from this form.",
                 ].map((item, i) => (
                   <li key={item} className="grid gap-4 py-5 sm:grid-cols-[48px_1fr]">
                     <span className="font-mono text-[11px] text-gray-500">
@@ -45,23 +45,13 @@ export default function ContactPage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/data-fit" className="link-arrow mt-8 text-black">
+              <Link href="/#quiz" className="link-arrow mt-8 text-black">
                 Check your data fit
                 <span aria-hidden>→</span>
               </Link>
             </div>
 
-            <div className="min-w-0">
-              <InquiryForm
-                inquiryType="process_question"
-                quiz={null}
-                ctaOrigin="contact-page"
-                heading="Ask a question"
-                allowNote
-                noteLabel="Your question (optional)"
-                submitLabel="Send question"
-              />
-            </div>
+            <ContactForms />
           </div>
         </div>
       </section>

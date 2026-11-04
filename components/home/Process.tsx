@@ -1,17 +1,14 @@
-import Link from "next/link";
-
-export const processSteps = [
+const processSteps = [
   {
     num: "01",
     title: "Tell us what your company holds",
-    detail:
-      "Answer a few questions about your business and the categories of records you may want to discuss.",
+    detail: "Answer a few questions about your business and the categories of records you may want to discuss.",
   },
   {
     num: "02",
-    title: "Clarify the starting point",
+    title: "See your modeled value",
     detail:
-      "Your answers highlight the scope of the collection and any permissions your team may need to review.",
+      "Your answers set the scope of the collection and any permissions your team may need to review. Your email opens the result.",
   },
   {
     num: "03",
@@ -27,27 +24,22 @@ export const processSteps = [
   },
 ];
 
-export const processSupportingLine =
-  "SiteTech's role is the introduction. Your business remains responsible for deciding what it can share and which terms it accepts.";
+const controlPoints = [
+  "No document uploads or software connections through this site.",
+  "A specific introduction requires your approval.",
+  "Any evaluation or licensing arrangement is discussed directly with the counterparty.",
+];
 
 export function Process() {
   return (
-    <section id="process" className="section-dark-solid scroll-mt-24 border-t border-white/10">
-      <div className="mx-auto max-w-[1400px] px-6 py-16 sm:py-20 lg:px-10 lg:py-32">
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-          <div className="max-w-2xl">
-            <p className="section-label mb-6">How it works</p>
-            <h2 className="headline-sm text-white">
-              Start with a description. Explore the opportunity from there.
-            </h2>
-          </div>
-          <Link href="/how-it-works" className="link-arrow shrink-0 text-gray-400">
-            Read the full process
-            <span aria-hidden>→</span>
-          </Link>
-        </div>
+    <section id="how" className="section-dark-solid scroll-mt-24 border-t border-white/10">
+      <div className="mx-auto max-w-[1400px] px-6 py-16 sm:py-20 lg:px-10 lg:py-28">
+        <p className="section-label mb-6">How it works</p>
+        <h2 className="headline-sm max-w-3xl text-white">
+          Start with a description. Explore the opportunity from there.
+        </h2>
 
-        <div className="mt-14 grid gap-px border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-12 grid gap-px border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-4">
           {processSteps.map((step) => (
             <div key={step.num} className="bg-black p-8">
               <p className="font-mono text-[11px] text-gray-500">{step.num}</p>
@@ -57,15 +49,19 @@ export function Process() {
           ))}
         </div>
 
-        <div className="mt-12 flex flex-col gap-4 border-t border-white/10 pt-8 sm:flex-row sm:items-center sm:justify-between">
-          <p className="max-w-2xl text-base leading-relaxed text-gray-400">{processSupportingLine}</p>
-          <Link
-            href="/for-buyers"
-            className="shrink-0 text-sm text-gray-500 underline-offset-4 hover:text-white hover:underline"
-          >
-            Are you a data buyer or licensing partner?
-          </Link>
-        </div>
+        <ul className="mt-10 grid gap-4 border-t border-white/10 pt-8 sm:grid-cols-3">
+          {controlPoints.map((point) => (
+            <li key={point} className="flex gap-3 text-sm leading-relaxed text-gray-300">
+              <span aria-hidden className="mt-[9px] h-px w-5 shrink-0 bg-gold" />
+              {point}
+            </li>
+          ))}
+        </ul>
+
+        <p className="mt-8 max-w-2xl text-sm leading-relaxed text-gray-500">
+          SiteTech&apos;s role is the introduction. Your business remains responsible for deciding what it can
+          share and which terms it accepts. Possessing a file does not establish permission to license it.
+        </p>
       </div>
     </section>
   );

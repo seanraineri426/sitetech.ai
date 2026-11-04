@@ -88,3 +88,18 @@ This deliberately changes two rules from the original pivot brief. Review before
 - **Modeled value.** `lib/data-fit/valuation.ts` computes `BASE x coverage x format x freshness x rights x cleanliness` in integer hundredths, rounds to the nearest $100, and shows the full breakdown, the assumption tables, a deterministic reference code (for example `STV2-XXXXXX`), and a copy-ready citation. The constants are SiteTech modeling assumptions, calibrated (and unit-tested in `tests/data-fit-valuation.test.ts`) against published buyer ranges for construction and design records, kept with source URLs in `lib/data-fit/benchmarks.ts` (checked 2026-11-03). Those are published offers and indicative prices, not completed sales; the only public completed sales with a stated amount for company records are four, with a median near $28K. Re-check the sources before launch and update `benchmarks.ts` if they changed. The number is always labeled a modeled estimate, not a quote, appraisal, offer, or promise of payment.
 - **Editing answers after the reveal** reruns the formula, and the visitor confirms their details again before the new number opens, because SiteTech received the earlier answers only.
 - **Test safely.** Submitting the gate sends a real email through Web3Forms. When testing in a browser, stub `window.fetch` for the Web3Forms host rather than submitting real inquiries.
+
+## Three-page site (supersedes the route table above)
+
+The site is now `/`, `/contact`, and `/privacy`. The quiz sits in the homepage hero, opens on question 1 with no intro screen, and every "check your data fit" link goes to `/#quiz`.
+
+| Old route | Now |
+|---|---|
+| `/data-fit` | 307 to `/#quiz` |
+| `/how-it-works`, `/platform` | 307 to `/#how` (the homepage "How it works" section) |
+| `/for-buyers` | 307 to `/contact?topic=buyer` (the contact page has a question / buyer toggle) |
+| `/pricing` | 307 to `/contact` |
+| `/solutions`, `/solutions/*`, `/workflows`, `/integrations` | 307 to `/` |
+| `/blog`, `/blog/*`, `/insights`, `/insights/*` | 307 to `/` |
+
+The retired pages, the blog articles (`lib/insights.ts`), and the unused homepage sections were deleted from the working tree. They remain in Git history and in the archive branch, tag, and bundle described in `ORIGINAL_FRONTEND_ARCHIVE.md`. Redirects are temporary (307) so routes can be restored without fighting cached permanent redirects.

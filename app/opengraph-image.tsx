@@ -66,7 +66,7 @@ export default function OpengraphImage() {
               maxWidth: "980px",
             }}
           >
-            Your project files could be your next revenue stream.
+            AI companies want construction data. What is yours worth?
           </div>
           <div
             style={{
@@ -77,8 +77,8 @@ export default function OpengraphImage() {
               maxWidth: "880px",
             }}
           >
-            Explore whether a permitted collection could support an AI data
-            opportunity, starting with an eight-question fit check.
+            Answer 8 quick questions and see a modeled value for your
+            project records.
           </div>
         </div>
       </div>

@@ -5,10 +5,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navLinks = [
-  { href: "/#opportunity", label: "The opportunity" },
-  { href: "/#who-its-for", label: "Who it's for" },
-  { href: "/how-it-works", label: "How it works" },
+  { href: "/#how", label: "How it works" },
   { href: "/#faq", label: "FAQ" },
+  { href: "/contact", label: "Contact" },
 ];
 
 export function Header() {
@@ -30,8 +29,8 @@ export function Header() {
   }, [pathname]);
 
   const light = !isHome || scrolled;
-  // Homepage CTAs scroll to the embedded fit check; everywhere else uses the dedicated route.
-  const fitHref = isHome ? "/#data-fit" : "/data-fit";
+  // The quiz is the first thing on the homepage, so every "data fit" link goes straight to it.
+  const fitHref = "/#quiz";
 
   return (
     <header
@@ -120,13 +119,6 @@ export function Header() {
                 {link.label}
               </Link>
             ))}
-            <Link
-              href="/for-buyers"
-              className={`flex min-h-[44px] items-center text-sm ${light ? "text-gray-600" : "text-gray-400"}`}
-              onClick={() => setOpen(false)}
-            >
-              For buyers &amp; partners
-            </Link>
             <Link
               href={fitHref}
               className={`mt-2 flex min-h-[44px] items-center text-sm font-medium ${light ? "text-black" : "text-white"}`}

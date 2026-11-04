@@ -16,9 +16,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const defaultTitle = "SiteTech AI | Data Licensing Opportunities for the Built Environment";
+const defaultTitle = "SiteTech AI | What is your construction data worth to AI companies?";
 const defaultDescription =
-  "Explore whether your company's project and operating records could support an AI data licensing opportunity. Start with SiteTech's short fit check.";
+  "AI data buyers publish offer ranges of $100K to $5M for construction and design records. Answer 8 quick questions and see a modeled value for yours.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

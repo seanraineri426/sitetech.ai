@@ -9,21 +9,23 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   async redirects() {
+    // The site is three pages: "/", "/contact", "/privacy". Retired routes go
+    // straight to their replacement in one hop. Temporary (307) so earlier
+    // routes can be restored without fighting cached permanent redirects.
     return [
-      // Pre-pivot redirects (unchanged).
-      { source: "/platform", destination: "/how-it-works", permanent: true },
-      { source: "/workflows", destination: "/solutions", permanent: true },
-      { source: "/insights", destination: "/blog", permanent: true },
-      { source: "/insights/:slug", destination: "/blog/:slug", permanent: true },
-
-      // Data-referral pivot (2026-11). Temporary (307) so the original routes
-      // can be restored without fighting cached permanent redirects.
-      // The contact form previously lived at /pricing#contact.
+      { source: "/data-fit", destination: "/#quiz", permanent: false },
+      { source: "/how-it-works", destination: "/#how", permanent: false },
+      { source: "/platform", destination: "/#how", permanent: false },
+      { source: "/for-buyers", destination: "/contact?topic=buyer", permanent: false },
       { source: "/pricing", destination: "/contact", permanent: false },
-      // Retired AI-implementation service pages -> single context page.
-      { source: "/solutions/affordable-housing", destination: "/solutions", permanent: false },
-      { source: "/solutions/property-management", destination: "/solutions", permanent: false },
-      { source: "/integrations", destination: "/solutions", permanent: false },
+      { source: "/solutions", destination: "/", permanent: false },
+      { source: "/solutions/:path*", destination: "/", permanent: false },
+      { source: "/workflows", destination: "/", permanent: false },
+      { source: "/integrations", destination: "/", permanent: false },
+      { source: "/blog", destination: "/", permanent: false },
+      { source: "/blog/:slug", destination: "/", permanent: false },
+      { source: "/insights", destination: "/", permanent: false },
+      { source: "/insights/:slug", destination: "/", permanent: false },
     ];
   },
   async headers() {

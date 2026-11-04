@@ -1,18 +1,15 @@
 import Link from "next/link";
 
 const exploreLinks = [
-  { href: "/data-fit", label: "Fit check" },
-  { href: "/how-it-works", label: "Process" },
-  { href: "/#who-its-for", label: "Who it's for" },
+  { href: "/#quiz", label: "Check your data fit" },
+  { href: "/#how", label: "How it works" },
   { href: "/#faq", label: "FAQ" },
-  { href: "/blog", label: "Blog" },
 ];
 
 const companyLinks = [
   { href: "/contact", label: "Contact" },
-  { href: "/for-buyers", label: "Buyer / partner inquiry" },
+  { href: "/contact?topic=buyer", label: "Buyers and partners" },
   { href: "/privacy", label: "Privacy" },
-  { href: "/solutions", label: "Previous services" },
 ];
 
 export function Footer() {
