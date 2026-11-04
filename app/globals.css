@@ -288,6 +288,45 @@ body {
   animation: hud-jolt 0.35s ease-out;
 }
 
+/* Primary "see what it is worth" button */
+.cta-gold {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: linear-gradient(110deg, #b8862b 0%, #f5c451 30%, #fff1b8 50%, #f5c451 70%, #b8862b 100%);
+  background-size: 250% 100%;
+  color: #000;
+  box-shadow:
+    0 0 0 1px rgba(255, 241, 184, 0.6) inset,
+    0 10px 30px -8px rgba(245, 196, 81, 0.55);
+  animation: casino-shine 4s linear infinite, cta-glow 2.4s ease-in-out infinite;
+  transition: transform 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.cta-gold:active {
+  transform: scale(0.98);
+}
+.cta-gold .cta-arrow {
+  animation: cta-nudge 1.4s ease-in-out infinite;
+}
+@keyframes cta-nudge-x {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(4px); }
+}
+@media (min-width: 1024px) {
+  .cta-gold .cta-arrow {
+    animation-name: cta-nudge-x;
+  }
+}
+@keyframes cta-glow {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(255, 241, 184, 0.6) inset, 0 10px 30px -8px rgba(245, 196, 81, 0.45); }
+  50% { box-shadow: 0 0 0 1px rgba(255, 241, 184, 0.9) inset, 0 12px 44px -6px rgba(245, 196, 81, 0.85); }
+}
+@keyframes cta-nudge {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(3px); }
+}
+
 @keyframes casino-shine {
   0% { background-position: 0% 50%; }
   100% { background-position: 300% 50%; }
@@ -329,6 +368,8 @@ body {
   .reel-spin,
   .flash-overlay,
   .hud-jolt,
+  .cta-gold,
+  .cta-gold .cta-arrow,
   .animate-drift,
   .float-card {
     animation: none;

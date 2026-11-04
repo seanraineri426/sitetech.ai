@@ -37,9 +37,11 @@ export function Hero() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black" />
       </div>
 
-      <div className="relative z-[2] flex flex-1 flex-col justify-center px-5 pb-12 pt-24 sm:px-6 lg:px-10">
-        <div className="mx-auto grid w-full max-w-[1400px] items-center gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:gap-14">
+      <div className="relative z-[2] flex flex-1 flex-col justify-center px-5 pb-12 pt-20 sm:px-6 lg:px-10 lg:pt-24">
+        <div className="mx-auto grid w-full max-w-[1400px] items-center gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:gap-14">
+          {/* On phones this block fills the first screen (hook + button); the quiz is the next screen. */}
           <motion.div
+            className="flex min-h-[calc(100svh-6.5rem)] flex-col justify-center pb-4 lg:block lg:min-h-0 lg:pb-0"
             initial={reduce ? false : { opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
@@ -48,16 +50,36 @@ export function Hero() {
               AI data licensing for businesses
             </p>
 
-            <h1 className="mt-4 max-w-[16ch] text-[clamp(2.4rem,6.2vw,4.6rem)] font-medium leading-[1.02] tracking-tight">
+            <h1 className="mt-4 max-w-[16ch] text-[clamp(2.6rem,11vw,4.6rem)] font-medium leading-[1.02] tracking-tight lg:text-[clamp(2.4rem,6.2vw,4.6rem)]">
               AI companies buy business data. What is yours worth?
             </h1>
 
-            <p className="mt-5 max-w-xl text-lg leading-relaxed text-gray-300">
+            <p className="mt-5 max-w-xl text-base leading-relaxed text-gray-300 sm:text-lg">
               SiteTech introduces companies in construction, real estate, design, and other industries to AI
-              data buyers. Answer 8 quick questions and see a modeled value.
+              data buyers.
             </p>
 
-            <p className="mt-5 max-w-xl border-l-2 border-gold pl-4 text-base leading-relaxed text-gray-200">
+            <div className="mt-7">
+              <a
+                href="#quiz"
+                className="cta-gold group inline-flex min-h-[60px] w-full items-center justify-between gap-4 rounded-xl px-6 text-left text-base font-semibold sm:w-auto sm:min-w-[22rem] sm:text-lg"
+              >
+                <span className="flex flex-col leading-tight">
+                  <span>See what my data is worth</span>
+                  <span className="mt-0.5 text-xs font-medium text-black/60">8 quick questions. Tap to answer.</span>
+                </span>
+                <span className="cta-arrow flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-black text-gold" aria-hidden>
+                  <svg viewBox="0 0 24 24" className="h-5 w-5 lg:hidden" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 5v14M6 13l6 6 6-6" />
+                  </svg>
+                  <svg viewBox="0 0 24 24" className="hidden h-5 w-5 lg:block" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14M13 6l6 6-6 6" />
+                  </svg>
+                </span>
+              </a>
+            </div>
+
+            <p className="mt-6 max-w-xl border-l-2 border-gold pl-4 text-sm leading-relaxed text-gray-200 sm:text-base">
               Buyers publish offer ranges of{" "}
               <span className="font-semibold text-gold">{PUBLISHED_RANGE_TEXT}</span> for construction and design records.{" "}
               <span className="text-gray-500">Published offers, not completed sales or a promise of payment.</span>
@@ -66,7 +88,7 @@ export function Hero() {
 
           <motion.div
             id="quiz"
-            className="scroll-mt-24"
+            className="scroll-mt-20 lg:scroll-mt-24"
             initial={reduce ? false : { opacity: 0, y: 28 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
