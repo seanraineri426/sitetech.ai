@@ -35,7 +35,9 @@ export function ResultView({
   returnLabel,
 }: Props) {
   const copy = RESULT_COPY[result];
-  const intent = answers.next;
+  const wantsInternalCheck =
+    answers.permission === "ours_needs_review" || answers.permission === "third_party_needed";
+  const justBrowsing = answers.permission === "unsure";
   const valuation = computeValuation(answers);
   const [settled, setSettled] = useState(false);
 
@@ -93,7 +95,7 @@ export function ResultView({
               </div>
             )}
 
-            {result === "INITIAL_CONVERSATION" && intent === "internal_review" && (
+            {wantsInternalCheck && (
               <div className="mt-8 border-t border-white/10 pt-6">
                 <p className={eyebrow}>Worth checking before you talk</p>
                 <ul className="mt-4 space-y-3">
@@ -115,7 +117,7 @@ export function ResultView({
               <Link href="/#how" className="link-arrow min-h-[44px] text-gray-200">
                 See how the process works <span aria-hidden>→</span>
               </Link>
-              {intent === "learn_process" && (
+              {justBrowsing && (
                 <Link href="/#faq" className="link-arrow min-h-[44px] text-gray-200">
                   Read the FAQ <span aria-hidden>→</span>
                 </Link>

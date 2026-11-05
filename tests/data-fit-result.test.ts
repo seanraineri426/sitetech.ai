@@ -21,7 +21,6 @@ const favorable: CompleteAnswers = {
   scope: "portfolio",
   permission: "confirmed",
   frequency: "regular",
-  next: "explore_introduction",
 };
 
 test("1. identifiable records + confirmed permission -> INITIAL_CONVERSATION", () => {
@@ -136,17 +135,12 @@ test("7e. per-question validation gates each step", () => {
   assert.equal(validateQuestion("business", {}), "Choose one option to continue.");
   assert.equal(validateQuestion("records", { records: [] }), "Select at least one option to continue.");
   assert.equal(validateQuestion("records", { records: ["none"] }), null);
-  assert.equal(validateQuestion("next", { next: "nothing" }), null);
+  assert.equal(validateQuestion("permission", { permission: "confirmed" }), null);
 });
 
-test("8. next-step never changes the readiness conclusion", () => {
-  for (const next of ["explore_introduction", "internal_review", "learn_process", "nothing"] as const) {
-    assert.equal(computeResult({ ...favorable, next }), "INITIAL_CONVERSATION");
-    assert.equal(
-      computeResult({ ...favorable, permission: "unsure", next }),
-      "PERMISSIONS_AND_SCOPE_REVIEW",
-    );
-  }
+test("8. the final permission choice drives readiness, not a separate next-step question", () => {
+  assert.equal(computeResult({ ...favorable, permission: "confirmed" }), "INITIAL_CONVERSATION");
+  assert.equal(computeResult({ ...favorable, permission: "unsure" }), "PERMISSIONS_AND_SCOPE_REVIEW");
 });
 
 test("review questions are relevant, 1 to 3 items, and framed for the visitor's organization", () => {

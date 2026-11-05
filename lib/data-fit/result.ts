@@ -11,7 +11,6 @@
 import {
   BUSINESS_TYPES,
   FREQUENCIES,
-  NEXT_STEPS,
   PERMISSIONS,
   RECORD_EXCLUSIVE,
   RECORD_TYPES,
@@ -67,7 +66,7 @@ export function validateAnswers(input: unknown): ValidationResult {
     };
   }
 
-  const { business, size, records, software, scope, permission, frequency, next } = a;
+  const { business, size, records, software, scope, permission, frequency } = a;
 
   const okBusiness = isOneOf(BUSINESS_TYPES, business);
   const okRecords = validMulti(RECORD_TYPES, RECORD_EXCLUSIVE, records);
@@ -76,7 +75,6 @@ export function validateAnswers(input: unknown): ValidationResult {
   const okScope = isOneOf(SCOPES, scope);
   const okPermission = isOneOf(PERMISSIONS, permission);
   const okFrequency = isOneOf(FREQUENCIES, frequency);
-  const okNext = isOneOf(NEXT_STEPS, next);
 
   if (!okBusiness) errors.business = "Choose one option to continue.";
   if (!okRecords) errors.records = "Select at least one option to continue.";
@@ -85,11 +83,10 @@ export function validateAnswers(input: unknown): ValidationResult {
   if (!okScope) errors.scope = "Choose one option to continue.";
   if (!okPermission) errors.permission = "Choose one option to continue.";
   if (!okFrequency) errors.frequency = "Choose one option to continue.";
-  if (!okNext) errors.next = "Choose one option to continue.";
 
   if (
     !okBusiness || !okSize || !okRecords || !okSoftware || !okScope ||
-    !okPermission || !okFrequency || !okNext
+    !okPermission || !okFrequency
   ) {
     return { ok: false, errors };
   }
@@ -104,7 +101,6 @@ export function validateAnswers(input: unknown): ValidationResult {
       scope,
       permission,
       frequency,
-      next,
     },
   };
 }
@@ -120,7 +116,6 @@ export function validateQuestion(id: QuestionId, answers: Answers): string | nul
     scope: "single",
     permission: "confirmed",
     frequency: "historical",
-    next: "nothing",
     [id]: probe[id],
   });
   return full.ok ? null : (full.errors[id] ?? null);

@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
 import { QUIZ_VERSION, type CompleteAnswers } from "@/lib/data-fit/questions";
 import type { ResultType } from "@/lib/data-fit/result";
-import { CONSENT_TEXT, CONSENT_TEXT_VERSION, LIMITS, validateInquiry } from "@/lib/inquiry/schema";
+import { CONSENT_TEXT_VERSION, LIMITS, validateInquiry } from "@/lib/inquiry/schema";
 import { submitInquiry } from "@/lib/inquiry/submit";
 import { LockIcon } from "./casino-bits";
 import { SpinningReel } from "./Reels";
@@ -33,7 +33,7 @@ const labelClass = "mb-2 block font-mono text-[11px] uppercase tracking-[0.18em]
 export function UnlockGate({ headingRef, answers, result, origin, initial, onBack, onUnlocked }: Props) {
   const pathname = usePathname() || "/";
   const reduce = useReducedMotion();
-  const [fields, setFields] = useState({ ...initial, consent: false });
+  const [fields, setFields] = useState({ ...initial });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState<Status>("idle");
   const [failure, setFailure] = useState<"delivery_failed" | "network" | "not_configured" | null>(null);
@@ -74,7 +74,8 @@ export function UnlockGate({ headingRef, answers, result, origin, initial, onBac
         inquiryType: result === "INITIAL_CONVERSATION" ? "supplier_conversation" : "process_question",
         contact: { name: fields.name, email: fields.email, company: fields.company },
         quiz: { version: QUIZ_VERSION, answers, resultType: result },
-        consent: { respondToRequest: fields.consent as true, textVersion: CONSENT_TEXT_VERSION },
+        // Submitting this form is consent to respond. No separate checkbox.
+        consent: { respondToRequest: true as const, textVersion: CONSENT_TEXT_VERSION },
         source: { pagePath: pathname, ctaOrigin },
       };
       const v = validateInquiry(payload);
@@ -102,7 +103,6 @@ export function UnlockGate({ headingRef, answers, result, origin, initial, onBac
 
   return (
     <form onSubmit={handleSubmit} noValidate className="relative">
-      {/* Spinning reels behind the lock: the number exists, and it is sealed. */}
       <div aria-hidden className="pointer-events-none flex select-none items-center justify-center gap-1 font-mono text-5xl font-semibold text-gold/90 sm:text-7xl">
         <span>$</span>
         <SpinningReel speed={0.42} />
@@ -213,26 +213,6 @@ export function UnlockGate({ headingRef, answers, result, origin, initial, onBac
         </div>
       </div>
 
-      <div className="mx-auto mt-5 max-w-xl">
-        <label htmlFor={`${ctaOrigin}-consent`} className="flex cursor-pointer items-start gap-3 text-sm leading-relaxed text-gray-300">
-          <input
-            id={`${ctaOrigin}-consent`}
-            type="checkbox"
-            checked={fields.consent}
-            onChange={(e) => update("consent", e.target.checked)}
-            aria-invalid={!!errors.consent}
-            aria-describedby={dby("consent")}
-            className="mt-1 h-5 w-5 shrink-0 accent-[#f5c451]"
-          />
-          <span>
-            {CONSENT_TEXT}{" "}
-            <Link href="/privacy" className="underline underline-offset-4 hover:text-gold">
-              Privacy notice
-            </Link>
-          </span>
-        </label>
-      </div>
-
       <div className="mx-auto mt-7 flex max-w-xl flex-col gap-3 sm:flex-row sm:items-center">
         <button
           type="submit"
@@ -251,7 +231,11 @@ export function UnlockGate({ headingRef, answers, result, origin, initial, onBac
         </button>
       </div>
       <p className="mx-auto mt-5 max-w-xl text-center text-xs leading-relaxed text-gray-500">
-        Your details go to SiteTech only. Nothing is shared with a buyer without your separate approval.
+        By submitting, you ask SiteTech to respond using these details. Nothing is shared with a buyer without
+        your separate approval.{" "}
+        <Link href="/privacy" className="underline underline-offset-4 hover:text-gold">
+          Privacy notice
+        </Link>
       </p>
     </form>
   );

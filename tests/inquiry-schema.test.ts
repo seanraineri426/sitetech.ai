@@ -11,7 +11,6 @@ const favorableAnswers = {
   scope: "several",
   permission: "confirmed",
   frequency: "occasional",
-  next: "explore_introduction",
 };
 
 const base = {

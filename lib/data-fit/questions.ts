@@ -6,7 +6,7 @@
 // Option ids are stable; bump QUIZ_VERSION when ids change.
 // ---------------------------------------------------------------------------
 
-export const QUIZ_VERSION = "2026-11-04.3";
+export const QUIZ_VERSION = "2026-11-04.4";
 
 export const BUSINESS_TYPES = [
   "development_owner_reit",
@@ -108,14 +108,6 @@ export type Permission = (typeof PERMISSIONS)[number];
 export const FREQUENCIES = ["historical", "occasional", "regular", "unsure"] as const;
 export type Frequency = (typeof FREQUENCIES)[number];
 
-export const NEXT_STEPS = [
-  "explore_introduction",
-  "internal_review",
-  "learn_process",
-  "nothing",
-] as const;
-export type NextStep = (typeof NEXT_STEPS)[number];
-
 /** Partial answer set held in memory while the visitor is mid-quiz. */
 export type Answers = {
   business?: BusinessType;
@@ -125,7 +117,6 @@ export type Answers = {
   scope?: Scope;
   permission?: Permission;
   frequency?: Frequency;
-  next?: NextStep;
 };
 
 /** Fully validated answer set, only produced by validateAnswers(). */
@@ -137,7 +128,7 @@ export type Option<V extends string = string> = { value: V; label: string };
 
 export type QuestionDef =
   | {
-      id: "business" | "size" | "scope" | "permission" | "frequency" | "next";
+      id: "business" | "size" | "scope" | "permission" | "frequency";
       kind: "single";
       legend: string;
       helper?: string;
@@ -156,9 +147,9 @@ export const QUIZ_INTRO_HELPER =
   "Categories and software names only. No uploads. No document text.";
 
 /**
- * Eight taps aligned to what buyer intake forms actually ask:
+ * Seven taps aligned to what buyer intake forms actually ask:
  * company type, headcount, record categories, systems, coverage,
- * years of retained history, intro readiness, next step.
+ * years of retained history, and what should happen next.
  */
 export const QUESTIONS: readonly QuestionDef[] = [
   {
@@ -253,24 +244,14 @@ export const QUESTIONS: readonly QuestionDef[] = [
   {
     id: "permission",
     kind: "single",
-    legend: "Would a short introduction call be okay?",
+    legend: "What should happen next?",
+    helper: "This also tells us whether an introduction call is on the table.",
     options: [
-      { value: "confirmed", label: "Yes, we can talk" },
-      { value: "ours_needs_review", label: "Likely, after a quick internal check" },
-      { value: "third_party_needed", label: "A client or partner would need to sign off" },
+      { value: "confirmed", label: "Book a short introduction call" },
+      { value: "ours_needs_review", label: "I need a quick internal check first" },
+      { value: "third_party_needed", label: "A client or partner needs to sign off first" },
       { value: "restricted", label: "This set is off-limits for outside use" },
-      { value: "unsure", label: "Not sure yet" },
-    ],
-  },
-  {
-    id: "next",
-    kind: "single",
-    legend: "What would you like after you see your number?",
-    options: [
-      { value: "explore_introduction", label: "See if an introduction makes sense" },
-      { value: "internal_review", label: "Check a few things internally first" },
-      { value: "learn_process", label: "Learn how the process works" },
-      { value: "nothing", label: "Just browsing for now" },
+      { value: "unsure", label: "Just browsing or learning for now" },
     ],
   },
 ];

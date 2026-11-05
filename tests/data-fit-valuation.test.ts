@@ -17,7 +17,6 @@ const favorable: CompleteAnswers = {
   scope: "portfolio",
   permission: "confirmed",
   frequency: "regular",
-  next: "explore_introduction",
 };
 
 test("the headline number is exactly recomputable by hand", () => {
@@ -78,8 +77,8 @@ test("boosts are computed from the same model and are positive", () => {
   assert.equal(v.amountUsd + v.boosts[0].deltaUsd, confirmed);
 });
 
-test("reference code is deterministic and ignores the next-step answer", () => {
-  assert.equal(referenceCode(favorable), referenceCode({ ...favorable, next: "nothing" }));
+test("reference code is deterministic for the same answers", () => {
+  assert.equal(referenceCode(favorable), referenceCode({ ...favorable }));
   assert.notEqual(referenceCode(favorable), referenceCode({ ...favorable, scope: "single" }));
   assert.match(referenceCode(favorable), /^STV2-[0-9A-F]{6}$/);
 });
