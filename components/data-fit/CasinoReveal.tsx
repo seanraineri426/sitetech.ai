@@ -17,6 +17,7 @@ import {
   formatUsd,
   type Valuation,
 } from "@/lib/data-fit/valuation";
+import { BOOKING_URL } from "@/lib/site";
 import { BenchmarkGauge } from "./BenchmarkGauge";
 import { ReelNumber } from "./Reels";
 
@@ -60,22 +61,7 @@ export function CasinoReveal({
 }) {
   const reduce = useReducedMotion();
   const [settled, setSettled] = useState(false);
-  const [copied, setCopied] = useState(false);
   const v = valuation;
-  const citation = `${v.model}. Ref ${v.reference}. Modeled value ${formatUsd(v.amountUsd)} (range ${formatUsd(
-    v.lowUsd,
-  )} to ${formatUsd(v.highUsd)}). Quiz ${v.quizVersion}. Based on self-reported answers; not an appraisal, quote, or offer.`;
-
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(citation);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2200);
-    } catch {
-      setCopied(false);
-    }
-  }
-
   const win = v.amountUsd > 0;
 
   return (
@@ -121,6 +107,28 @@ export function CasinoReveal({
       </div>
 
       {settled && (
+        <motion.div
+          initial={reduce ? false : { opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+          className="mx-auto mt-8 max-w-2xl"
+        >
+          <a
+            href={BOOKING_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="cta-gold inline-flex min-h-[60px] w-full items-center justify-between gap-4 rounded-xl px-6 text-left text-base font-semibold sm:text-lg"
+          >
+            <span className="flex flex-col leading-tight">
+              <span>Book a call about this number</span>
+              <span className="mt-0.5 text-xs font-medium text-black/60">Opens a scheduling page in a new tab.</span>
+            </span>
+            <span aria-hidden className="text-xl">↗</span>
+          </a>
+        </motion.div>
+      )}
+
+      {settled && (
         <motion.div variants={container} initial={reduce ? "show" : "hidden"} animate="show" className="mx-auto mt-10 max-w-2xl space-y-8">
           {v.held && (
             <motion.div variants={item} className="border border-white/30 p-4 text-sm leading-relaxed text-gray-200">
@@ -130,7 +138,6 @@ export function CasinoReveal({
             </motion.div>
           )}
 
-          {/* Formula */}
           <motion.div variants={item}>
             <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-gold/80">How the number is calculated</p>
             <div className="mt-3 border border-gold/30">
@@ -193,24 +200,6 @@ export function CasinoReveal({
               </p>
             </motion.div>
           )}
-
-          {/* Citation */}
-          <motion.div variants={item} className="border border-gold/40 bg-gold/[0.06] p-4">
-            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-gold/80">Cite this number</p>
-            <p className="mt-2 break-words font-mono text-sm leading-relaxed text-white">{citation}</p>
-            <div className="mt-3 flex flex-wrap items-center gap-4">
-              <button
-                type="button"
-                onClick={copy}
-                className="min-h-[44px] border border-gold px-4 font-mono text-xs uppercase tracking-[0.18em] text-gold transition hover:bg-gold hover:text-black"
-              >
-                {copied ? "Copied" : "Copy citation"}
-              </button>
-              <span className="font-mono text-sm text-gold" aria-label={`Reference ${v.reference}`}>
-                {v.reference}
-              </span>
-            </div>
-          </motion.div>
 
           <motion.details variants={item} className="group border border-white/15 px-4 py-3">
             <summary className="cursor-pointer font-mono text-[11px] uppercase tracking-[0.2em] text-gray-300 outline-none focus-visible:text-gold">

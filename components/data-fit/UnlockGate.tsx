@@ -130,8 +130,7 @@ export function UnlockGate({ headingRef, answers, result, origin, initial, onBac
         Your number is ready.
       </h3>
       <p className="mx-auto mt-3 max-w-lg text-center text-base leading-relaxed text-gray-300">
-        Drop your work email to see it. You get the modeled value, the formula behind it, and a
-        reference code you can cite.
+        Drop your work email to see it. You get the modeled value and the formula behind it.
       </p>
 
       {errorKeys.length > 0 && (
