@@ -116,7 +116,7 @@ export function ResultView({
                   {[
                     "Which record categories you would put on the table, and roughly how far back they go.",
                     "Who in your company can green-light an outside conversation.",
-                    "What you would keep out of a first deal.",
+                    "What you want to get out of a first intro call.",
                   ].map((it) => (
                     <li key={it} className="flex gap-4 text-sm leading-relaxed text-gray-200">
                       <Dash />
@@ -146,7 +146,7 @@ export function ResultView({
                   onClick={onRestart}
                   className="text-sm text-gray-300 underline-offset-4 hover:text-gold hover:underline"
                 >
-                  Spin again
+                  Start over
                 </button>
               </div>
               <dl className="mt-4 divide-y divide-white/10 border-y border-white/10">

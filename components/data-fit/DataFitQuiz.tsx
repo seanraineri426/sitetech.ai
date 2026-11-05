@@ -13,6 +13,7 @@ import {
 } from "@/lib/data-fit/questions";
 import { evaluate, validateQuestion, type ResultType } from "@/lib/data-fit/result";
 import { answersKey } from "@/lib/data-fit/valuation";
+import { AdvanceFlash } from "./AdvanceFlash";
 import { CasinoHud } from "./CasinoHud";
 import { OptionItem } from "./OptionItem";
 import { ResultView } from "./ResultView";
@@ -27,6 +28,8 @@ type State = {
   error: string | null;
   fromResult: boolean;
   nav: number;
+  /** Increments only on forward progress; drives the advance dopamine flash. */
+  flash: number;
   advancing: boolean;
   /** Held in memory only. Never written to storage, URLs, or analytics. */
   contact: GateContact;
@@ -56,6 +59,7 @@ const initial: State = {
   error: null,
   fromResult: false,
   nav: 0,
+  flash: 0,
   advancing: false,
   contact: emptyContact,
   submittedKey: null,
@@ -74,7 +78,7 @@ function finish(state: State): State {
 function reducer(state: State, action: Action): State {
   switch (action.type) {
     case "start":
-      return { ...initial, phase: "question", nav: state.nav + 1 };
+      return { ...initial, phase: "question", nav: state.nav + 1, flash: state.flash + 1 };
     case "single":
       return {
         ...state,
@@ -94,8 +98,18 @@ function reducer(state: State, action: Action): State {
       const q = QUESTIONS[state.step];
       const error = validateQuestion(q.id, state.answers);
       if (error) return { ...state, error, advancing: false };
-      if (state.step >= QUESTION_COUNT - 1) return finish(state);
-      return { ...state, step: state.step + 1, error: null, nav: state.nav + 1, advancing: false };
+      if (state.step >= QUESTION_COUNT - 1) {
+        const done = finish(state);
+        return { ...done, flash: state.flash + 1 };
+      }
+      return {
+        ...state,
+        step: state.step + 1,
+        error: null,
+        nav: state.nav + 1,
+        flash: state.flash + 1,
+        advancing: false,
+      };
     }
     case "back":
       if (state.phase === "gate") {
@@ -208,9 +222,8 @@ export function DataFitQuiz({
   const stageKey = state.phase === "question" ? `q-${state.step}` : state.phase;
 
   return (
-    <div className="casino-border @container" data-step={state.step + 1} data-phase={state.phase}>
-      <div className="casino-inner overflow-hidden">
-        <div className="casino-bulbs" aria-hidden />
+    <div className="fit-border @container" data-step={state.step + 1} data-phase={state.phase}>
+      <div className="fit-inner overflow-hidden">
         {state.phase !== "reveal" && (
           <CasinoHud
             answers={state.answers}
@@ -220,17 +233,7 @@ export function DataFitQuiz({
           />
         )}
 
-        {/* Gold sweep on every round change. */}
-        {!reduce && state.phase === "question" && (
-          <motion.span
-            key={`sweep-${state.step}`}
-            aria-hidden
-            className="pointer-events-none absolute left-0 top-2 z-10 h-[2px] w-1/2 bg-gradient-to-r from-transparent via-gold to-transparent"
-            initial={{ x: "-100%", opacity: 1 }}
-            animate={{ x: "300%", opacity: 0 }}
-            transition={{ duration: 0.9, ease: "easeOut" }}
-          />
-        )}
+        {state.phase === "question" && <AdvanceFlash flashKey={state.flash} />}
 
         <AnimatePresence mode="wait" custom={state.phase} initial={false}>
           <motion.div
@@ -245,15 +248,15 @@ export function DataFitQuiz({
             {state.phase === "intro" && (
               <div className="px-5 py-8 sm:px-8 sm:py-10">
                 <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-gold/80">
-                  {QUESTION_COUNT} rounds
+                  {QUESTION_COUNT} quick taps
                 </p>
                 <h3 className="mt-3 max-w-xl text-3xl font-semibold tracking-tight sm:text-4xl">
                   Find out what your records could be worth.
                 </h3>
                 <p className="mt-4 max-w-xl text-sm leading-relaxed text-gray-300">{QUIZ_INTRO_HELPER}</p>
                 <p className="mt-3 max-w-xl text-sm leading-relaxed text-gray-400">
-                  Tap an answer and you move on. Each round unlocks a modeled value you can
-                  calculate and cite. Your email opens the vault at the end.
+                  Tap an answer to move on. At the end, your email unlocks a modeled value you can
+                  calculate and cite.
                 </p>
                 <button
                   type="button"
@@ -268,8 +271,8 @@ export function DataFitQuiz({
             {state.phase === "question" && (
               <div className="px-5 py-8 sm:px-8">
                 <p id={progressId} className="font-mono text-[11px] uppercase tracking-[0.2em] text-gray-400">
-                  Round {state.step + 1} of {QUESTION_COUNT}
-                  {q.kind === "single" ? " / tap to lock in" : " / select all that apply"}
+                  {state.step + 1} of {QUESTION_COUNT}
+                  {q.kind === "single" ? " · tap to continue" : " · select all that apply"}
                 </p>
 
                 {state.step === 0 && (
@@ -347,7 +350,7 @@ export function DataFitQuiz({
                         disabled={state.advancing}
                         className="min-h-[48px] bg-gold px-6 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-black transition hover:bg-gold-soft disabled:opacity-60"
                       >
-                        Lock it in
+                        Continue
                       </button>
                     )}
                     {!(embedded && state.step === 0) && (

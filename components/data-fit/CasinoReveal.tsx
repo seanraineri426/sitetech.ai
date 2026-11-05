@@ -17,7 +17,6 @@ import {
   formatUsd,
   type Valuation,
 } from "@/lib/data-fit/valuation";
-import { CoinBurst } from "./casino-bits";
 import { BenchmarkGauge } from "./BenchmarkGauge";
 import { ReelNumber } from "./Reels";
 
@@ -82,10 +81,8 @@ export function CasinoReveal({
   return (
     <section className="relative overflow-hidden px-5 pb-10 pt-10 sm:px-8" aria-labelledby="reveal-heading">
       {settled && !reduce && <div aria-hidden className="flash-overlay pointer-events-none absolute inset-0 z-10" />}
-      {settled && !reduce && win && <CoinBurst />}
-
       <p className="text-center font-mono text-[11px] uppercase tracking-[0.3em] text-gold/80">
-        {settled ? "Vault open" : "Rolling your number"}
+        {settled ? "Your result" : "Building your number"}
       </p>
       <h3
         id="reveal-heading"
@@ -171,7 +168,7 @@ export function CasinoReveal({
               </div>
             </div>
             <p className="mt-2 font-mono text-[11px] leading-relaxed text-gray-500">
-              Base x Coverage x Format x Freshness x Rights x Cleanliness. Range is 0.7x to 1.4x.
+              Base x Coverage x Format x Freshness x Rights x Readiness. Range is 0.7x to 1.4x.
             </p>
           </motion.div>
 
@@ -233,13 +230,8 @@ export function CasinoReveal({
               <Table title="Freshness" rows={Object.entries(FRESHNESS_PCT).map(([k, n]) => [FRESHNESS_NAME[k as keyof typeof FRESHNESS_NAME], mult(n)])} />
               <Table title="Rights" rows={Object.entries(RIGHTS_PCT).map(([k, n]) => [RIGHTS_NAME[k as keyof typeof RIGHTS_NAME], mult(n)])} />
               <Table
-                title="Cleanliness"
-                rows={[
-                  ["Clear to license as-is", "x1.00"],
-                  ["Each carve-out flagged", "minus 0.12"],
-                  ["Deal scope unsure", "x0.80"],
-                  ["Floor", "x0.50"],
-                ]}
+                title="Readiness"
+                rows={[["Full collection modeled", "x1.00"]]}
               />
             </div>
             <p className="mt-4 text-xs leading-relaxed text-gray-500">

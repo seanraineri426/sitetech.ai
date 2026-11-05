@@ -119,7 +119,7 @@ export function UnlockGate({ headingRef, answers, result, origin, initial, onBac
         transition={{ type: "spring", stiffness: 260, damping: 18, delay: 0.1 }}
         className="mx-auto mt-6 flex w-fit items-center gap-2 border border-gold bg-black px-4 py-2 font-mono text-[11px] uppercase tracking-[0.25em] text-gold shadow-[0_0_40px_rgba(245,196,81,0.35)]"
       >
-        <LockIcon className="h-4 w-4" /> Vault sealed
+        <LockIcon className="h-4 w-4" /> Number locked
       </motion.div>
 
       <h3
@@ -130,8 +130,8 @@ export function UnlockGate({ headingRef, answers, result, origin, initial, onBac
         Your number is ready.
       </h3>
       <p className="mx-auto mt-3 max-w-lg text-center text-base leading-relaxed text-gray-300">
-        Enter your email to open the vault. Your modeled value, the formula behind it, and a reference
-        code you can cite appear right after.
+        Drop your work email to see it. You get the modeled value, the formula behind it, and a
+        reference code you can cite.
       </p>
 
       {errorKeys.length > 0 && (
@@ -147,7 +147,7 @@ export function UnlockGate({ headingRef, answers, result, origin, initial, onBac
 
       {status === "failure" && (
         <div ref={failureRef} tabIndex={-1} role="alert" className="mx-auto mt-6 max-w-xl border border-white/40 p-4 text-sm outline-none">
-          <p className="font-medium text-white">The vault stays sealed for now.</p>
+          <p className="font-medium text-white">Your number stays locked for now.</p>
           <p className="mt-2 text-gray-300">
             {failure === "not_configured"
               ? "Requests cannot be accepted right now, so your number cannot be unlocked. Nothing was sent."
@@ -240,7 +240,7 @@ export function UnlockGate({ headingRef, answers, result, origin, initial, onBac
           disabled={pending}
           className="min-h-[52px] flex-1 bg-gold px-6 py-3 font-mono text-sm font-semibold uppercase tracking-[0.2em] text-black shadow-[0_0_40px_rgba(245,196,81,0.35)] transition hover:bg-gold-soft disabled:opacity-60"
         >
-          {pending ? "Opening the vault..." : "Unlock my number"}
+          {pending ? "Unlocking..." : "Show my number"}
         </button>
         <button
           type="button"

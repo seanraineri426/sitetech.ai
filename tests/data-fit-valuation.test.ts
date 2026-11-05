@@ -2,9 +2,9 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   answersKey,
-  cleanlinessPct,
   computeBase,
   computeValuation,
+  READINESS_PCT,
   referenceCode,
 } from "../lib/data-fit/valuation.ts";
 import type { CompleteAnswers } from "../lib/data-fit/questions.ts";
@@ -16,20 +16,21 @@ const favorable: CompleteAnswers = {
   software: ["shared_drive"],
   scope: "portfolio",
   permission: "confirmed",
-  sensitivity: ["none_identified"],
   frequency: "regular",
   next: "explore_introduction",
 };
 
 test("the headline number is exactly recomputable by hand", () => {
   // Base: imagery 150,000 x 100% + plans 125,000 x 80% = 250,000
-  // Then x2.50 coverage x1.00 format x1.25 freshness x1.00 rights x1.00 cleanliness = 781,250
+  // Then x2.50 coverage x1.00 format x1.25 freshness x1.00 rights x1.00 readiness = 781,250
   const v = computeValuation(favorable);
   assert.equal(v.baseUsd, 250000);
   assert.equal(v.rawUsd, 781250);
   assert.equal(v.amountUsd, 781300);
   assert.equal(v.tier, "Black");
   assert.equal(v.held, null);
+  assert.equal(READINESS_PCT, 100);
+  assert.ok(v.factors.some((f) => f.key === "readiness" && f.pct === 100));
 });
 
 test("base uses diminishing weights, highest value first", () => {
@@ -68,21 +69,13 @@ test("coverage, freshness, and rights move the number in the right direction", (
   assert.ok(review < portfolio);
 });
 
-test("cleanliness multiplier floors at 50 and stacks per flag", () => {
-  assert.equal(cleanlinessPct(["none_identified"]), 100);
-  assert.equal(cleanlinessPct(["unsure"]), 80);
-  assert.equal(cleanlinessPct(["personal"]), 88);
-  assert.equal(cleanlinessPct(["personal", "privileged", "client_confidential", "third_party_licensed"]), 52);
-  assert.ok(cleanlinessPct(["personal", "privileged", "client_confidential", "third_party_licensed"]) >= 50);
-});
-
 test("boosts are computed from the same model and are positive", () => {
-  const v = computeValuation({ ...favorable, permission: "ours_needs_review", sensitivity: ["personal"] });
-  assert.equal(v.boosts.length, 2);
-  for (const b of v.boosts) assert.ok(b.deltaUsd > 0);
-  const confirmed = computeValuation({ ...favorable, sensitivity: ["personal"] }).amountUsd;
-  const withBoost = v.amountUsd + v.boosts.find((b) => b.key === "rights")!.deltaUsd;
-  assert.equal(withBoost, confirmed);
+  const v = computeValuation({ ...favorable, permission: "ours_needs_review" });
+  assert.equal(v.boosts.length, 1);
+  assert.equal(v.boosts[0].key, "rights");
+  assert.ok(v.boosts[0].deltaUsd > 0);
+  const confirmed = computeValuation(favorable).amountUsd;
+  assert.equal(v.amountUsd + v.boosts[0].deltaUsd, confirmed);
 });
 
 test("reference code is deterministic and ignores the next-step answer", () => {
@@ -102,11 +95,9 @@ test("calibration: model output stays inside published buyer ranges", async () =
   const { BENCHMARKS, OFFER_INDEX } = await import("../lib/data-fit/benchmarks.ts");
   const topPublished = Math.max(...BENCHMARKS.map((b) => b.highUsd));
 
-  // Strongest realistic path sits in the published offer band, below the top of every range.
   const best = computeValuation(favorable).amountUsd;
   assert.ok(best >= 115_000 && best <= 1_000_000, `best path ${best} should sit inside $115K to $1M`);
 
-  // A single strong category at portfolio scale lands inside the middle half of published offers.
   const median = computeValuation({
     ...favorable,
     records: ["imagery_scans"],
@@ -114,7 +105,6 @@ test("calibration: model output stays inside published buyer ranges", async () =
   }).amountUsd;
   assert.ok(median >= OFFER_INDEX.q1Usd && median <= OFFER_INDEX.q3Usd, `mid path ${median} should sit in the IQR`);
 
-  // The absolute ceiling of the model (everything maxed) never exceeds the highest published figure.
   const ceiling = computeValuation({
     ...favorable,
     records: [

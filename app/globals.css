@@ -220,16 +220,18 @@ body {
   animation: topo-breathe 16s ease-in-out infinite;
 }
 
-/* ---- Casino quiz ---------------------------------------------------- */
+/* ---- Fit-check panel ------------------------------------------------ */
+.fit-border,
 .casino-border {
   position: relative;
   padding: 1px;
   background: linear-gradient(120deg, #f5c451, #6b4d0f, #fff3c4, #6b4d0f, #f5c451);
   background-size: 300% 300%;
-  animation: casino-shine 7s linear infinite;
+  animation: casino-shine 22s linear infinite;
   box-shadow: 0 30px 90px rgba(245, 196, 81, 0.18), 0 0 0 1px rgba(245, 196, 81, 0.1);
 }
 
+.fit-inner,
 .casino-inner {
   position: relative;
   /* Translucent so the hero art glows through the panel; blur keeps text crisp. */
@@ -239,27 +241,6 @@ body {
   -webkit-backdrop-filter: blur(14px) saturate(1.1);
   backdrop-filter: blur(14px) saturate(1.1);
   color: #fff;
-}
-
-.casino-bulbs {
-  height: 8px;
-  position: relative;
-  overflow: hidden;
-}
-.casino-bulbs::before,
-.casino-bulbs::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(circle at 50% 50%, #f5c451 0 2.4px, transparent 3px);
-  background-size: 20px 8px;
-}
-.casino-bulbs::before {
-  animation: bulb-a 1.1s steps(1) infinite;
-}
-.casino-bulbs::after {
-  background-position: 10px 0;
-  animation: bulb-b 1.1s steps(1) infinite;
 }
 
 .gold-text {
@@ -298,7 +279,7 @@ body {
   box-shadow:
     0 0 0 1px rgba(255, 241, 184, 0.6) inset,
     0 10px 30px -8px rgba(245, 196, 81, 0.55);
-  animation: casino-shine 4s linear infinite, cta-glow 2.4s ease-in-out infinite;
+  animation: casino-shine 14s linear infinite, cta-glow 4.8s ease-in-out infinite;
   transition: transform 0.15s ease;
   -webkit-tap-highlight-color: transparent;
 }
@@ -375,9 +356,8 @@ body {
   .animate-panel-glow,
   .animate-pulse-node,
   .animate-topo-breathe,
+  .fit-border,
   .casino-border,
-  .casino-bulbs::before,
-  .casino-bulbs::after,
   .reel-spin,
   .flash-overlay,
   .hud-jolt,

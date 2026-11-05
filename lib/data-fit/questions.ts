@@ -1,14 +1,12 @@
 // ---------------------------------------------------------------------------
 // Data fit check: authoritative question definitions.
 //
-// This is the single source of truth for the questions rendered by the
-// homepage and /data-fit. Option values are stable string ids; the result
-// function in ./result.ts depends on them. Bump QUIZ_VERSION when ids change.
-//
-// Intentionally free of framework imports so it can be unit-tested with Node.
+// Questions track what AI data buyers ask at intake (company, headcount,
+// retained history, systems, categories, coverage, intro readiness).
+// Option ids are stable; bump QUIZ_VERSION when ids change.
 // ---------------------------------------------------------------------------
 
-export const QUIZ_VERSION = "2026-11-04.1";
+export const QUIZ_VERSION = "2026-11-04.3";
 
 export const BUSINESS_TYPES = [
   "development_owner_reit",
@@ -47,11 +45,6 @@ export type StorageFormat = (typeof STORAGE_FORMATS)[number];
 export const TEAM_SIZES = ["micro", "small", "mid", "large"] as const;
 export type TeamSize = (typeof TEAM_SIZES)[number];
 
-/**
- * Systems where the records live. Buyers ask for this first: a system of record
- * such as Procore or Autodesk Construction Cloud can export clean, structured
- * data, while a shared drive or paper cannot.
- */
 export const SOFTWARE_TOOLS = [
   "procore",
   "autodesk",
@@ -76,7 +69,7 @@ const STRUCTURED_TOOLS: readonly SoftwareTool[] = [
 ];
 
 /**
- * The model's format input, inferred from the tools a visitor picked:
+ * Format input inferred from tools:
  *   unsure                       -> unsure
  *   paper plus any digital tool  -> mixed digital and paper
  *   paper only                   -> paper or scanned
@@ -105,17 +98,13 @@ export const PERMISSIONS = [
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
-export const SENSITIVITIES = [
-  "personal",
-  "client_confidential",
-  "privileged",
-  "third_party_licensed",
-  "none_identified",
-  "unsure",
-] as const;
-export type Sensitivity = (typeof SENSITIVITIES)[number];
-export const SENSITIVITY_EXCLUSIVE: readonly Sensitivity[] = ["none_identified", "unsure"];
-
+/**
+ * Retained-history depth. Ids reuse the former frequency slots so the
+ * freshness multiplier stays wired without a schema break.
+ *   regular    = deepest retained history (highest freshness weight)
+ *   occasional = mid history
+ *   historical = short / thin history
+ */
 export const FREQUENCIES = ["historical", "occasional", "regular", "unsure"] as const;
 export type Frequency = (typeof FREQUENCIES)[number];
 
@@ -135,7 +124,6 @@ export type Answers = {
   software?: SoftwareTool[];
   scope?: Scope;
   permission?: Permission;
-  sensitivity?: Sensitivity[];
   frequency?: Frequency;
   next?: NextStep;
 };
@@ -156,18 +144,22 @@ export type QuestionDef =
       options: readonly Option[];
     }
   | {
-      id: "records" | "software" | "sensitivity";
+      id: "records" | "software";
       kind: "multi";
       legend: string;
       helper?: string;
       options: readonly Option[];
-      /** Selecting one of these clears every other choice, and vice versa. */
       exclusive: readonly string[];
     };
 
 export const QUIZ_INTRO_HELPER =
-  "Categories and software names only. No uploads, no document text.";
+  "Categories and software names only. No uploads. No document text.";
 
+/**
+ * Eight taps aligned to what buyer intake forms actually ask:
+ * company type, headcount, record categories, systems, coverage,
+ * years of retained history, intro readiness, next step.
+ */
 export const QUESTIONS: readonly QuestionDef[] = [
   {
     id: "business",
@@ -187,19 +179,20 @@ export const QUESTIONS: readonly QuestionDef[] = [
   {
     id: "size",
     kind: "single",
-    legend: "How big is the team?",
+    legend: "About how many people work there?",
+    helper: "A rough band is enough. There is no minimum size to continue.",
     options: [
-      { value: "micro", label: "1 to 10 people" },
-      { value: "small", label: "11 to 50 people" },
-      { value: "mid", label: "51 to 250 people" },
-      { value: "large", label: "More than 250 people" },
+      { value: "micro", label: "1 to 10" },
+      { value: "small", label: "11 to 50" },
+      { value: "mid", label: "51 to 250" },
+      { value: "large", label: "More than 250" },
     ],
   },
   {
     id: "records",
     kind: "multi",
-    legend: "What could buyers want from your files?",
-    helper: "Tap every category that fits. More categories can lift the model.",
+    legend: "What kinds of company records do you still have?",
+    helper: "Tap every category that fits. You can be approximate.",
     exclusive: RECORD_EXCLUSIVE,
     options: [
       { value: "plans_specs_technical", label: "Plans, drawings, specs, or models" },
@@ -215,8 +208,8 @@ export const QUESTIONS: readonly QuestionDef[] = [
   {
     id: "software",
     kind: "multi",
-    legend: "Where do those records live?",
-    helper: "Tap every system you use. Names only — shows how cleanly they could export.",
+    legend: "Where do those records live today?",
+    helper: "Names only. No logins and no uploads.",
     exclusive: SOFTWARE_EXCLUSIVE,
     options: [
       { value: "procore", label: "Procore" },
@@ -237,7 +230,7 @@ export const QUESTIONS: readonly QuestionDef[] = [
   {
     id: "scope",
     kind: "single",
-    legend: "How much ground does that cover?",
+    legend: "How much work does that cover?",
     options: [
       { value: "single", label: "One project or property" },
       { value: "several", label: "A handful (2 to 20)" },
@@ -248,45 +241,31 @@ export const QUESTIONS: readonly QuestionDef[] = [
   {
     id: "frequency",
     kind: "single",
-    legend: "Is the collection still growing?",
+    legend: "How far back can you still open those records?",
+    helper: "Think about usable history you can still reach, not just when the company started.",
     options: [
-      { value: "regular", label: "Yes — new records land all the time" },
-      { value: "occasional", label: "Sometimes, as work wraps" },
-      { value: "historical", label: "Mostly a finished archive" },
+      { value: "regular", label: "5 or more years" },
+      { value: "occasional", label: "About 2 to 5 years" },
+      { value: "historical", label: "Under 2 years" },
       { value: "unsure", label: "Not sure" },
     ],
   },
   {
     id: "permission",
     kind: "single",
-    legend: "Could you green-light an introduction?",
+    legend: "Would a short introduction call be okay?",
     options: [
-      { value: "confirmed", label: "Yes — we can move on a conversation" },
-      { value: "ours_needs_review", label: "Likely ours; need a quick internal check" },
+      { value: "confirmed", label: "Yes, we can talk" },
+      { value: "ours_needs_review", label: "Likely, after a quick internal check" },
       { value: "third_party_needed", label: "A client or partner would need to sign off" },
       { value: "restricted", label: "This set is off-limits for outside use" },
       { value: "unsure", label: "Not sure yet" },
     ],
   },
   {
-    id: "sensitivity",
-    kind: "multi",
-    legend: "What would you keep out of a first deal?",
-    helper: "Tap anything that should stay off the table. A cleaner subset can still model high.",
-    exclusive: SENSITIVITY_EXCLUSIVE,
-    options: [
-      { value: "personal", label: "Customer, resident, or employee details" },
-      { value: "client_confidential", label: "Client-only material" },
-      { value: "privileged", label: "Legal or attorney work product" },
-      { value: "third_party_licensed", label: "Licensed third-party content" },
-      { value: "none_identified", label: "Looks clear to license as-is" },
-      { value: "unsure", label: "Not sure yet" },
-    ],
-  },
-  {
     id: "next",
     kind: "single",
-    legend: "Where do you want to take this?",
+    legend: "What would you like after you see your number?",
     options: [
       { value: "explore_introduction", label: "See if an introduction makes sense" },
       { value: "internal_review", label: "Check a few things internally first" },

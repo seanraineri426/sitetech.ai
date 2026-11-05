@@ -29,7 +29,7 @@ export const RESULT_COPY: Record<ResultType, ResultCopy> = {
     label: "Starting point",
     heading: "Lock the deal-ready set first.",
     body:
-      "There may be a collection worth discussing. Your answers suggest rights or scope need a quick internal check before an introduction makes sense. A cleaner subset can still be a strong fit.",
+      "There may be a collection worth discussing. Your answers suggest rights or scope need a quick internal check before an introduction makes sense.",
   },
   INITIAL_CONVERSATION: {
     label: "Starting point",

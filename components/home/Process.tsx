@@ -8,7 +8,7 @@ const processSteps = [
     num: "02",
     title: "See your modeled value",
     detail:
-      "Your answers set the scope of the collection and any permissions your team may need to review. Your email opens the result.",
+      "Your answers shape a modeled estimate you can calculate and cite. Your email opens that result when you are ready.",
   },
   {
     num: "03",
@@ -59,8 +59,9 @@ export function Process() {
         </ul>
 
         <p className="mt-8 max-w-2xl text-sm leading-relaxed text-gray-500">
-          SiteTech&apos;s role is the introduction. Your business remains responsible for deciding what it can
-          share and which terms it accepts. Possessing a file does not establish permission to license it.
+          SiteTech&apos;s role is the introduction. You decide what to share and which terms to accept. We earn
+          a referral fee only when an eligible introduction leads to an arrangement, under a separate agreement
+          with the buyer or partner.
         </p>
       </div>
     </section>

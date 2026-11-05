@@ -10,7 +10,6 @@ const favorableAnswers = {
   software: ["shared_drive"],
   scope: "several",
   permission: "confirmed",
-  sensitivity: ["none_identified"],
   frequency: "occasional",
   next: "explore_introduction",
 };

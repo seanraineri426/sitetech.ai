@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// SiteTech Data Fit Model v1: a transparent, deterministic estimate.
+// SiteTech Data Fit Model v2: a transparent, deterministic estimate.
 //
 // The headline number is calculable and citable. It is the product of a base
 // value (from the record categories a visitor selects) and five published
@@ -7,7 +7,10 @@
 // exported and shown to the visitor, so anyone can recompute the result by
 // hand and cite it with its reference code.
 //
-//   modeled value = BASE x coverage x format x freshness x rights x cleanliness
+//   modeled value = BASE x coverage x format x freshness x rights x readiness
+//
+// Readiness is fixed at x1.00 in this quiz version (no carve-out / safety
+// questions). It stays in the formula so published numbers stay comparable.
 //
 // This is a modeled estimate from the visitor's answers. It is not a quote,
 // appraisal, buyer offer, or promise of payment, and SiteTech does not buy or
@@ -25,13 +28,16 @@ import {
   type Permission,
   type RecordType,
   type Scope,
-  type Sensitivity,
   type StorageFormat,
   storageFromSoftware,
 } from "./questions.ts";
 
 export const MODEL_ID = "SiteTech Data Fit Model v2";
 export const MODEL_VERSION = "2";
+
+/** Fixed readiness multiplier (percent). Kept in the product for formula continuity. */
+export const READINESS_PCT = 100;
+export const READINESS_NAME = "Full collection modeled";
 
 type Category = Exclude<RecordType, "unsure" | "none">;
 
@@ -93,10 +99,10 @@ export const FORMAT_NAME: Record<StorageFormat, string> = {
   unsure: "Format unsure",
 };
 export const FRESHNESS_NAME: Record<Frequency, string> = {
-  historical: "Historical collection",
-  occasional: "Added occasionally",
-  regular: "Added regularly",
-  unsure: "Frequency unsure",
+  historical: "Under 2 years retained",
+  occasional: "About 2 to 5 years retained",
+  regular: "5+ years retained",
+  unsure: "History unsure",
 };
 export const RIGHTS_NAME: Record<Permission, string> = {
   confirmed: "Introduction green-lit",
@@ -105,21 +111,6 @@ export const RIGHTS_NAME: Record<Permission, string> = {
   restricted: "Outside use off-limits",
   unsure: "Rights unsure",
 };
-
-/** Cleanliness multiplier (percent): 100 when the set is clear to license as-is. */
-export function cleanlinessPct(sensitivity: readonly Sensitivity[]): number {
-  if (sensitivity.includes("none_identified")) return 100;
-  const flags = sensitivity.filter((s) => s !== "unsure" && s !== "none_identified").length;
-  const unsure = sensitivity.includes("unsure") ? 20 : 0;
-  return Math.max(50, 100 - flags * 12 - unsure);
-}
-
-export function cleanlinessName(sensitivity: readonly Sensitivity[]): string {
-  if (sensitivity.includes("none_identified")) return "Clear to license as-is";
-  if (sensitivity.length === 1 && sensitivity[0] === "unsure") return "Deal scope unsure";
-  const flags = sensitivity.filter((s) => s !== "unsure" && s !== "none_identified").length;
-  return `${flags} carve-out${flags === 1 ? "" : "s"} flagged`;
-}
 
 export type BaseItem = { key: Category; name: string; valueUsd: number; weightPct: number; contributionUsd: number };
 
@@ -135,12 +126,12 @@ export function computeBase(records: readonly RecordType[]): { baseUsd: number; 
   return { baseUsd: items.reduce((sum, it) => sum + it.contributionUsd, 0), items };
 }
 
-export type FactorKey = "coverage" | "format" | "freshness" | "rights" | "cleanliness";
+export type FactorKey = "coverage" | "format" | "freshness" | "rights" | "readiness";
 export type Factor = { key: FactorKey; label: string; choice: string; pct: number };
 
 export type Tier = "Held" | "Bronze" | "Silver" | "Gold" | "Black";
 
-export type Boost = { key: "rights" | "cleanliness"; label: string; deltaUsd: number };
+export type Boost = { key: "rights"; label: string; deltaUsd: number };
 
 export type Valuation = {
   model: string;
@@ -175,7 +166,7 @@ function factorsFor(a: CompleteAnswers): Factor[] {
     { key: "format", label: "Format", choice: FORMAT_NAME[storageFromSoftware(a.software)], pct: FORMAT_PCT[storageFromSoftware(a.software)] },
     { key: "freshness", label: "Freshness", choice: FRESHNESS_NAME[a.frequency], pct: FRESHNESS_PCT[a.frequency] },
     { key: "rights", label: "Rights", choice: RIGHTS_NAME[a.permission], pct: RIGHTS_PCT[a.permission] },
-    { key: "cleanliness", label: "Cleanliness", choice: cleanlinessName(a.sensitivity), pct: cleanlinessPct(a.sensitivity) },
+    { key: "readiness", label: "Readiness", choice: READINESS_NAME, pct: READINESS_PCT },
   ];
 }
 
@@ -204,7 +195,6 @@ export function referenceCode(a: CompleteAnswers): string {
     storageFromSoftware(a.software),
     a.scope,
     a.permission,
-    [...a.sensitivity].sort().join("+"),
     a.frequency,
   ].join("|");
   let h = 0x811c9dc5;
@@ -225,12 +215,6 @@ export function computeValuation(a: CompleteAnswers): Valuation {
     const delta = roundTo100(better) - amountUsd;
     if (delta > 0) boosts.push({ key: "rights", label: "Introduction green-lit by your team", deltaUsd: delta });
   }
-  if (cleanlinessPct(a.sensitivity) < 100) {
-    const better = rawFor({ ...a, sensitivity: ["none_identified"] }).rawUsd;
-    const delta = roundTo100(better) - amountUsd;
-    if (delta > 0) boosts.push({ key: "cleanliness", label: "A separate set clear to license as-is", deltaUsd: delta });
-  }
-  boosts.sort((x, y) => y.deltaUsd - x.deltaUsd);
 
   const held: Valuation["held"] =
     baseUsd === 0 ? "no_collection" : a.permission === "restricted" ? "restricted" : null;
@@ -261,6 +245,6 @@ export function answersKey(a: Answers): string {
   return JSON.stringify({
     ...a,
     records: a.records ? [...a.records].sort() : undefined,
-    sensitivity: a.sensitivity ? [...a.sensitivity].sort() : undefined,
+    software: a.software ? [...a.software].sort() : undefined,
   });
 }

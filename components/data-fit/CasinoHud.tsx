@@ -1,27 +1,23 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { LockIcon } from "./casino-bits";
 
 /**
- * The jackpot window: a masked, pulsing placeholder. It never shows digits, so
- * nothing on screen can be mistaken for the real number. It pulses faster each
- * round so the visitor feels the vault getting closer.
+ * Locked modeled-value tease + progress. Digits stay masked until the email
+ * gate unlocks the real number. Nothing on screen can be mistaken for it.
  */
-function LockedJackpot({ round, total }: { round: number; total: number }) {
+function LockedValue({ round, total }: { round: number; total: number }) {
   const heat = Math.min(1, round / total);
   const reduce = useReducedMotion();
   return (
     <div className="min-w-0">
-      <p className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-[0.22em] text-gold/80">
-        <LockIcon className="h-3.5 w-3.5" /> Your number
-      </p>
+      <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-gold/80">Your number</p>
       <motion.p
         aria-hidden
         className="mt-1 select-none font-mono text-2xl font-semibold tracking-[0.18em] text-gold sm:text-3xl"
-        animate={reduce ? undefined : { opacity: [0.45, 1, 0.45] }}
-        transition={{ duration: Math.max(0.5, 1.8 - heat * 1.3), repeat: Infinity, ease: "easeInOut" }}
-        style={{ textShadow: `0 0 ${8 + heat * 22}px rgba(245,196,81,${0.25 + heat * 0.45})` }}
+        animate={reduce ? undefined : { opacity: [0.55, 1, 0.55] }}
+        transition={{ duration: Math.max(2.4, 3.6 - heat * 0.8), repeat: Infinity, ease: "easeInOut" }}
+        style={{ textShadow: `0 0 ${6 + heat * 14}px rgba(245,196,81,${0.2 + heat * 0.3})` }}
       >
         $???,???
       </motion.p>
@@ -35,9 +31,9 @@ export function CasinoHud({
   total,
   sealed = false,
 }: {
-  /** Kept for call-site stability; chip score UI was removed. */
+  /** Kept for call-site stability. */
   answers?: unknown;
-  /** Number of rounds completed so far, 0 to total. */
+  /** Number of steps completed so far, 0 to total. */
   round: number;
   total: number;
   sealed?: boolean;
@@ -48,7 +44,7 @@ export function CasinoHud({
   return (
     <div className="border-b border-gold/20 bg-black/40 px-5 py-4 sm:px-8">
       <div className="flex items-start justify-between gap-6">
-        <LockedJackpot round={round} total={total} />
+        <LockedValue round={round} total={total} />
 
         <div className="text-right">
           <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-gold/80">Progress</p>
@@ -72,7 +68,7 @@ export function CasinoHud({
           ))}
         </ol>
         <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-gray-400">
-          {sealed ? "Vault sealed" : `Round ${Math.min(round + 1, total)} of ${total}`}
+          {sealed ? "Ready" : `${Math.min(round + 1, total)} of ${total}`}
         </p>
       </div>
     </div>

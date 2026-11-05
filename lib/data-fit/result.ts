@@ -16,8 +16,6 @@ import {
   RECORD_EXCLUSIVE,
   RECORD_TYPES,
   SCOPES,
-  SENSITIVITIES,
-  SENSITIVITY_EXCLUSIVE,
   SOFTWARE_EXCLUSIVE,
   SOFTWARE_TOOLS,
   TEAM_SIZES,
@@ -69,7 +67,7 @@ export function validateAnswers(input: unknown): ValidationResult {
     };
   }
 
-  const { business, size, records, software, scope, permission, sensitivity, frequency, next } = a;
+  const { business, size, records, software, scope, permission, frequency, next } = a;
 
   const okBusiness = isOneOf(BUSINESS_TYPES, business);
   const okRecords = validMulti(RECORD_TYPES, RECORD_EXCLUSIVE, records);
@@ -77,7 +75,6 @@ export function validateAnswers(input: unknown): ValidationResult {
   const okSoftware = validMulti(SOFTWARE_TOOLS, SOFTWARE_EXCLUSIVE, software);
   const okScope = isOneOf(SCOPES, scope);
   const okPermission = isOneOf(PERMISSIONS, permission);
-  const okSensitivity = validMulti(SENSITIVITIES, SENSITIVITY_EXCLUSIVE, sensitivity);
   const okFrequency = isOneOf(FREQUENCIES, frequency);
   const okNext = isOneOf(NEXT_STEPS, next);
 
@@ -87,13 +84,12 @@ export function validateAnswers(input: unknown): ValidationResult {
   if (!okSoftware) errors.software = "Select at least one option to continue.";
   if (!okScope) errors.scope = "Choose one option to continue.";
   if (!okPermission) errors.permission = "Choose one option to continue.";
-  if (!okSensitivity) errors.sensitivity = "Select at least one option to continue.";
   if (!okFrequency) errors.frequency = "Choose one option to continue.";
   if (!okNext) errors.next = "Choose one option to continue.";
 
   if (
     !okBusiness || !okSize || !okRecords || !okSoftware || !okScope ||
-    !okPermission || !okSensitivity || !okFrequency || !okNext
+    !okPermission || !okFrequency || !okNext
   ) {
     return { ok: false, errors };
   }
@@ -107,7 +103,6 @@ export function validateAnswers(input: unknown): ValidationResult {
       software: [...software],
       scope,
       permission,
-      sensitivity: [...sensitivity],
       frequency,
       next,
     },
@@ -124,7 +119,6 @@ export function validateQuestion(id: QuestionId, answers: Answers): string | nul
     software: ["shared_drive"],
     scope: "single",
     permission: "confirmed",
-    sensitivity: ["none_identified"],
     frequency: "historical",
     next: "nothing",
     [id]: probe[id],
@@ -136,11 +130,10 @@ export function validateQuestion(id: QuestionId, answers: Answers): string | nul
  * Result precedence (strict, in order):
  *   1. Known restriction on the proposed use      -> CURRENT_SCOPE_RESTRICTED
  *   2. Unsure what exists / no collection          -> INVENTORY_FIRST
- *   3. Permission not confirmed, or any carve-out /
- *      deal-scope flag, or scope unsure            -> PERMISSIONS_AND_SCOPE_REVIEW
+ *   3. Permission not confirmed or scope unsure    -> PERMISSIONS_AND_SCOPE_REVIEW
  *   4. Otherwise                                   -> INITIAL_CONVERSATION
  *
- * Industry, team size, software, scope, and frequency never change the result.
+ * Industry, team size, software, and frequency never change the result.
  */
 export function computeResult(answers: CompleteAnswers): ResultType {
   if (answers.permission === "restricted") return "CURRENT_SCOPE_RESTRICTED";
@@ -149,9 +142,9 @@ export function computeResult(answers: CompleteAnswers): ResultType {
     return "INVENTORY_FIRST";
   }
 
-  const permissionUnconfirmed = answers.permission !== "confirmed";
-  const sensitivityFlag = answers.sensitivity.some((s) => s !== "none_identified");
-  if (permissionUnconfirmed || sensitivityFlag) return "PERMISSIONS_AND_SCOPE_REVIEW";
+  if (answers.permission !== "confirmed" || answers.scope === "unsure") {
+    return "PERMISSIONS_AND_SCOPE_REVIEW";
+  }
 
   return "INITIAL_CONVERSATION";
 }
@@ -171,9 +164,8 @@ export function evaluate(input: unknown): Evaluation {
 }
 
 /**
- * For PERMISSIONS_AND_SCOPE_REVIEW: two or three commercial next checks the
- * visitor's organization may want to answer internally. Prompts only — not an
- * assessment by SiteTech.
+ * For PERMISSIONS_AND_SCOPE_REVIEW: commercial next checks the visitor's
+ * organization may want to answer internally. Prompts only, not an assessment.
  */
 export function reviewQuestions(answers: CompleteAnswers): string[] {
   const out: string[] = [];
@@ -184,25 +176,8 @@ export function reviewQuestions(answers: CompleteAnswers): string[] {
   if (answers.permission === "ours_needs_review" || answers.permission === "unsure") {
     out.push("Who can green-light an outside conversation on this set?");
   }
-  if (answers.sensitivity.includes("personal")) {
-    out.push(
-      answers.business === "property_facilities_management" ||
-        answers.business === "housing_public_sector"
-        ? "Can you package equipment or building records without resident details?"
-        : "Can you package a subset without customer or employee details?",
-    );
-  }
-  if (answers.sensitivity.includes("client_confidential")) {
-    out.push("Which company-created records could sit in a first deal?");
-  }
-  if (answers.sensitivity.includes("privileged")) {
-    out.push("Can legal or attorney material stay completely out of scope?");
-  }
-  if (answers.sensitivity.includes("third_party_licensed")) {
-    out.push("Who can confirm what third-party content can be included?");
-  }
-  if (answers.sensitivity.includes("unsure")) {
-    out.push("Who can name a clean subset for a first conversation?");
+  if (answers.scope === "unsure") {
+    out.push("Can you name how many projects or properties this covers?");
   }
 
   if (out.length === 0) {

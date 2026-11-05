@@ -1,47 +1,35 @@
 export const faqs = [
   {
-    q: "What kinds of records can I ask about?",
-    a: "Start with high-level categories such as technical documentation, project imagery, equipment records, or company-created research. Relevance depends on the collection and its permitted uses. The site does not accept underlying documents or datasets.",
-  },
-  {
-    q: "How much could our data earn?",
-    a: "AI data buyers and brokers publish offer ranges of $100K to $5M for construction and design records, and the fit check shows where your collection lands against them with a modeled estimate computed from your own answers with a published formula and compared against the ranges buyers and brokers publicly state for construction and design records. Those are published offers, not completed sales or a promise of payment, and the estimate is not a quote or an appraisal. Real terms depend on a buyer's requirements, the specific collection, permitted uses, and the agreement between the parties. SiteTech does not appraise datasets or negotiate terms.",
-  },
-  {
-    q: "Would this be a one-time payment or ongoing revenue?",
-    a: "An opportunity could involve a one-time license or another arrangement agreed directly with the counterparty. New records do not automatically create recurring revenue, and no payment structure is guaranteed.",
-  },
-  {
-    q: "Do we have to upload anything or connect our software?",
-    a: "No. The fit check and initial inquiry use a high-level description. Any later sharing would be a separate step that your organization evaluates and approves directly with the relevant party.",
-  },
-  {
-    q: "Do we have to give up ownership?",
-    a: "Ownership, permitted use, exclusivity, and other rights depend on the specific agreement. A licensing discussion does not by itself determine those terms. Your organization reviews any proposal before deciding whether to proceed.",
-  },
-  {
-    q: "What if our records contain client, tenant, or confidential information?",
-    a: "Keep that information out of this website and the initial inquiry. Your organization should determine whether a separate permitted collection exists and which permissions or restrictions apply. The fit check is not a review of your records or a legal determination.",
-  },
-  {
-    q: "Do we need to clean or organize everything first?",
-    a: "You can begin with a general understanding of what you have. Any preparation requirements would depend on a specific opportunity. SiteTech does not process, clean, or anonymize datasets.",
-  },
-  {
-    q: "Who would we be introduced to?",
-    a: "A potential introduction could involve an AI data buyer or a licensing partner relevant to the collection. We identify the proposed recipient and ask for permission before sharing your inquiry with that recipient. Completing the quiz does not mean a buyer has been found.",
+    q: "What is SiteTech, in plain terms?",
+    a: "SiteTech helps businesses explore whether their company records might be a fit for AI data licensing. We listen, model a first-pass number from your answers, and when it makes sense we ask before introducing you to a buyer or licensing partner. You stay in control the whole way.",
   },
   {
     q: "How does SiteTech make money?",
-    a: "SiteTech's model is to receive referral fees on eligible introductions under separate agreements with buyers or partners. Any applicable referral arrangement and next steps are clarified before an introduction. We do not set the price or negotiate the terms of your data license.",
+    a: "We earn a referral fee when an introduction we facilitate leads to an eligible arrangement between you and a buyer or partner. That fee sits in a separate agreement with the buyer or partner. We do not buy your data, set your price, or take a cut of your license unless that is agreed up front. If no introduction happens, you owe us nothing from this website.",
   },
   {
-    q: "What happens after I contact you?",
-    a: "SiteTech reviews your high-level inquiry and follows up about a possible next step. An introduction depends on fit and opportunity availability. You have no obligation to enter a transaction.",
+    q: "How much could our data be worth?",
+    a: "AI buyers and brokers publish offer ranges of $100K to $5M for construction and design records. The fit check gives you a modeled estimate from your own answers so you can see where you might sit. That number is a planning guide, not a quote, appraisal, or promise of payment. Real terms only appear if you and a counterparty agree later.",
   },
   {
-    q: "I am a data buyer or licensing partner. Can we connect?",
-    a: "Yes. Use the buyer and partner inquiry option to describe your organization and the categories you are interested in discussing. Please keep confidential requirements and underlying materials out of the form.",
+    q: "Do we have to upload files or connect our software?",
+    a: "No. You only answer a few high-level questions. Nothing leaves your systems through this site. If a later conversation needs samples or exports, that would be a separate step you approve with the other party.",
+  },
+  {
+    q: "Do we give up ownership of our records?",
+    a: "Not by talking to us, and not by finishing the fit check. Ownership and use terms only change if you sign a separate agreement with a buyer or partner. You can walk away at any point.",
+  },
+  {
+    q: "Who would we be introduced to?",
+    a: "When a relevant opportunity exists, we would name the proposed buyer or licensing partner and ask your permission before sharing your inquiry. Completing the quiz does not mean a buyer is already lined up.",
+  },
+  {
+    q: "What happens after I reach out?",
+    a: "We review what you shared and follow up about a possible next step. There is no obligation to take a call, accept an introduction, or enter a deal. If it is not a fit, we will say so plainly.",
+  },
+  {
+    q: "I am a data buyer or licensing partner. Can we talk?",
+    a: "Yes. Use the buyer and partner path on the contact page to tell us who you are and what categories you care about. Keep confidential requirements and source materials out of the form for now.",
   },
 ];
 

@@ -18,11 +18,9 @@ type Props = {
 };
 
 /**
- * Casino-style answer card. State is never carried by color alone: selected
- * cards also gain a check mark, a filled badge, and heavier text.
+ * Clean answer row. Selected state uses gold fill + check, not letter chips.
  */
 export function OptionItem({ kind, name, value, label, checked, index, onChange, onCommit }: Props) {
-  const letter = String.fromCharCode(65 + index);
   const arrowNav = useRef(false);
   return (
     <motion.label
@@ -32,13 +30,13 @@ export function OptionItem({ kind, name, value, label, checked, index, onChange,
         // while arrow keys move through radios (those only change the selection).
         if (kind === "single" && !arrowNav.current) onCommit?.();
       }}
-      initial={{ opacity: 0, y: 14 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.05 + index * 0.045, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-      className={`group relative flex min-h-[56px] cursor-pointer items-center gap-4 border px-4 py-3 text-left text-[15px] leading-snug transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-gold ${
+      transition={{ delay: 0.04 + index * 0.035, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+      className={`group relative flex min-h-[56px] cursor-pointer items-center gap-3.5 border px-4 py-3.5 text-left text-[15px] leading-snug transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-gold ${
         checked
-          ? "border-gold bg-gold font-semibold text-black shadow-[0_0_32px_rgba(245,196,81,0.35)]"
-          : "border-white/15 bg-white/[0.03] text-white hover:border-gold/70 hover:bg-white/[0.07]"
+          ? "border-gold bg-gold font-semibold text-black shadow-[0_0_28px_rgba(245,196,81,0.28)]"
+          : "border-white/15 bg-white/[0.03] text-white hover:border-gold/60 hover:bg-white/[0.06]"
       }`}
     >
       <input
@@ -64,14 +62,17 @@ export function OptionItem({ kind, name, value, label, checked, index, onChange,
       />
       <span
         aria-hidden
-        className={`flex h-7 w-7 shrink-0 items-center justify-center border font-mono text-xs transition-colors ${
-          checked ? "border-black bg-black text-gold" : "border-white/30 text-gray-300 group-hover:border-gold group-hover:text-gold"
+        className={`flex h-5 w-5 shrink-0 items-center justify-center border transition-colors ${
+          kind === "multi" ? "" : "rounded-full"
+        } ${
+          checked
+            ? "border-black bg-black text-gold"
+            : "border-white/35 text-transparent group-hover:border-gold/70"
         }`}
       >
-        {kind === "multi" ? checked ? <CheckIcon className="h-3.5 w-3.5" /> : letter : letter}
+        {checked && <CheckIcon className="h-3 w-3" />}
       </span>
       <span className="flex-1">{label}</span>
-      {checked && kind === "single" && <CheckIcon className="h-5 w-5 shrink-0" />}
     </motion.label>
   );
 }
