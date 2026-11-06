@@ -2,7 +2,8 @@ import Link from "next/link";
 import { BOOKING_URL } from "@/lib/site";
 
 const exploreLinks = [
-  { href: "/#quiz", label: "Check your data fit" },
+  { href: "/#license", label: "License my records" },
+  { href: "/#record", label: "Record my work" },
   { href: "/#how", label: "How it works" },
   { href: "/#faq", label: "FAQ" },
 ];

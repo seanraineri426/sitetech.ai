@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
     // straight to their replacement in one hop. Temporary (307) so earlier
     // routes can be restored without fighting cached permanent redirects.
     return [
-      { source: "/data-fit", destination: "/#quiz", permanent: false },
+      { source: "/data-fit", destination: "/#license", permanent: false },
       { source: "/how-it-works", destination: "/#how", permanent: false },
       { source: "/platform", destination: "/#how", permanent: false },
       { source: "/for-buyers", destination: "/contact?topic=buyer", permanent: false },

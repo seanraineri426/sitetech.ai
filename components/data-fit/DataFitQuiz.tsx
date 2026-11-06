@@ -83,15 +83,19 @@ function reducer(state: State, action: Action): State {
       return {
         ...state,
         error: null,
-        advancing: state.advancing || action.commit,
+        // commit:false must not clear a pending advance (label click can double-dispatch).
+        advancing: action.commit ? true : state.advancing,
         answers: { ...state.answers, [action.id]: action.value },
       };
     case "multi": {
       const current = state.answers[action.id] as string[] | undefined;
+      const next = toggleMulti(current, action.value, action.exclusive);
       return {
         ...state,
         error: null,
-        answers: { ...state.answers, [action.id]: toggleMulti(current, action.value, action.exclusive) },
+        // Auto-advance after a selection; empty selection cancels the advance.
+        advancing: next.length > 0,
+        answers: { ...state.answers, [action.id]: next },
       };
     }
     case "continue": {
@@ -176,17 +180,22 @@ export function DataFitQuiz({
     if (state.error) errorRef.current?.focus();
   }, [state.error]);
 
-  // Tap, brief lock-in flash, then the next round for single-select questions.
+  // Tap an answer → brief pause → next question.
+  // Multi-select waits a bit longer so a second tap can still add another option.
   useEffect(() => {
     if (!state.advancing || state.phase !== "question") return;
     const q = QUESTIONS[state.step];
-    if (q.kind !== "single") {
-      dispatch({ type: "set_advancing", value: false });
-      return;
+    if (q.kind === "multi") {
+      const selected = state.answers[q.id] as string[] | undefined;
+      if (!selected?.length) {
+        dispatch({ type: "set_advancing", value: false });
+        return;
+      }
     }
-    const timer = setTimeout(() => dispatch({ type: "continue" }), reduce ? 0 : 420);
+    const delay = reduce ? 0 : q.kind === "multi" ? 750 : 320;
+    const timer = setTimeout(() => dispatch({ type: "continue" }), delay);
     return () => clearTimeout(timer);
-  }, [state.advancing, state.phase, state.step, reduce]);
+  }, [state.advancing, state.phase, state.step, reduce, state.answers]);
 
   const evaluated = evaluate(state.answers);
   const complete = evaluated.status === "complete" ? evaluated : null;
@@ -272,7 +281,9 @@ export function DataFitQuiz({
               <div className="px-5 py-8 sm:px-8">
                 <p id={progressId} className="font-mono text-[11px] uppercase tracking-[0.2em] text-gray-400">
                   {state.step + 1} of {QUESTION_COUNT}
-                  {q.kind === "single" ? " · tap to continue" : " · select all that apply"}
+                  {q.kind === "single"
+                    ? " · tap to continue"
+                    : " · tap all that apply, then it continues"}
                 </p>
 
                 {state.step === 0 && (
@@ -347,10 +358,10 @@ export function DataFitQuiz({
                       <button
                         type="button"
                         onClick={() => dispatch({ type: "continue" })}
-                        disabled={state.advancing}
+                        disabled={state.advancing && ((current as string[] | undefined) ?? []).length === 0}
                         className="min-h-[48px] bg-gold px-6 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-black transition hover:bg-gold-soft disabled:opacity-60"
                       >
-                        Continue
+                        Continue now
                       </button>
                     )}
                     {!(embedded && state.step === 0) && (

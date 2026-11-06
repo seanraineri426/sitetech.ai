@@ -4,8 +4,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BOOKING_URL } from "@/lib/site";
+import { LICENSE_HREF, RECORD_HREF } from "@/lib/doors";
 
 const navLinks = [
+  { href: LICENSE_HREF, label: "License records" },
+  { href: RECORD_HREF, label: "Record work" },
   { href: "/#how", label: "How it works" },
   { href: "/#faq", label: "FAQ" },
   { href: "/contact", label: "Contact" },
@@ -30,8 +33,7 @@ export function Header() {
   }, [pathname]);
 
   const light = !isHome || scrolled;
-  // The quiz is the first thing on the homepage, so every "data fit" link goes straight to it.
-  const fitHref = "/#quiz";
+  const fitHref = LICENSE_HREF;
 
   return (
     <header
@@ -91,7 +93,7 @@ export function Header() {
               : "border-white bg-white text-black hover:bg-transparent hover:text-white"
           }`}
         >
-          Check your data fit
+          License my records
         </Link>
 
         <button
@@ -144,7 +146,7 @@ export function Header() {
               className={`mt-2 flex min-h-[44px] items-center text-sm font-medium ${light ? "text-black" : "text-white"}`}
               onClick={() => setOpen(false)}
             >
-              Check your data fit →
+              License my records →
             </Link>
           </nav>
         </div>

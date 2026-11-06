@@ -6,11 +6,12 @@
 // Option ids are stable; bump QUIZ_VERSION when ids change.
 // ---------------------------------------------------------------------------
 
-export const QUIZ_VERSION = "2026-11-04.4";
+export const QUIZ_VERSION = "2026-11-06.1";
 
 export const BUSINESS_TYPES = [
   "development_owner_reit",
   "contracting",
+  "home_services_trades",
   "architecture_engineering_surveying",
   "property_facilities_management",
   "brokerage_appraisal_research",
@@ -159,6 +160,7 @@ export const QUESTIONS: readonly QuestionDef[] = [
     options: [
       { value: "development_owner_reit", label: "Developer, owner, or REIT" },
       { value: "contracting", label: "General or specialty contractor" },
+      { value: "home_services_trades", label: "Home services or field trades" },
       { value: "architecture_engineering_surveying", label: "Architecture, engineering, or surveying" },
       { value: "property_facilities_management", label: "Property or facilities management" },
       { value: "brokerage_appraisal_research", label: "Brokerage, appraisal, or research" },

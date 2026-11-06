@@ -1,11 +1,21 @@
+import { BUYER_TYPES_SOFT } from "@/lib/doors";
+
 export const faqs = [
   {
     q: "What is SiteTech, in plain terms?",
-    a: "SiteTech helps businesses explore whether their company records might be a fit for AI data licensing. We listen, model a first-pass number from your answers, and when it makes sense we ask before introducing you to a buyer or licensing partner. You stay in control the whole way.",
+    a: "SiteTech helps businesses explore two paths with AI data partners: licensing company records you already keep, or recording first-person field work for robotics training programs. We listen, help you see a first-pass fit, and ask before introducing you to anyone. You stay in control.",
+  },
+  {
+    q: "Who are the buyers or partners?",
+    a: `${BUYER_TYPES_SOFT} When a specific introduction makes sense, we name the proposed recipient and ask your permission before sharing your inquiry.`,
   },
   {
     q: "How does SiteTech make money?",
     a: "We earn a referral fee when an introduction we facilitate leads to an eligible arrangement between you and a buyer or partner. That fee sits in a separate agreement with the buyer or partner. We do not buy your data, set your price, or take a cut of your license unless that is agreed up front. If no introduction happens, you owe us nothing from this website.",
+  },
+  {
+    q: "What is the difference between the two doors?",
+    a: "License my records is for archives and operating systems (plans, photos, CRM, project tools, and similar). Record my work is for first-person footage of job-site or shop work that robotics training programs may want. The robotics path estimates annual payout as people × hours per week × $10 × 52. Some trades businesses qualify for both.",
   },
   {
     q: "How much could our data be worth?",
@@ -13,15 +23,11 @@ export const faqs = [
   },
   {
     q: "Do we have to upload files or connect our software?",
-    a: "No. You only answer a few high-level questions. Nothing leaves your systems through this site. If a later conversation needs samples or exports, that would be a separate step you approve with the other party.",
+    a: "No. You only answer a few high-level questions. Nothing leaves your systems through this site. If a later conversation needs samples, exports, or footage, that would be a separate step you approve with the other party.",
   },
   {
     q: "Do we give up ownership of our records?",
     a: "Not by talking to us, and not by finishing the fit check. Ownership and use terms only change if you sign a separate agreement with a buyer or partner. You can walk away at any point.",
-  },
-  {
-    q: "Who would we be introduced to?",
-    a: "When a relevant opportunity exists, we would name the proposed buyer or licensing partner and ask your permission before sharing your inquiry. Completing the quiz does not mean a buyer is already lined up.",
   },
   {
     q: "What happens after I reach out?",

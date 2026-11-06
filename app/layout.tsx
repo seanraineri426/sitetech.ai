@@ -16,9 +16,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const defaultTitle = "SiteTech AI | What is your company's data worth to AI companies?";
+const defaultTitle = "SiteTech AI | Get paid for company records or crew footage";
 const defaultDescription =
-  "AI data buyers publish offer ranges of $100K to $5M for construction and design records. Answer a few quick questions and see a modeled value for your company's data.";
+  "SiteTech introduces construction, real estate, home services, and trades businesses to AI data partners. License records you already keep, or estimate robotics footage payout from crew hours.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

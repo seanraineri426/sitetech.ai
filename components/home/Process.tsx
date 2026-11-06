@@ -1,33 +1,36 @@
+import { BUYER_TYPES_SOFT } from "@/lib/doors";
+
 const processSteps = [
   {
     num: "01",
-    title: "Tell us what your company holds",
-    detail: "Answer a few questions about your business and the categories of records you may want to discuss.",
+    title: "Choose a door",
+    detail:
+      "License records you already keep, or explore first-person footage of field work for robotics training programs.",
   },
   {
     num: "02",
-    title: "See your modeled value",
+    title: "Describe the fit",
     detail:
-      "Your answers shape a modeled estimate you can calculate and cite. Your email opens that result when you are ready.",
+      "Answer a few high-level questions. For records, you can unlock a modeled estimate. Nothing uploads through this site.",
   },
   {
     num: "03",
     title: "Consider a specific introduction",
     detail:
-      "If a relevant opportunity is available, SiteTech asks for your permission before introducing your business to a buyer or licensing partner.",
+      "If a relevant opportunity is available, SiteTech asks for your permission before introducing your business to an AI lab or data partner.",
   },
   {
     num: "04",
-    title: "Evaluate the opportunity directly",
+    title: "Evaluate directly",
     detail:
-      "You and the counterparty discuss any evaluation, licensing terms, compensation, and permitted use. You decide whether to proceed.",
+      "You and the counterparty discuss scope, terms, and compensation. You decide whether to proceed.",
   },
 ];
 
 const controlPoints = [
   "No document uploads or software connections through this site.",
   "A specific introduction requires your approval.",
-  "Any evaluation or licensing arrangement is discussed directly with the counterparty.",
+  "Any arrangement is discussed directly with the counterparty.",
 ];
 
 export function Process() {
@@ -36,8 +39,11 @@ export function Process() {
       <div className="mx-auto max-w-[1400px] px-6 py-16 sm:py-20 lg:px-10 lg:py-28">
         <p className="section-label mb-6">How it works</p>
         <h2 className="headline-sm max-w-3xl text-white">
-          Start with a description. Explore the opportunity from there.
+          Two doors. One introduction role.
         </h2>
+        <p className="mt-4 max-w-2xl text-sm leading-relaxed text-gray-400">
+          {BUYER_TYPES_SOFT}
+        </p>
 
         <div className="mt-12 grid gap-px border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-4">
           {processSteps.map((step) => (

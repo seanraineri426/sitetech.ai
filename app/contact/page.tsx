@@ -55,8 +55,8 @@ export default function ContactPage() {
                 <span aria-hidden className="text-lg">↗</span>
               </a>
               <div className="mt-6">
-                <Link href="/#quiz" className="link-arrow text-black">
-                  Check your data fit
+                <Link href="/#license" className="link-arrow text-black">
+                  License my records
                   <span aria-hidden>→</span>
                 </Link>
               </div>

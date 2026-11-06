@@ -25,10 +25,10 @@ export function OptionItem({ kind, name, value, label, checked, index, onChange,
   return (
     <motion.label
       whileTap={{ scale: 0.985 }}
-      onClick={() => {
-        // Any click commits and advances, except the clicks a browser synthesizes
-        // while arrow keys move through radios (those only change the selection).
-        if (kind === "single" && !arrowNav.current) onCommit?.();
+      onPointerUp={(e) => {
+        // Pointer commit advances single-select. Skip synthetic arrow-key focus moves.
+        if (kind !== "single" || arrowNav.current || e.button !== 0) return;
+        onCommit?.();
       }}
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}

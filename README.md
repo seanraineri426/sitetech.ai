@@ -33,7 +33,9 @@ npm start
 - `components/home/` — homepage sections.
 - `lib/site.ts` — canonical host and form-delivery configuration.
 
-The fit check has eight questions. Team size and software are lead qualification
+The homepage has two doors: license company records (fit check) and record field
+work for robotics training programs. The fit check has seven questions. Team size
+and software are lead qualification
 signals sent with the inquiry; software changes the dollar number only through the
 inferred format factor, and team size does not change it. A third meter that used
 to sit in the quiz HUD and reveal was removed.
